@@ -1,12 +1,11 @@
-import { Button, YStack, Text } from 'tamagui'
+import { View, Text } from "react-native";
 
-export default function Home() {
+export default function Index() {
   return (
-    <YStack f={1} ai="center" jc="center" gap="$4">
-      <Text fontSize="$8">Tamagui funcionando 🎉</Text>
-      <Button theme="blue" onPress={() => alert('Beleza!')}>
-        Testar botão
-      </Button>
-    </YStack>
-  )
+    <View className="flex-1 items-center justify-center bg-red-700">
+      <Text className="text-3xl font-bold text-white ">
+        NativeWind funcionando
+      </Text>
+    </View>
+  );
 }
