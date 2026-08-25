@@ -4,7 +4,7 @@ import { Text } from "@/components/ui/text";
 
 export default function Home() {
   return (
-    <VStack className="flex-1 items-center justify-center gap-4">
+    <VStack className="flex-1 items-center justify-center gap-4 bg-blue-500">
       <Text className="text-2xl font-bold rounded-full bg-slate-200 p-4">
         Gluestack funcionando!
       </Text>
