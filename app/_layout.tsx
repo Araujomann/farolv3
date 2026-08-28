@@ -2,6 +2,15 @@ import { Stack } from "expo-router";
 import "../global.css"
 import "react-native-reanimated";
 import { LogBox } from 'react-native';
+import Mapbox from '@rnmapbox/maps';
+
+const mapboxToken = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
+
+if (!mapboxToken) {
+  throw new Error("EXPO_PUBLIC_MAPBOX_TOKEN não foi encontrada.");
+}
+
+Mapbox.setAccessToken(mapboxToken);
 
 LogBox.ignoreLogs(['Unable to activate keep awake']);
 

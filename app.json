@@ -9,18 +9,16 @@
         "ios": {
             "supportsTablet": true
         },
-
         "android": {
             "adaptiveIcon": {
                 "backgroundColor": "#E6F4FE"
-                  },
+            },
             "predictiveBackGestureEnabled": false
         },
         "web": {
             "bundler": "metro",
             "output": "static"
         },
-
         "plugins": [
             "expo-router",
             [
@@ -35,7 +33,8 @@
                     }
                 }
             ],
-            "expo-font"
+            "expo-font",
+             "@rnmapbox/maps"
         ],
         "experiments": {
             "typedRoutes": true,
