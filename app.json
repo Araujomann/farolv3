@@ -1,44 +1,47 @@
 {
-    "expo": {
-        "name": "farolv3",
-        "slug": "farolv3",
-        "version": "1.0.0",
-        "orientation": "portrait",
-        "scheme": "farolv3",
-        "userInterfaceStyle": "automatic",
-        "ios": {
-            "supportsTablet": true
-        },
-        "android": {
-            "adaptiveIcon": {
-                "backgroundColor": "#E6F4FE"
-            },
-            "predictiveBackGestureEnabled": false
-        },
-        "web": {
-            "bundler": "metro",
-            "output": "static"
-        },
-        "plugins": [
-            "expo-router",
-            [
-                "expo-splash-screen",
-                {
-                    "image": "./assets/images/splash-icon.png",
-                    "imageWidth": 200,
-                    "resizeMode": "contain",
-                    "backgroundColor": "#ffffff",
-                    "dark": {
-                        "backgroundColor": "#000000"
-                    }
-                }
-            ],
-            "expo-font",
-             "@rnmapbox/maps"
-        ],
-        "experiments": {
-            "typedRoutes": true,
-            "reactCompiler": true
+  "expo": {
+    "name": "farolv3",
+    "slug": "farolv3",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "farolv3",
+    "userInterfaceStyle": "automatic",
+
+    "ios": {
+      "supportsTablet": true
+    },
+
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.farolv3"
+    },
+
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#E6F4FE"
         }
+      ],
+      "expo-font",
+      "@rnmapbox/maps"
+    ],
+
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
     }
+  }
 }

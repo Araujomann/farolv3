@@ -1,10 +1,23 @@
-import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import Mapbox from "@rnmapbox/maps";
 
-export default function Index() {
+export default function MapScreen() {
     return (
-        <View>
-            <Text>this is the map page</Text>
+        <View className="flex-1">
+
+            <Mapbox.MapView 
+            style={{ flex: 1 }}
+            styleURL={Mapbox.StyleURL.Dark}
+            >
+                <Mapbox.Camera
+  centerCoordinate={[-47.4917, -5.5184]}
+  zoomLevel={13}
+/> 
+ 
+                
+            </Mapbox.MapView>
         </View>
-    );
+        
+
+    )
 }
