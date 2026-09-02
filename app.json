@@ -2,6 +2,7 @@
   "expo": {
     "name": "farolv3",
     "slug": "farolv3",
+    "icon": "./assets/images/splash-icon.png",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "farolv3",
