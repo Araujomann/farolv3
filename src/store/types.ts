@@ -3,7 +3,11 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  // adicione foto, token de notificação, etc, se necessário no futuro
+  is_verified: boolean;
+  email_verified_at: string | null;
+  avatar: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type AuthState = {
@@ -13,7 +17,7 @@ export type AuthState = {
 };
 
 export type AuthActions = {
-  signIn: (user: User, token: string) => Promise<void>;
+  signIn: (user: User, token: string, refresh_token: string) => Promise<void>;
   signOut: () => Promise<void>;
   restoreSession: () => Promise<void>;
 };

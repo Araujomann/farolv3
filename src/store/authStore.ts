@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { AuthState, AuthActions } from './types';
-
+import { getMeService } from '../api/auth';
 
 // Aqui unificamos o State e as Actions
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
@@ -11,14 +11,16 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   isLoading: true, // Começa em true enquanto checamos se o usuário já tem login salvo
 
   // Ação de Login: Salva no SecureStore e atualiza o estado global
-  signIn: async (user, token) => {
+  signIn: async (user, token, refresh_token) => {
     await SecureStore.setItemAsync('token', token);
+    await SecureStore.setItemAsync('refresh_token', refresh_token);
     set({ user, token, isLoading: false });
   },
 
   // Ação de Logout: Remove do SecureStore e limpa o estado
   signOut: async () => {
     await SecureStore.deleteItemAsync('token');
+    await SecureStore.deleteItemAsync('refresh_token');
     set({ user: null, token: null, isLoading: false });
   },
 
@@ -28,16 +30,19 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       const token = await SecureStore.getItemAsync('token');
       
       if (token) {
-        // TODO: Num cenário real, você bate na API do backend (/me)
-        // usando esse token para pegar os dados do 'user' renovados.
-        // Simulando que validamos o token:
-        set({ token, isLoading: false });
+        // Tenta bater na API do backend (/users/me) usando esse token para pegar os dados recentes do user.
+        // Se este token estiver expirado (401), o Interceptor do axios cuidará silenciosamente
+        // de bater no /auth/refresh e refazer a chamada.
+        const user = await getMeService();
+        set({ user, token, isLoading: false });
       } else {
         set({ isLoading: false });
       }
     } catch (error) {
-      // Se não conseguir acessar o SecureStore por algum motivo
-      set({ isLoading: false });
+      // Se não conseguir pegar o user (mesmo com refresh, o cara tá deslogado de vez)
+      await SecureStore.deleteItemAsync('token');
+      await SecureStore.deleteItemAsync('refresh_token');
+      set({ user: null, token: null, isLoading: false });
     }
   },
 }));
