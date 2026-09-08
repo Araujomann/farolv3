@@ -14,8 +14,10 @@ export type RegisterPayload = {
 
 export type AuthResponse = {
     data: {
-        token: string;
-        refresh_token: string;
+        tokens: {
+            accessToken: string;
+            refreshToken: string;
+        };
         user: User;
     }
 }

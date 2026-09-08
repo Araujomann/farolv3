@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
-import { LogBox } from 'react-native';
+import { ActivityIndicator, LogBox, View } from 'react-native';
 import Mapbox from '@rnmapbox/maps';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { useAuthStore } from '@/src/store/authStore';
@@ -44,7 +44,11 @@ export default function RootLayout() {
     }, [token, isLoading, segments]);
 
     if (isLoading) {
-        return null;
+        return (
+            <View className="flex-1 items-center justify-center bg-background">
+                <ActivityIndicator size="large" color="#0058BC" />
+            </View>
+        );
     }
 
     return (

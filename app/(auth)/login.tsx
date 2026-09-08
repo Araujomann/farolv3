@@ -36,8 +36,8 @@ export default function LoginScreen() {
     const onSubmit = async (data: LoginFormData) => {
         setServerError(null);
         try {
-            const { token, refresh_token, user } = await loginService(data);
-            await signIn(user, token, refresh_token);
+            const { tokens, user } = await loginService(data);
+            await signIn(user, tokens.accessToken, tokens.refreshToken);
         } catch (error: any) {
             const message =
                 error?.response?.data?.message ??

@@ -71,21 +71,21 @@ api.interceptors.response.use(
 
                 // Cria uma requisição limpa para NÃO passar por *este* interceptor
                 const refreshResponse = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/auth/refresh`, {
-                    refresh_token: refreshToken
+                    refreshToken: refreshToken
                 });
 
-                const { token, refresh_token: newRefreshToken } = refreshResponse.data.data;
+                const { tokens } = refreshResponse.data.data;
 
                 // Salva os novos tokens no banco do dispositivo
-                await SecureStore.setItemAsync("token", token);
-                await SecureStore.setItemAsync("refresh_token", newRefreshToken);
+                await SecureStore.setItemAsync("token", tokens.accessToken);
+                await SecureStore.setItemAsync("refresh_token", tokens.refreshToken);
 
                 // Configura o novo token na requisição repetida
-                api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-                originalRequest.headers.Authorization = `Bearer ${token}`;
+                api.defaults.headers.common["Authorization"] = `Bearer ${tokens.accessToken}`;
+                originalRequest.headers.Authorization = `Bearer ${tokens.accessToken}`;
 
                 // Avisa todo mundo da fila que fomos bem sucedidos para eles reconectarem
-                processQueue(null, token);
+                processQueue(null, tokens.accessToken);
 
                 // Refaz a requisição original falhada e devolve para quem chamou com sucesso
                 return api(originalRequest);

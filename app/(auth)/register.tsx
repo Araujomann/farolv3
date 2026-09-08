@@ -37,8 +37,8 @@ export default function RegisterScreen() {
     const onSubmit = async (data: RegisterFormData) => {
         setServerError(null);
         try {
-            const { token, refresh_token, user } = await registerService(data);
-            await signIn(user, token, refresh_token);
+            const { tokens, user } = await registerService(data);
+            await signIn(user, tokens.accessToken, tokens.refreshToken);
         } catch (error: any) {
             const message =
                 error?.response?.data?.message ??
