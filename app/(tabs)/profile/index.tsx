@@ -1,12 +1,24 @@
+import {
+    BadgeCheck,
+    CalendarDays,
+    LogOut,
+    Mail,
+    ShieldCheck,
+    User as UserIcon,
+} from "lucide-react-native";
 import React, { useState } from "react";
 import { ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LogOut, Mail, CalendarDays, User as UserIcon, ShieldCheck } from "lucide-react-native";
 
-import { Text } from "@/components/ui/text";
 import { Box } from "@/components/ui/box";
+import {
+    Button,
+    ButtonIcon,
+    ButtonSpinner,
+    ButtonText,
+} from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { Button, ButtonText, ButtonIcon, ButtonSpinner } from "@/components/ui/button";
 
 import { useAuthStore } from "@/src/store/authStore";
 
@@ -24,12 +36,13 @@ export default function ProfileScreen() {
         }
     };
 
-    const initials = user?.name
-        ?.split(" ")
-        .map((n) => n[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase() ?? "?";
+    const initials =
+        user?.name
+            ?.split(" ")
+            .map((n) => n[0])
+            .slice(0, 2)
+            .join("")
+            .toUpperCase() ?? "?";
 
     const memberSince = user?.created_at
         ? new Date(user.created_at).toLocaleDateString("pt-BR", {
@@ -47,18 +60,22 @@ export default function ProfileScreen() {
                 paddingBottom: insets.bottom + 32,
             }}
         >
-            <ProfileHeader initials={initials} name={user?.name} email={user?.email} />
+            <ProfileHeader
+                initials={initials}
+                name={user?.name}
+                email={user?.email}
+            />
             <AccountInfo
                 email={user?.email}
                 name={user?.name}
-                isVerified={user?.is_verified}
+                role={user?.role}
+                isVerified={user?.is_email_verified}
                 memberSince={memberSince}
             />
             <LogoutButton isLoggingOut={isLoggingOut} onPress={handleLogout} />
         </ScrollView>
     );
 }
-
 
 /* ─── Sub-componentes locais ─── */
 
@@ -72,11 +89,17 @@ function ProfileHeader({ initials, name, email }: ProfileHeaderProps) {
     return (
         <VStack space="sm" className="items-center px-6 pb-8 pt-4">
             <Box className="h-24 w-24 items-center justify-center rounded-full bg-primary">
-                <Text className="text-3xl font-bold text-on-primary">{initials}</Text>
+                <Text className="text-3xl font-bold text-on-primary">
+                    {initials}
+                </Text>
             </Box>
             <VStack space="xs" className="items-center">
-                <Text className="text-xl font-bold text-foreground">{name ?? "Usuário"}</Text>
-                <Text className="text-sm text-muted-foreground">{email ?? "—"}</Text>
+                <Text className="text-xl font-bold text-foreground">
+                    {name ?? "Usuário"}
+                </Text>
+                <Text className="text-sm text-muted-foreground">
+                    {email ?? "—"}
+                </Text>
             </VStack>
         </VStack>
     );
@@ -85,11 +108,25 @@ function ProfileHeader({ initials, name, email }: ProfileHeaderProps) {
 type AccountInfoProps = {
     email?: string;
     name?: string;
+    role?: "user" | "moderator" | "admin";
     isVerified?: boolean;
     memberSince: string;
 };
 
-function AccountInfo({ email, name, isVerified, memberSince }: AccountInfoProps) {
+function AccountInfo({
+    email,
+    name,
+    role,
+    isVerified,
+    memberSince,
+}: AccountInfoProps) {
+    const roleLabel =
+        role === "moderator"
+            ? "Moderador"
+            : role === "admin"
+              ? "Administrador"
+              : "Usuário padrão";
+
     return (
         <VStack space="sm" className="px-6">
             <Text className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -102,12 +139,22 @@ function AccountInfo({ email, name, isVerified, memberSince }: AccountInfoProps)
                     <InfoRow icon={UserIcon} label="Nome" value={name ?? "—"} />
                     <Box className="h-px bg-border" />
                     <InfoRow
+                        icon={BadgeCheck}
+                        label="Tipo de usuário"
+                        value={roleLabel}
+                    />
+                    <Box className="h-px bg-border" />
+                    <InfoRow
                         icon={ShieldCheck}
                         label="E-mail verificado"
                         value={isVerified ? "Sim" : "Não verificado"}
                     />
                     <Box className="h-px bg-border" />
-                    <InfoRow icon={CalendarDays} label="Membro desde" value={memberSince} />
+                    <InfoRow
+                        icon={CalendarDays}
+                        label="Membro desde"
+                        value={memberSince}
+                    />
                 </VStack>
             </Box>
         </VStack>
@@ -128,7 +175,9 @@ function InfoRow({ icon: Icon, label, value }: InfoRowProps) {
             </Box>
             <VStack>
                 <Text className="text-xs text-muted-foreground">{label}</Text>
-                <Text className="text-sm font-medium text-foreground">{value}</Text>
+                <Text className="text-sm font-medium text-foreground">
+                    {value}
+                </Text>
             </VStack>
         </Box>
     );
@@ -153,7 +202,9 @@ function LogoutButton({ isLoggingOut, onPress }: LogoutButtonProps) {
                 ) : (
                     <>
                         <ButtonIcon as={LogOut} className="text-error" />
-                        <ButtonText className="text-error font-semibold">Sair da conta</ButtonText>
+                        <ButtonText className="text-error font-semibold">
+                            Sair da conta
+                        </ButtonText>
                     </>
                 )}
             </Button>
