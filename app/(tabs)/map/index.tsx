@@ -2,27 +2,35 @@ import { View } from "react-native";
 import Mapbox from "@rnmapbox/maps";
 import { SearchBar } from "@/components";
 
-export default function MapScreen() {
-    // 👇 Objeto com as configurações do estilo
-    const styleConfig = {
-        show3dObjects: true,
-        show3dBuildings: true,
-        show3dTrees: true,      // 🌳 ativa árvores 3D
-        show3dFacades: true,    // 🪟 ativa janelas e portas
-        show3dLandmarks: true,
-        theme: 'default',       // ou 'faded', 'monochrome'
-        lightPreset: 'day',     // ou 'night', 'dawn', 'dusk'
-    };
+const mapStyle = {
+    version: 8,
+    imports: [
+        {
+            id: "basemap",
+            url: "mapbox://styles/mapbox/standard",
+            config: {
+                basemap: {
+                    lightPreset: "night",
+                    theme: "monochrome",
+                    show3dObjects: false,
+                    show3dBuildings: false,
+                    show3dTrees: false,
+                    show3dFacades: false,
+                    show3dLandmarks: false,
+                },
+            },
+        },
+    ],
+} as const;
 
+export default function MapScreen() {
     return (
         <View className="flex-1">
             <SearchBar />
 
-            <Mapbox.MapView 
-                style={{ flex: 1 }} 
-                styleURL={"mapbox://styles/mapbox/standard"}
-                // 👇 Agora é uma string JSON
-                styleJSON={JSON.stringify(styleConfig)}
+            <Mapbox.MapView
+                style={{ flex: 1 }}
+                styleJSON={JSON.stringify(mapStyle)}
             >
                 <Mapbox.Camera
                     zoomLevel={17}
