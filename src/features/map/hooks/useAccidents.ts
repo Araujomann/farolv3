@@ -19,7 +19,8 @@ export const useAccidents = () => {
                 const nextAccidents = await getAccidents();
                 if (isMounted) setAccidents(nextAccidents);
             } catch {
-                if (isMounted) setError("Não foi possível carregar os acidentes.");
+                if (isMounted)
+                    setError("Não foi possível carregar os acidentes.");
             } finally {
                 if (isMounted) setIsLoading(false);
             }

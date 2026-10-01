@@ -1,4 +1,9 @@
-export type AccidentSeverity = "low" | "medium" | "high" | "critical" | "unknown";
+export type AccidentSeverity =
+    | "low"
+    | "medium"
+    | "high"
+    | "critical"
+    | "unknown";
 
 export type Accident = {
     id: string;
@@ -27,4 +32,11 @@ export type AccidentApiRecord = {
 
 export type AccidentApiResponse =
     | AccidentApiRecord[]
-    | { data?: AccidentApiRecord[] | { accidents?: AccidentApiRecord[]; results?: AccidentApiRecord[] } };
+    | {
+          data?:
+              | AccidentApiRecord[]
+              | {
+                    accidents?: AccidentApiRecord[];
+                    results?: AccidentApiRecord[];
+                };
+      };

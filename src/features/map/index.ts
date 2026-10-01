@@ -1,2 +1,2 @@
-export { useAccidents } from "./hooks/useAccidents";
 export { AccidentMarker } from "./components/AccidentMarker";
+export { useAccidents } from "./hooks/useAccidents";

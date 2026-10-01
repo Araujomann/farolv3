@@ -1,7 +1,7 @@
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
-import Mapbox from "@rnmapbox/maps";
 import { SearchBar } from "@/components";
 import { AccidentMarker, useAccidents } from "@/src/features/map";
+import Mapbox from "@rnmapbox/maps";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 const mapStyle = {
     version: 8,
@@ -30,15 +30,26 @@ export default function MapScreen() {
     const { accidents, error, isLoading, retry } = useAccidents();
     const longitudes = accidents.map((accident) => accident.longitude);
     const latitudes = accidents.map((accident) => accident.latitude);
-    const singleAccidentCenter = accidents.length === 1
-        ? [accidents[0].longitude, accidents[0].latitude] as [number, number]
-        : undefined;
-    const accidentBounds = accidents.length > 1
-        ? {
-            ne: [Math.max(...longitudes), Math.max(...latitudes)] as [number, number],
-            sw: [Math.min(...longitudes), Math.min(...latitudes)] as [number, number],
-        }
-        : undefined;
+    const singleAccidentCenter =
+        accidents.length === 1
+            ? ([accidents[0].longitude, accidents[0].latitude] as [
+                  number,
+                  number,
+              ])
+            : undefined;
+    const accidentBounds =
+        accidents.length > 1
+            ? {
+                  ne: [Math.max(...longitudes), Math.max(...latitudes)] as [
+                      number,
+                      number,
+                  ],
+                  sw: [Math.min(...longitudes), Math.min(...latitudes)] as [
+                      number,
+                      number,
+                  ],
+              }
+            : undefined;
 
     return (
         <View className="flex-1">
@@ -64,10 +75,7 @@ export default function MapScreen() {
                 />
 
                 {accidents.map((accident) => (
-                    <AccidentMarker
-                        key={accident.id}
-                        accident={accident}
-                    />
+                    <AccidentMarker key={accident.id} accident={accident} />
                 ))}
             </Mapbox.MapView>
 
@@ -89,7 +97,9 @@ export default function MapScreen() {
                         onPress={retry}
                         className="mt-2 rounded-full bg-[#0969D7] px-4 py-2"
                     >
-                        <Text className="text-sm font-semibold text-white">Tentar novamente</Text>
+                        <Text className="text-sm font-semibold text-white">
+                            Tentar novamente
+                        </Text>
                     </Pressable>
                 </View>
             )}

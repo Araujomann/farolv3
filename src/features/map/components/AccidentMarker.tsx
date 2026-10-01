@@ -1,5 +1,5 @@
-import { View } from "react-native";
 import Mapbox from "@rnmapbox/maps";
+import { View } from "react-native";
 import { Accident, AccidentSeverity } from "../types/accident.types";
 
 const SEVERITY_COLORS: Record<AccidentSeverity, string> = {
@@ -10,7 +10,8 @@ const SEVERITY_COLORS: Record<AccidentSeverity, string> = {
     unknown: "#0969D7",
 };
 
-const getMarkerColor = (severity: AccidentSeverity) => SEVERITY_COLORS[severity];
+const getMarkerColor = (severity: AccidentSeverity) =>
+    SEVERITY_COLORS[severity];
 
 type AccidentMarkerProps = {
     accident: Accident;

@@ -6,13 +6,17 @@ import {
     AccidentSeverity,
 } from "../types/accident.types";
 
-const normalizeSeverity = (severity: AccidentApiRecord["severity"]): AccidentSeverity => {
+const normalizeSeverity = (
+    severity: AccidentApiRecord["severity"],
+): AccidentSeverity => {
     const value = String(severity ?? "").toLowerCase();
 
     if (["low", "baixa", "1"].includes(value)) return "low";
-    if (["medium", "moderate", "media", "média", "2"].includes(value)) return "medium";
+    if (["medium", "moderate", "media", "média", "2"].includes(value))
+        return "medium";
     if (["high", "alta", "3"].includes(value)) return "high";
-    if (["critical", "critica", "crítica", "4"].includes(value)) return "critical";
+    if (["critical", "critica", "crítica", "4"].includes(value))
+        return "critical";
 
     return "unknown";
 };
@@ -41,8 +45,12 @@ const getCoordinates = (record: AccidentApiRecord) => {
     }
 
     return {
-        latitude: Number(record.latitude ?? record.lat ?? record.location?.latitude),
-        longitude: Number(record.longitude ?? record.lng ?? record.location?.longitude),
+        latitude: Number(
+            record.latitude ?? record.lat ?? record.location?.latitude,
+        ),
+        longitude: Number(
+            record.longitude ?? record.lng ?? record.location?.longitude,
+        ),
     };
 };
 
@@ -54,7 +62,10 @@ const isValidCoordinate = (latitude: number, longitude: number) =>
     longitude >= -180 &&
     longitude <= 180;
 
-const normalizeAccident = (record: AccidentApiRecord, index: number): Accident | null => {
+const normalizeAccident = (
+    record: AccidentApiRecord,
+    index: number,
+): Accident | null => {
     const { latitude, longitude } = getCoordinates(record);
 
     if (!isValidCoordinate(latitude, longitude)) return null;
