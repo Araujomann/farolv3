@@ -121,9 +121,10 @@ export default function MapScreen() {
                         const accidentId = feature?.properties?.accidentId;
 
                         if (clusterId !== undefined) {
-                            const zoomLevel = await sourceRef.current?.getClusterExpansionZoom(
-                                feature,
-                            );
+                            const zoomLevel =
+                                await sourceRef.current?.getClusterExpansionZoom(
+                                    feature,
+                                );
 
                             if (zoomLevel !== undefined) {
                                 cameraRef.current?.setCamera({
@@ -140,7 +141,8 @@ export default function MapScreen() {
                             return;
                         }
 
-                        if (accidentId) setSelectedAccidentId(String(accidentId));
+                        if (accidentId)
+                            setSelectedAccidentId(String(accidentId));
                     }}
                 >
                     <Mapbox.CircleLayer
@@ -245,9 +247,15 @@ export default function MapScreen() {
                     </Text>
                     <View className="flex-row items-center gap-3">
                         <LegendItem color={MARKER_COLORS.low} label="Baixa" />
-                        <LegendItem color={MARKER_COLORS.medium} label="Média" />
+                        <LegendItem
+                            color={MARKER_COLORS.medium}
+                            label="Média"
+                        />
                         <LegendItem color={MARKER_COLORS.high} label="Alta" />
-                        <LegendItem color={MARKER_COLORS.critical} label="Crítica" />
+                        <LegendItem
+                            color={MARKER_COLORS.critical}
+                            label="Crítica"
+                        />
                     </View>
                 </View>
             )}
@@ -260,10 +268,12 @@ export default function MapScreen() {
                                 Acidente selecionado
                             </Text>
                             <Text className="mt-1 text-lg font-bold text-gray-900">
-                                {selectedAccident.type ?? "Ocorrência registrada"}
+                                {selectedAccident.type ??
+                                    "Ocorrência registrada"}
                             </Text>
                             <Text className="mt-1 text-sm text-gray-600">
-                                Severidade: {getSeverityLabel(selectedAccident.severity)}
+                                Severidade:{" "}
+                                {getSeverityLabel(selectedAccident.severity)}
                             </Text>
                         </View>
                         <Pressable
@@ -320,7 +330,9 @@ function LegendItem({ color, label }: { color: string; label: string }) {
                 className="h-2.5 w-2.5 rounded-full border border-white"
                 style={{ backgroundColor: color }}
             />
-            <Text className="text-[11px] font-medium text-gray-700">{label}</Text>
+            <Text className="text-[11px] font-medium text-gray-700">
+                {label}
+            </Text>
         </View>
     );
 }
