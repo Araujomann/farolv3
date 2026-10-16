@@ -15,29 +15,61 @@ const getMarkerColor = (severity: AccidentSeverity) =>
 
 type AccidentMarkerProps = {
     accident: Accident;
+    selected?: boolean;
+    onSelected?: () => void;
 };
 
-export function AccidentMarker({ accident }: AccidentMarkerProps) {
+export function AccidentMarker({
+    accident,
+    selected = false,
+    onSelected,
+}: AccidentMarkerProps) {
     return (
         <Mapbox.PointAnnotation
             id={accident.id}
             coordinate={[accident.longitude, accident.latitude]}
+            anchor={{ x: 0.5, y: 1 }}
+            selected={selected}
+            onSelected={onSelected}
         >
             <View
                 style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 11,
-                    backgroundColor: getMarkerColor(accident.severity),
-                    borderWidth: 3,
-                    borderColor: "#FFFFFF",
-                    shadowColor: "#000000",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 3,
-                    elevation: 4,
+                    width: 36,
+                    height: 42,
+                    alignItems: "center",
+                    justifyContent: "center",
                 }}
-            />
+            >
+                <View
+                    style={{
+                        width: selected ? 30 : 27,
+                        height: selected ? 30 : 27,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: getMarkerColor(accident.severity),
+                        borderWidth: 3,
+                        borderColor: "#FFFFFF",
+                        borderRadius: 18,
+                        borderBottomRightRadius: 5,
+                        transform: [{ rotate: "45deg" }],
+                        shadowColor: "#000000",
+                        shadowOffset: { width: 0, height: 3 },
+                        shadowOpacity: 0.35,
+                        shadowRadius: 4,
+                        elevation: 5,
+                    }}
+                >
+                    <View
+                        style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: 4,
+                            backgroundColor: "#FFFFFF",
+                            transform: [{ rotate: "-45deg" }],
+                        }}
+                    />
+                </View>
+            </View>
         </Mapbox.PointAnnotation>
     );
 }
