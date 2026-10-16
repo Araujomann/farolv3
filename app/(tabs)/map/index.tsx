@@ -1,5 +1,5 @@
 import { SearchBar } from "@/components";
-import { useAccidents } from "@/src/features/map";
+import { AccidentMarker, MapFilters, useAccidents } from "@/src/features/map";
 import Mapbox from "@rnmapbox/maps";
 import { X } from "lucide-react-native";
 import { useRef, useState } from "react";
@@ -36,7 +36,7 @@ const MARKER_COLORS = {
 } as const;
 
 export default function MapScreen() {
-    const { accidents, error, isLoading, retry } = useAccidents();
+    const { accidents, error, isLoading, retry, filters, applyFilters, clearFilters } = useAccidents();
     const cameraRef = useRef<Mapbox.Camera>(null);
     const sourceRef = useRef<Mapbox.ShapeSource>(null);
     const [selectedAccidentId, setSelectedAccidentId] = useState<string | null>(
@@ -86,6 +86,11 @@ export default function MapScreen() {
     return (
         <View className="flex-1">
             <SearchBar />
+            <MapFilters
+                filters={filters}
+                onApply={applyFilters}
+                onClear={clearFilters}
+            />
 
             <Mapbox.MapView
                 style={{ flex: 1 }}
@@ -167,77 +172,18 @@ export default function MapScreen() {
                             textAllowOverlap: true,
                         }}
                     />
-                    <Mapbox.CircleLayer
-                        id="accidents-low"
-                        filter={[
-                            "all",
-                            ["!", ["has", "point_count"]],
-                            ["==", ["get", "severity"], "low"],
-                        ]}
-                        style={{
-                            circleColor: MARKER_COLORS.low,
-                            circleRadius: 9,
-                            circleStrokeColor: "#FFFFFF",
-                            circleStrokeWidth: 3,
-                        }}
-                    />
-                    <Mapbox.CircleLayer
-                        id="accidents-medium"
-                        filter={[
-                            "all",
-                            ["!", ["has", "point_count"]],
-                            ["==", ["get", "severity"], "medium"],
-                        ]}
-                        style={{
-                            circleColor: MARKER_COLORS.medium,
-                            circleRadius: 9,
-                            circleStrokeColor: "#FFFFFF",
-                            circleStrokeWidth: 3,
-                        }}
-                    />
-                    <Mapbox.CircleLayer
-                        id="accidents-high"
-                        filter={[
-                            "all",
-                            ["!", ["has", "point_count"]],
-                            ["==", ["get", "severity"], "high"],
-                        ]}
-                        style={{
-                            circleColor: MARKER_COLORS.high,
-                            circleRadius: 9,
-                            circleStrokeColor: "#FFFFFF",
-                            circleStrokeWidth: 3,
-                        }}
-                    />
-                    <Mapbox.CircleLayer
-                        id="accidents-critical"
-                        filter={[
-                            "all",
-                            ["!", ["has", "point_count"]],
-                            ["==", ["get", "severity"], "critical"],
-                        ]}
-                        style={{
-                            circleColor: MARKER_COLORS.critical,
-                            circleRadius: 10,
-                            circleStrokeColor: "#FFFFFF",
-                            circleStrokeWidth: 3,
-                        }}
-                    />
-                    <Mapbox.CircleLayer
-                        id="accidents-unknown"
-                        filter={[
-                            "all",
-                            ["!", ["has", "point_count"]],
-                            ["==", ["get", "severity"], "unknown"],
-                        ]}
-                        style={{
-                            circleColor: MARKER_COLORS.unknown,
-                            circleRadius: 9,
-                            circleStrokeColor: "#FFFFFF",
-                            circleStrokeWidth: 3,
-                        }}
-                    />
                 </Mapbox.ShapeSource>
+
+                {accidents.map((accident) => (
+                    <AccidentMarker
+                        key={accident.id}
+                        accident={accident}
+                        selected={selectedAccidentId === accident.id}
+                        onSelected={() =>
+                            setSelectedAccidentId(accident.id)
+                        }
+                    />
+                ))}
             </Mapbox.MapView>
 
             {!isLoading && !error && accidents.length > 0 && (
@@ -268,7 +214,7 @@ export default function MapScreen() {
                                 Acidente selecionado
                             </Text>
                             <Text className="mt-1 text-lg font-bold text-gray-900">
-                                {selectedAccident.type ??
+                                {selectedAccident.tipo_acidente ??
                                     "Ocorrência registrada"}
                             </Text>
                             <Text className="mt-1 text-sm text-gray-600">

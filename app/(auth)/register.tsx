@@ -9,7 +9,6 @@ import { Eye, EyeOff, Mail, Lock, User } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input";
 import { Button, ButtonText, ButtonSpinner } from "@/components/ui/button";
-import { VStack } from "@/components/ui/vstack";
 import { Box } from "@/components/ui/box";
 
 import { registerService } from "@/src/api/auth";
