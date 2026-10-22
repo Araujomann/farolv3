@@ -3,7 +3,7 @@ import { AccidentMarker, MapFilters, useAccidents } from "@/src/features/map";
 import Mapbox from "@rnmapbox/maps";
 import { Image } from "expo-image";
 import { CalendarDays, X } from "lucide-react-native";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import prfLogo from "../../../policia-rodoviaria-federal-logo-png_seeklogo-351022.png";
 
@@ -39,11 +39,10 @@ const MARKER_COLORS = {
 
 export default function MapScreen() {
     const { accidents, error, isLoading, retry, filters, applyFilters, clearFilters } = useAccidents();
-    const cameraRef = useRef<Mapbox.Camera>(null);
-    const sourceRef = useRef<Mapbox.ShapeSource>(null);
     const [selectedAccidentId, setSelectedAccidentId] = useState<string | null>(
         null,
     );
+    const [viewMode, setViewMode] = useState<"markers" | "heatmap">("markers");
     const longitudes = accidents.map((accident) => accident.longitude);
     const latitudes = accidents.map((accident) => accident.latitude);
     const selectedAccident = accidents.find(
@@ -88,18 +87,19 @@ export default function MapScreen() {
     return (
         <View className="flex-1">
             <SearchBar />
-            <MapFilters
-                filters={filters}
-                onApply={applyFilters}
-                onClear={clearFilters}
-            />
+            {viewMode === "markers" && (
+                <MapFilters
+                    filters={filters}
+                    onApply={applyFilters}
+                    onClear={clearFilters}
+                />
+            )}
 
             <Mapbox.MapView
                 style={{ flex: 1 }}
                 styleJSON={JSON.stringify(mapStyle)}
             >
                 <Mapbox.Camera
-                    ref={cameraRef}
                     bounds={accidentBounds}
                     centerCoordinate={singleAccidentCenter ?? DEFAULT_CENTER}
                     zoomLevel={singleAccidentCenter ? 15 : 17}
@@ -115,98 +115,142 @@ export default function MapScreen() {
                 />
 
                 <Mapbox.ShapeSource
-                    ref={sourceRef}
                     id="accidents"
                     shape={accidentGeoJson}
-                    cluster
-                    clusterRadius={48}
-                    clusterMaxZoomLevel={14}
-                    hitbox={{ width: 32, height: 32 }}
-                    onPress={async (event) => {
-                        const feature = event.features[0];
-                        const clusterId = feature?.properties?.cluster_id;
-                        const accidentId = feature?.properties?.accidentId;
-
-                        if (clusterId !== undefined) {
-                            const zoomLevel =
-                                await sourceRef.current?.getClusterExpansionZoom(
-                                    feature,
-                                );
-
-                            if (zoomLevel !== undefined) {
-                                cameraRef.current?.setCamera({
-                                    centerCoordinate: [
-                                        event.coordinates.longitude,
-                                        event.coordinates.latitude,
-                                    ],
-                                    zoomLevel,
-                                    animationMode: "flyTo",
-                                    animationDuration: 350,
-                                });
-                            }
-
-                            return;
-                        }
-
-                        if (accidentId)
-                            setSelectedAccidentId(String(accidentId));
-                    }}
                 >
-                    <Mapbox.CircleLayer
-                        id="accident-clusters"
-                        filter={["has", "point_count"]}
-                        style={{
-                            circleColor: "#0969D7",
-                            circleRadius: 23,
-                            circleOpacity: 0.94,
-                            circleStrokeColor: "#FFFFFF",
-                            circleStrokeWidth: 3,
-                        }}
-                    />
-                    <Mapbox.SymbolLayer
-                        id="accident-cluster-count"
-                        filter={["has", "point_count"]}
-                        style={{
-                            textField: ["get", "point_count_abbreviated"],
-                            textColor: "#FFFFFF",
-                            textSize: 13,
-                            textFont: ["Open Sans Bold"],
-                            textAllowOverlap: true,
-                        }}
-                    />
+                    {viewMode === "heatmap" && (
+                        <Mapbox.HeatmapLayer
+                            id="accident-heatmap"
+                            style={{
+                                heatmapWeight: 1,
+                                heatmapIntensity: [
+                                    "interpolate",
+                                    ["linear"],
+                                    ["zoom"],
+                                    0,
+                                    0.8,
+                                    14,
+                                    1.4,
+                                ],
+                                heatmapRadius: [
+                                    "interpolate",
+                                    ["linear"],
+                                    ["zoom"],
+                                    0,
+                                    12,
+                                    14,
+                                    32,
+                                ],
+                                heatmapColor: [
+                                    "interpolate",
+                                    ["linear"],
+                                    ["heatmap-density"],
+                                    0,
+                                    "rgba(33, 102, 172, 0)",
+                                    0.2,
+                                    "#65B7FF",
+                                    0.4,
+                                    "#FFD166",
+                                    0.7,
+                                    "#FF8A80",
+                                    1,
+                                    "#B42318",
+                                ],
+                                heatmapOpacity: 0.88,
+                            }}
+                        />
+                    )}
                 </Mapbox.ShapeSource>
 
-                {accidents.map((accident) => (
-                    <AccidentMarker
-                        key={accident.id}
-                        accident={accident}
-                        selected={selectedAccidentId === accident.id}
-                        onSelected={() =>
-                            setSelectedAccidentId(accident.id)
-                        }
-                    />
-                ))}
+                {viewMode === "markers" &&
+                    accidents.map((accident) => (
+                        <AccidentMarker
+                            key={accident.id}
+                            accident={accident}
+                            selected={selectedAccidentId === accident.id}
+                            onSelected={() =>
+                                setSelectedAccidentId(accident.id)
+                            }
+                        />
+                    ))}
             </Mapbox.MapView>
 
-            {!isLoading && !error && accidents.length > 0 && (
-                <View className="absolute bottom-24 left-4 rounded-2xl bg-white/95 px-3 py-2 shadow-lg">
-                    <Text className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">
-                        Severidade
-                    </Text>
-                    <View className="flex-row items-center gap-3">
-                        <LegendItem color={MARKER_COLORS.low} label="Baixa" />
-                        <LegendItem
-                            color={MARKER_COLORS.medium}
-                            label="Média"
-                        />
-                        <LegendItem color={MARKER_COLORS.high} label="Alta" />
-                        <LegendItem
-                            color={MARKER_COLORS.critical}
-                            label="Crítica"
-                        />
-                    </View>
+            <View className="absolute bottom-7 left-4 items-start gap-2">
+                <View className="flex-row rounded-full bg-white p-1 shadow-lg">
+                    <Pressable
+                        accessibilityLabel="Exibir marcadores de acidentes"
+                        accessibilityState={{ selected: viewMode === "markers" }}
+                        onPress={() => setViewMode("markers")}
+                        className={`rounded-full px-3 py-2 ${
+                            viewMode === "markers"
+                                ? "bg-[#0969D7]"
+                                : "bg-transparent"
+                        }`}
+                    >
+                        <Text
+                            className={`text-xs font-semibold ${
+                                viewMode === "markers"
+                                    ? "text-white"
+                                    : "text-gray-600"
+                            }`}
+                        >
+                            Pins
+                        </Text>
+                    </Pressable>
+                    <Pressable
+                        accessibilityLabel="Exibir mapa de calor dos acidentes"
+                        accessibilityState={{ selected: viewMode === "heatmap" }}
+                        onPress={() => {
+                            setViewMode("heatmap");
+                            setSelectedAccidentId(null);
+                        }}
+                        className={`rounded-full px-3 py-2 ${
+                            viewMode === "heatmap"
+                                ? "bg-[#0969D7]"
+                                : "bg-transparent"
+                        }`}
+                    >
+                        <Text
+                            className={`text-xs font-semibold ${
+                                viewMode === "heatmap"
+                                    ? "text-white"
+                                    : "text-gray-600"
+                            }`}
+                        >
+                            Calor
+                        </Text>
+                    </Pressable>
                 </View>
-            )}
+
+                {viewMode === "markers" &&
+                    !isLoading &&
+                    !error &&
+                    accidents.length > 0 && (
+                        <View className="rounded-2xl bg-white/95 px-3 py-2 shadow-lg">
+                            <Text className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">
+                                Severidade
+                            </Text>
+                            <View className="flex-row items-center gap-3">
+                                <LegendItem
+                                    color={MARKER_COLORS.low}
+                                    label="Baixa"
+                                />
+                                <LegendItem
+                                    color={MARKER_COLORS.medium}
+                                    label="Média"
+                                />
+                                <LegendItem
+                                    color={MARKER_COLORS.high}
+                                    label="Alta"
+                                />
+                                <LegendItem
+                                    color={MARKER_COLORS.critical}
+                                    label="Crítica"
+                                />
+                            </View>
+                        </View>
+                    )}
+            </View>
 
             {selectedAccident && (
                 <View className="absolute bottom-24 left-4 right-4 overflow-hidden rounded-3xl bg-white px-4 py-4 shadow-xl">
