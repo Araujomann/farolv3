@@ -5,38 +5,34 @@ export type AccidentSeverity =
     | "critical"
     | "unknown";
 
+export type AccidentClassification = "com_vitima" | "sem_vitima";
+export type AccidentWeatherCondition = "ceu_claro" | "chuva" | "nublado" | "garoa";
+export type AccidentSource = "APP" | "PRF";
+
 export type Accident = {
     id: string;
+    tipo_acidente: string;
+    classificacao_acidente: AccidentClassification;
+    condicao_meteorologica: AccidentWeatherCondition;
     latitude: number;
     longitude: number;
+    occurred_at: string;
     severity: AccidentSeverity;
-    type?: string;
+    source: AccidentSource;
 };
 
-export type AccidentApiRecord = {
-    id?: string | number;
-    _id?: string;
-    latitude?: number | string;
-    longitude?: number | string;
-    lat?: number | string;
-    lng?: number | string;
-    severity?: string | number;
-    type?: string;
-    location?: {
-        latitude?: number | string;
-        longitude?: number | string;
-        coordinates?: [number | string, number | string];
-    };
-    coordinates?: [number | string, number | string];
+export type AccidentMapFilters = {
+    search?: string;
+    severity?: AccidentSeverity;
+    classificacao?: AccidentClassification;
+    condicao_meteorologica?: AccidentWeatherCondition;
+    source?: AccidentSource;
+    source_year?: number;
+    from?: string;
+    to?: string;
 };
 
-export type AccidentApiResponse =
-    | AccidentApiRecord[]
-    | {
-          data?:
-              | AccidentApiRecord[]
-              | {
-                    accidents?: AccidentApiRecord[];
-                    results?: AccidentApiRecord[];
-                };
-      };
+export type AccidentMapResponse = {
+    data: Accident[];
+    total: number;
+};

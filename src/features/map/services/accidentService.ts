@@ -1,88 +1,51 @@
 import { api } from "@/src/api/client";
-import {
+import type {
     Accident,
-    AccidentApiRecord,
-    AccidentApiResponse,
-    AccidentSeverity,
+    AccidentMapFilters,
+    AccidentMapResponse,
 } from "../types/accident.types";
 
-const normalizeSeverity = (
-    severity: AccidentApiRecord["severity"],
-): AccidentSeverity => {
-    const value = String(severity ?? "").toLowerCase();
+const MOJIBAKE_MARKERS = /(?:Ã.|Â.|â.|�)/;
 
-    if (["low", "baixa", "1"].includes(value)) return "low";
-    if (["medium", "moderate", "media", "média", "2"].includes(value))
-        return "medium";
-    if (["high", "alta", "3"].includes(value)) return "high";
-    if (["critical", "critica", "crítica", "4"].includes(value))
-        return "critical";
+const repairMojibake = (value: string): string => {
+    if (!MOJIBAKE_MARKERS.test(value)) return value;
 
-    return "unknown";
-};
-
-const getRecords = (response: AccidentApiResponse): AccidentApiRecord[] => {
-    if (Array.isArray(response)) return response;
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data?.accidents) return response.data.accidents;
-    if (response.data?.results) return response.data.results;
-    return [];
-};
-
-const getCoordinates = (record: AccidentApiRecord) => {
-    if (record.coordinates?.length === 2) {
-        return {
-            longitude: Number(record.coordinates[0]),
-            latitude: Number(record.coordinates[1]),
-        };
+    try {
+        const bytes = Uint8Array.from(value, (character) =>
+            character.charCodeAt(0),
+        );
+        const repaired = new TextDecoder("utf-8").decode(bytes);
+        return repaired.includes("�") ? value : repaired;
+    } catch {
+        return value;
     }
-
-    if (record.location?.coordinates?.length === 2) {
-        return {
-            longitude: Number(record.location.coordinates[0]),
-            latitude: Number(record.location.coordinates[1]),
-        };
-    }
-
-    return {
-        latitude: Number(
-            record.latitude ?? record.lat ?? record.location?.latitude,
-        ),
-        longitude: Number(
-            record.longitude ?? record.lng ?? record.location?.longitude,
-        ),
-    };
 };
 
-const isValidCoordinate = (latitude: number, longitude: number) =>
-    Number.isFinite(latitude) &&
-    Number.isFinite(longitude) &&
-    latitude >= -90 &&
-    latitude <= 90 &&
-    longitude >= -180 &&
-    longitude <= 180;
+const normalizeAccident = (accident: Accident): Accident => ({
+    ...accident,
+    tipo_acidente: repairMojibake(accident.tipo_acidente),
+});
 
-const normalizeAccident = (
-    record: AccidentApiRecord,
-    index: number,
-): Accident | null => {
-    const { latitude, longitude } = getCoordinates(record);
+const buildQueryParams = (filters: AccidentMapFilters): Record<string, string> => {
+    const params: Record<string, string> = {};
 
-    if (!isValidCoordinate(latitude, longitude)) return null;
+    if (filters.search) params.search = filters.search;
+    if (filters.severity) params.severity = filters.severity;
+    if (filters.classificacao) params.classificacao = filters.classificacao;
+    if (filters.condicao_meteorologica) params.condicao_meteorologica = filters.condicao_meteorologica;
+    if (filters.source) params.source = filters.source;
+    if (filters.source_year !== undefined) params.source_year = String(filters.source_year);
+    if (filters.from) params.from = filters.from;
+    if (filters.to) params.to = filters.to;
 
-    return {
-        id: String(record.id ?? record._id ?? `accident-${index}`),
-        latitude,
-        longitude,
-        severity: normalizeSeverity(record.severity),
-        type: record.type,
-    };
+    return params;
 };
 
-export const getAccidents = async (): Promise<Accident[]> => {
-    const response = await api.get<AccidentApiResponse>("/accidents");
+export const getAccidentsForMap = async (
+    filters: AccidentMapFilters = {},
+): Promise<Accident[]> => {
+    const params = buildQueryParams(filters);
+    const response = await api.get<AccidentMapResponse>("/accidents/map", { params });
 
-    return getRecords(response.data)
-        .map(normalizeAccident)
-        .filter((accident): accident is Accident => accident !== null);
+    return response.data.data.map(normalizeAccident);
 };

@@ -1,9 +1,11 @@
 import { SearchBar } from "@/components";
 import { AccidentMarker, MapFilters, useAccidents } from "@/src/features/map";
 import Mapbox from "@rnmapbox/maps";
-import { X } from "lucide-react-native";
+import { Image } from "expo-image";
+import { CalendarDays, X } from "lucide-react-native";
 import { useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import prfLogo from "../../../policia-rodoviaria-federal-logo-png_seeklogo-351022.png";
 
 const mapStyle = {
     version: 8,
@@ -207,20 +209,44 @@ export default function MapScreen() {
             )}
 
             {selectedAccident && (
-                <View className="absolute bottom-24 left-4 right-4 rounded-3xl bg-white px-4 py-4 shadow-xl">
-                    <View className="flex-row items-start justify-between">
+                <View className="absolute bottom-24 left-4 right-4 overflow-hidden rounded-3xl bg-white px-4 py-4 shadow-xl">
+                    {selectedAccident.source === "PRF" && (
+                        <Image
+                            source={prfLogo}
+                            contentFit="contain"
+                            accessibilityElementsHidden
+                            pointerEvents="none"
+                            style={{
+                                position: "absolute",
+                                right: 10,
+                                top: 0,
+                                width: 120,
+                                height: 120,
+                                opacity: 0.11,
+                            }}
+                        />
+                    )}
+                    <View className="relative z-10 flex-row items-start justify-between">
                         <View className="flex-1 pr-3">
                             <Text className="text-xs font-bold uppercase tracking-wide text-gray-500">
                                 Acidente selecionado
                             </Text>
-                            <Text className="mt-1 text-lg font-bold text-gray-900">
-                                {selectedAccident.tipo_acidente ??
-                                    "Ocorrência registrada"}
-                            </Text>
+                            <View className="mt-1 flex-row items-center justify-between gap-3">
+                                <Text className="flex-1 text-lg font-bold text-gray-900">
+                                    {selectedAccident.tipo_acidente ||
+                                        "Ocorrência registrada"}
+                                </Text>
+                            </View>
                             <Text className="mt-1 text-sm text-gray-600">
                                 Severidade:{" "}
                                 {getSeverityLabel(selectedAccident.severity)}
                             </Text>
+                            <View className="mt-2 flex-row items-center">
+                                <CalendarDays size={14} color="#6B7280" />
+                                <Text className="ml-1.5 text-xs font-medium text-gray-500">
+                                    {formatAccidentDate(selectedAccident.occurred_at)}
+                                </Text>
+                            </View>
                         </View>
                         <Pressable
                             accessibilityLabel="Fechar detalhes do acidente"
@@ -267,6 +293,19 @@ export default function MapScreen() {
             )}
         </View>
     );
+}
+
+function formatAccidentDate(value: string) {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "Data não informada";
+    }
+
+    return new Intl.DateTimeFormat("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "short",
+    }).format(date);
 }
 
 function LegendItem({ color, label }: { color: string; label: string }) {

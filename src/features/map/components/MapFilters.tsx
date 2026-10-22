@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SlidersHorizontal, X, Check } from "lucide-react-native";
 import type {
     AccidentClassification,
@@ -40,6 +41,7 @@ type MapFiltersProps = {
 };
 
 export function MapFilters({ filters, onApply, onClear }: MapFiltersProps) {
+    const insets = useSafeAreaInsets();
     const [isOpen, setIsOpen] = useState(false);
     const [draft, setDraft] = useState<AccidentMapFilters>(filters);
 
@@ -84,7 +86,7 @@ export function MapFilters({ filters, onApply, onClear }: MapFiltersProps) {
             <Pressable
                 onPress={handleOpen}
                 className="absolute right-4 z-10 flex-row items-center gap-1.5 rounded-full bg-white px-4 py-2.5 shadow-lg"
-                style={{ top: 80 }}
+                style={{ top: insets.top + 84 }}
             >
                 <SlidersHorizontal size={16} color="#374151" />
                 <Text className="text-sm font-semibold text-gray-700">
@@ -257,4 +259,3 @@ function FilterChip({
         </Pressable>
     );
 }
-
