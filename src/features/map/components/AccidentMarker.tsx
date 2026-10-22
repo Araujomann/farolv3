@@ -1,4 +1,5 @@
 import Mapbox from "@rnmapbox/maps";
+import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { Accident, AccidentSeverity } from "../types/accident.types";
 
@@ -13,6 +14,29 @@ const SEVERITY_COLORS: Record<AccidentSeverity, string> = {
 const getMarkerColor = (severity: AccidentSeverity) =>
     SEVERITY_COLORS[severity];
 
+const PULSE_COLORS: Record<AccidentSeverity, string> = {
+    low: "#65B7FF",
+    medium: "#FFD166",
+    high: "#FF8A80",
+    critical: "#FF6B5F",
+    unknown: "#65B7FF",
+};
+
+const mixColors = (from: string, to: string, amount: number) => {
+    const fromRgb = from.match(/\w\w/g)?.map((value) => parseInt(value, 16));
+    const toRgb = to.match(/\w\w/g)?.map((value) => parseInt(value, 16));
+
+    if (!fromRgb || !toRgb || fromRgb.length !== 3 || toRgb.length !== 3) {
+        return from;
+    }
+
+    const channels = fromRgb.map((channel, index) =>
+        Math.round(channel + (toRgb[index] - channel) * amount),
+    );
+
+    return `#${channels.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
+};
+
 type AccidentMarkerProps = {
     accident: Accident;
     selected?: boolean;
@@ -24,12 +48,44 @@ export function AccidentMarker({
     selected = false,
     onSelected,
 }: AccidentMarkerProps) {
+    const annotationRef = useRef<Mapbox.PointAnnotation>(null);
+    const [pulsePhase, setPulsePhase] = useState(0);
+    const markerColor = getMarkerColor(accident.severity);
+
+    useEffect(() => {
+        if (!selected) {
+            setPulsePhase(0);
+            return;
+        }
+
+        const pulseTimer = setInterval(() => {
+            setPulsePhase(
+                (phase) => (phase + (Math.PI * 2 * 30) / 1200) % (Math.PI * 2),
+            );
+        }, 30);
+
+        return () => clearInterval(pulseTimer);
+    }, [selected]);
+
+    useEffect(() => {
+        annotationRef.current?.refresh();
+    }, [pulsePhase]);
+
+    const pulseAmount = selected ? (Math.sin(pulsePhase) + 1) / 2 : 0;
+    const displayedMarkerColor = selected
+        ? mixColors(
+              markerColor,
+              PULSE_COLORS[accident.severity],
+              pulseAmount,
+          )
+        : markerColor;
     return (
         <Mapbox.PointAnnotation
+            ref={annotationRef}
             id={accident.id}
+            key={`${accident.id}-${selected ? "selected" : "idle"}`}
             coordinate={[accident.longitude, accident.latitude]}
             anchor={{ x: 0.5, y: 1 }}
-            selected={selected}
             onSelected={onSelected}
         >
             <View
@@ -42,11 +98,11 @@ export function AccidentMarker({
             >
                 <View
                     style={{
-                        width: selected ? 30 : 27,
-                        height: selected ? 30 : 27,
+                        width: 27,
+                        height: 27,
                         alignItems: "center",
                         justifyContent: "center",
-                        backgroundColor: getMarkerColor(accident.severity),
+                        backgroundColor: displayedMarkerColor,
                         borderWidth: 3,
                         borderColor: "#FFFFFF",
                         borderRadius: 18,
