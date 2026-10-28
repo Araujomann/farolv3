@@ -3,8 +3,9 @@ import { useRouter } from "expo-router";
 import {
     ArrowLeft,
     Check,
+    CircleAlert,
     Crosshair,
-    Info,
+    Expand,
     Minus,
     Plus,
 } from "lucide-react-native";
@@ -15,8 +16,14 @@ import Animated, {
     useSharedValue,
     withTiming,
 } from "react-native-reanimated";
-import { useEffect, useRef, useState } from "react";
-import { Pressable, Text, useWindowDimensions, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+    Alert,
+    Pressable,
+    Text,
+    useWindowDimensions,
+    View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const DEFAULT_CENTER: [number, number] = [-47.47812, -5.52693];
@@ -45,29 +52,72 @@ export default function ReportScreen() {
     const expansionProgress = useSharedValue(0);
     const initialMapSize = Math.min(width - 32, height * 0.52);
     const initialMapTop = Math.max(insets.top + 32, 56);
+    const lastCameraUpdateRef = useRef(0);
+    const isConfirmedRef = useRef(false);
 
-    const handleMapIdle = (state: MapState) => {
+    const handleCameraChanged = useCallback((state: MapState) => {
+        const now = Date.now();
+
+        // Mapbox emits this event every frame while the map is moving.
+        // Keep the map gesture native and update only the visible readout.
+        if (now - lastCameraUpdateRef.current < 80) {
+            return;
+        }
+
         const [longitude, latitude] = state.properties.center;
 
-        if (typeof longitude === "number" && typeof latitude === "number") {
-            setSelectedLocation([longitude, latitude]);
+        if (typeof longitude !== "number" || typeof latitude !== "number") {
+            return;
+        }
+
+        lastCameraUpdateRef.current = now;
+        setSelectedLocation([longitude, latitude]);
+
+        if (isConfirmedRef.current) {
+            isConfirmedRef.current = false;
             setIsConfirmed(false);
         }
 
         if (typeof state.properties.zoom === "number") {
             setZoomLevel(state.properties.zoom);
         }
-    };
+    }, []);
 
     const handleResetLocation = () => {
         cameraRef.current?.flyTo(DEFAULT_CENTER, 700);
         setSelectedLocation(DEFAULT_CENTER);
         setZoomLevel(INITIAL_ZOOM);
+        isConfirmedRef.current = false;
         setIsConfirmed(false);
     };
 
     const handleConfirmLocation = () => {
+        isConfirmedRef.current = true;
         setIsConfirmed(true);
+    };
+
+    const handleBackPress = () => {
+        Alert.alert(
+            "Sair do relato?",
+            "Se você voltar agora, perderá o progresso e o estado atual deste relatório.",
+            [
+                {
+                    text: "Continuar no relato",
+                    style: "cancel",
+                },
+                {
+                    text: "Voltar mesmo assim",
+                    style: "destructive",
+                    onPress: () => {
+                        if (router.canGoBack()) {
+                            router.back();
+                        } else {
+                            router.replace("/(tabs)/home");
+                        }
+                    },
+                },
+            ],
+        );
     };
 
     useEffect(() => {
@@ -76,6 +126,12 @@ export default function ReportScreen() {
             easing: Easing.bezier(0.22, 1, 0.36, 1),
         });
     }, [expansionProgress, isMapExpanded]);
+
+    useEffect(() => {
+        return () => {
+            lastCameraUpdateRef.current = 0;
+        };
+    }, []);
 
     const mapWrapperStyle = useAnimatedStyle(() => ({
         top: interpolate(
@@ -149,13 +205,7 @@ export default function ReportScreen() {
             >
                 <Pressable
                     accessibilityLabel="Voltar"
-                    onPress={() => {
-                        if (router.canGoBack()) {
-                            router.back();
-                        } else {
-                            router.replace("/(tabs)/home");
-                        }
-                    }}
+                    onPress={handleBackPress}
                     className="h-11 w-11 items-center justify-center rounded-full bg-white shadow-md"
                 >
                     <ArrowLeft size={22} color="#181C23" />
@@ -169,7 +219,7 @@ export default function ReportScreen() {
                     <Mapbox.MapView
                         style={{ flex: 1 }}
                         styleJSON={JSON.stringify(mapStyle)}
-                        onMapIdle={handleMapIdle}
+                        onCameraChanged={handleCameraChanged}
                         attributionPosition={{ bottom: 8, right: 8 }}
                         compassEnabled={false}
                         logoPosition={{ bottom: 8, left: 8 }}
@@ -191,10 +241,10 @@ export default function ReportScreen() {
                         />
                         <Mapbox.Camera
                             ref={cameraRef}
-                            centerCoordinate={DEFAULT_CENTER}
-                            zoomLevel={INITIAL_ZOOM}
-                            animationMode="flyTo"
-                            animationDuration={700}
+                            defaultSettings={{
+                                centerCoordinate: DEFAULT_CENTER,
+                                zoomLevel: INITIAL_ZOOM,
+                            }}
                         />
                     </Mapbox.MapView>
 
@@ -297,22 +347,35 @@ export default function ReportScreen() {
                             <Text className="text-center text-[22px] font-bold text-[#181C23]">
                                 Local do Acidente
                             </Text>
-                            <View className="flex-row items-start gap-3 rounded-2xl border border-[#ADC6FF]/30 bg-[#ADC6FF]/20 p-4">
-                                <Info
-                                    size={20}
+                            <View className="flex-row items-center gap-2.5 rounded-2xl border border-[#ADC6FF]/30 bg-[#ADC6FF]/20 px-3 py-2.5">
+                                <CircleAlert
+                                    size={19}
                                     color="#0058BC"
-                                    fill="#0058BC"
+                                    strokeWidth={2.25}
                                 />
-                                <Text className="flex-1 text-[17px] leading-[22px] text-[#414755]">
+                                <Text className="flex-1 text-[15px] leading-[20px] text-[#414755]">
                                     Arraste o mapa até que o pino esteja sobre o
                                     local exato do acidente.
+                                </Text>
+                            </View>
+                            <View className="flex-row items-center gap-2.5 rounded-2xl border border-[#ADC6FF]/30 bg-[#ADC6FF]/20 px-3 py-2.5">
+                                <Expand
+                                    size={19}
+                                    color="#0058BC"
+                                    strokeWidth={2.25}
+                                />
+                                <Text className="flex-1 text-[15px] leading-[20px] text-[#414755]">
+                                    Use pinça para ajustar o zoom.
                                 </Text>
                             </View>
                         </View>
                         <Pressable
                             accessibilityLabel="Entendi"
                             onPress={() => setIsMapExpanded(true)}
-                            className="mb-10 h-14 items-center justify-center rounded-xl bg-[#0058BC] shadow-lg"
+                            className="h-14 items-center justify-center rounded-xl bg-[#0058BC] shadow-lg"
+                            style={{
+                                marginBottom: Math.max(insets.bottom + 16, 40),
+                            }}
                         >
                             <Text className="text-[17px] font-bold text-white">
                                 Entendi

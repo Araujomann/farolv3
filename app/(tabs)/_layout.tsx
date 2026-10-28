@@ -5,6 +5,7 @@ import {
   TabSlot,
   TabTriggerSlotProps,
 } from "expo-router/ui";
+import { usePathname } from "expo-router";
 
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -119,6 +120,8 @@ function ReportTab({
 
 export default function Layout() {
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
+  const isReportRoute = pathname === "/report" || pathname.endsWith("/report");
 
   return (
     <Tabs>
@@ -127,6 +130,7 @@ export default function Layout() {
       <TabList
         className="flex-row items-center justify-between rounded-t-3xl bg-white"
         style={{
+          display: isReportRoute ? "none" : "flex",
           height: 72 + insets.bottom,
           paddingBottom: insets.bottom,
           paddingHorizontal: 8,
