@@ -13,17 +13,6 @@ const mapStyle = {
         {
             id: "basemap",
             url: "mapbox://styles/mapbox/standard",
-            config: {
-                basemap: {
-                    lightPreset: "night",
-                    theme: "monochrome",
-                    show3dObjects: false,
-                    show3dBuildings: false,
-                    show3dTrees: false,
-                    show3dFacades: false,
-                    show3dLandmarks: false,
-                },
-            },
         },
     ],
 } as const;
@@ -99,6 +88,22 @@ export default function MapScreen() {
                 style={{ flex: 1 }}
                 styleJSON={JSON.stringify(mapStyle)}
             >
+                <Mapbox.StyleImport
+                    id="basemap"
+                    existing
+                    config={{
+                        lightPreset: "day",
+                        theme: "default",
+                        font: "DIN Pro",
+                        showTransitLabels: true,
+                        show3dObjects: true,
+                        show3dBuildings: true,
+                        show3dTrees: true,
+                        show3dFacades: true,
+                        show3dLandmarks: true,
+                    }}
+                />
+
                 <Mapbox.Camera
                     bounds={accidentBounds}
                     centerCoordinate={singleAccidentCenter ?? DEFAULT_CENTER}

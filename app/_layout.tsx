@@ -1,5 +1,10 @@
 import { useEffect } from "react";
-import { Stack, useRouter, useSegments } from "expo-router";
+import {
+    Stack,
+    useRootNavigationState,
+    useRouter,
+    useSegments,
+} from "expo-router";
 import { ActivityIndicator, LogBox, View } from 'react-native';
 import Mapbox from '@rnmapbox/maps';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
@@ -21,6 +26,7 @@ export default function RootLayout() {
     const { token, isLoading, restoreSession } = useAuthStore();
     const segments = useSegments();
     const router = useRouter();
+    const rootNavigationState = useRootNavigationState();
 
     useEffect(() => {
         restoreSession();
@@ -28,7 +34,7 @@ export default function RootLayout() {
 
     useEffect(() => {
         // Aguarda o restoreSession() terminar antes de qualquer redirect
-        if (isLoading) return;
+        if (isLoading || !rootNavigationState?.key) return;
 
         const inAuthGroup = segments[0] === "(auth)";
         const inTabsGroup = segments[0] === "(tabs)";
@@ -41,28 +47,26 @@ export default function RootLayout() {
             router.replace("/(tabs)/home");
         }
 
-    }, [token, isLoading, segments]);
-
-    if (isLoading) {
-        return (
-            <View className="flex-1 items-center justify-center bg-background">
-                <ActivityIndicator size="large" color="#0058BC" />
-            </View>
-        );
-    }
+    }, [token, isLoading, rootNavigationState?.key, segments]);
 
     return (
         <GluestackUIProvider mode="dark">
-            <Stack>
-                <Stack.Screen name="index" options={{ headerShown: false }} />
-                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen
-                    name="modal"
-                    options={{ presentation: "modal", title: "Modal" }}
-                />
-            </Stack>
+            <View className="flex-1">
+                <Stack>
+                    <Stack.Screen name="index" options={{ headerShown: false }} />
+                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen
+                        name="modal"
+                        options={{ presentation: "modal", title: "Modal" }}
+                    />
+                </Stack>
+                {isLoading && (
+                    <View className="absolute inset-0 items-center justify-center bg-background">
+                        <ActivityIndicator size="large" color="#0058BC" />
+                    </View>
+                )}
+            </View>
         </GluestackUIProvider>
     );
 }
-
