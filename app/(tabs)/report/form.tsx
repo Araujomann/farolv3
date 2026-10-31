@@ -7,9 +7,10 @@ import {
     Send,
     Shapes,
 } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
+    BackHandler,
     Keyboard,
     KeyboardAvoidingView,
     Platform,
@@ -19,7 +20,7 @@ import {
     TextInput,
     View,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { reverseGeocode } from "@/src/features/map/services/reverseGeocode";
 import type { AccidentSeverity } from "@/src/features/map/types/accident.types";
@@ -70,6 +71,29 @@ export default function ReportFormScreen() {
     const longitude = Number(longitudeParam);
     const latitude = Number(latitudeParam);
     const hasLocation = Number.isFinite(longitude) && Number.isFinite(latitude);
+
+    const handleBackPress = useCallback(() => {
+        if (keyboardHeight > 0) {
+            Keyboard.dismiss();
+            return;
+        }
+
+        router.back();
+    }, [keyboardHeight, router]);
+
+    useFocusEffect(
+        useCallback(() => {
+            const subscription = BackHandler.addEventListener(
+                "hardwareBackPress",
+                () => {
+                    handleBackPress();
+                    return true;
+                },
+            );
+
+            return () => subscription.remove();
+        }, [handleBackPress]),
+    );
 
     const scrollToDescription = () => {
         requestAnimationFrame(() => {
@@ -153,7 +177,7 @@ export default function ReportFormScreen() {
                     <View className="mb-6 flex-row items-center">
                         <Pressable
                             accessibilityLabel="Voltar para seleção de localização"
-                            onPress={() => router.back()}
+                            onPress={handleBackPress}
                             className="h-11 w-11 items-center justify-center rounded-full bg-white shadow-md"
                         >
                             <ArrowLeft size={22} color="#181C23" />

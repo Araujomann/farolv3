@@ -1,5 +1,5 @@
 import Mapbox, { type MapState } from "@rnmapbox/maps";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import {
     ArrowLeft,
     Check,
@@ -19,6 +19,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+    BackHandler,
     Modal,
     Pressable,
     Text,
@@ -111,9 +112,23 @@ export default function ReportScreen() {
         }, 1200);
     };
 
-    const handleBackPress = () => {
+    const handleBackPress = useCallback(() => {
         setIsExitDialogVisible(true);
-    };
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            const subscription = BackHandler.addEventListener(
+                "hardwareBackPress",
+                () => {
+                    handleBackPress();
+                    return true;
+                },
+            );
+
+            return () => subscription.remove();
+        }, [handleBackPress]),
+    );
 
     const handleExitReport = () => {
         setIsExitDialogVisible(false);
