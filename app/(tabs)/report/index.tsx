@@ -121,7 +121,7 @@ export default function ReportScreen() {
         if (router.canGoBack()) {
             router.back();
         } else {
-            router.replace("/(tabs)/home");
+            router.navigate("/map");
         }
     };
 
