@@ -11,6 +11,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     BackHandler,
+    InteractionManager,
     Keyboard,
     KeyboardAvoidingView,
     Platform,
@@ -95,6 +96,23 @@ export default function ReportFormScreen() {
         }, [handleBackPress]),
     );
 
+    useFocusEffect(
+        useCallback(() => {
+            const resetScrollPosition = () => {
+                scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+            };
+            const frame = requestAnimationFrame(resetScrollPosition);
+            const interaction = InteractionManager.runAfterInteractions(
+                resetScrollPosition,
+            );
+
+            return () => {
+                cancelAnimationFrame(frame);
+                interaction.cancel();
+            };
+        }, []),
+    );
+
     const scrollToDescription = () => {
         requestAnimationFrame(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -166,6 +184,7 @@ export default function ReportFormScreen() {
                 ref={scrollViewRef}
                 className="flex-1"
                 automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+                contentOffset={{ x: 0, y: 0 }}
                 contentContainerStyle={{
                     paddingTop: insets.top + 16,
                     paddingBottom: keyboardHeight + insets.bottom + 28,
@@ -346,7 +365,6 @@ export default function ReportFormScreen() {
                                 setDescription(text);
                                 scrollToDescription();
                             }}
-                            onContentSizeChange={scrollToDescription}
                             placeholder="Conte brevemente o que aconteceu, incluindo informações importantes."
                             placeholderTextColor="#8A90A0"
                             textAlignVertical="top"
