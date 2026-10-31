@@ -121,7 +121,10 @@ function ReportTab({
 export default function Layout() {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
-  const isReportRoute = pathname === "/report" || pathname.endsWith("/report");
+  const isReportRoute =
+    pathname === "/report" ||
+    pathname.endsWith("/report") ||
+    pathname.includes("/report/");
 
   return (
     <Tabs>

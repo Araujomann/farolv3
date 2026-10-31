@@ -16,6 +16,7 @@
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE"
       },
+      "softwareKeyboardLayoutMode": "resize",
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.farolv3"
     },

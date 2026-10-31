@@ -56,6 +56,9 @@ export default function ReportScreen() {
     const initialMapTop = Math.max(insets.top + 32, 56);
     const lastCameraUpdateRef = useRef(0);
     const isConfirmedRef = useRef(false);
+    const confirmationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+        null,
+    );
 
     const handleCameraChanged = useCallback((state: MapState) => {
         const now = Date.now();
@@ -96,6 +99,16 @@ export default function ReportScreen() {
     const handleConfirmLocation = () => {
         isConfirmedRef.current = true;
         setIsConfirmed(true);
+
+        confirmationTimeoutRef.current = setTimeout(() => {
+            router.push({
+                pathname: "/report/form",
+                params: {
+                    longitude: selectedLocation[0].toString(),
+                    latitude: selectedLocation[1].toString(),
+                },
+            });
+        }, 1200);
     };
 
     const handleBackPress = () => {
@@ -122,6 +135,9 @@ export default function ReportScreen() {
     useEffect(() => {
         return () => {
             lastCameraUpdateRef.current = 0;
+            if (confirmationTimeoutRef.current) {
+                clearTimeout(confirmationTimeoutRef.current);
+            }
         };
     }, []);
 
