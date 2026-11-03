@@ -1,0 +1,51 @@
+import { api } from "@/src/api/client";
+import type {
+    Accident,
+    AccidentMapFilters,
+    AccidentMapResponse,
+} from "../types/accident.types";
+
+const MOJIBAKE_MARKERS = /(?:Ã.|Â.|â.|�)/;
+
+const repairMojibake = (value: string): string => {
+    if (!MOJIBAKE_MARKERS.test(value)) return value;
+
+    try {
+        const bytes = Uint8Array.from(value, (character) =>
+            character.charCodeAt(0),
+        );
+        const repaired = new TextDecoder("utf-8").decode(bytes);
+        return repaired.includes("�") ? value : repaired;
+    } catch {
+        return value;
+    }
+};
+
+const normalizeAccident = (accident: Accident): Accident => ({
+    ...accident,
+    tipo_acidente: repairMojibake(accident.tipo_acidente),
+});
+
+const buildQueryParams = (filters: AccidentMapFilters): Record<string, string> => {
+    const params: Record<string, string> = {};
+
+    if (filters.search) params.search = filters.search;
+    if (filters.severity) params.severity = filters.severity;
+    if (filters.classificacao) params.classificacao = filters.classificacao;
+    if (filters.condicao_meteorologica) params.condicao_meteorologica = filters.condicao_meteorologica;
+    if (filters.source) params.source = filters.source;
+    if (filters.source_year !== undefined) params.source_year = String(filters.source_year);
+    if (filters.from) params.from = filters.from;
+    if (filters.to) params.to = filters.to;
+
+    return params;
+};
+
+export const getAccidentsForMap = async (
+    filters: AccidentMapFilters = {},
+): Promise<Accident[]> => {
+    const params = buildQueryParams(filters);
+    const response = await api.get<AccidentMapResponse>("/accidents/map", { params });
+
+    return response.data.data.map(normalizeAccident);
+};
