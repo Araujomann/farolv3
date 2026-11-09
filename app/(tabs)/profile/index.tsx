@@ -2,17 +2,20 @@ import {
     ArrowLeft,
     Bell,
     ChevronRight,
+    CircleAlert,
     History,
     Info,
     Settings,
     Shield,
     Trophy,
     User as UserIcon,
+    X,
 } from "lucide-react-native";
 import React, { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    Modal,
     Pressable,
     ScrollView,
     View,
@@ -51,11 +54,13 @@ export default function ProfileScreen() {
     const router = useRouter();
     const { user, signOut } = useAuthStore();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [isLogoutDialogVisible, setIsLogoutDialogVisible] = useState(false);
 
     const handleLogout = async () => {
         setIsLoggingOut(true);
         try {
             await signOut();
+            setIsLogoutDialogVisible(false);
             router.replace("/(auth)/login");
         } catch {
             Alert.alert(
@@ -112,9 +117,82 @@ export default function ProfileScreen() {
                 <SettingsList />
                 <LogoutSection
                     isLoggingOut={isLoggingOut}
-                    onPress={handleLogout}
+                    onPress={() => setIsLogoutDialogVisible(true)}
                 />
             </ScrollView>
+
+            <Modal
+                visible={isLogoutDialogVisible}
+                transparent
+                animationType="fade"
+                statusBarTranslucent
+                navigationBarTranslucent
+                onRequestClose={() => setIsLogoutDialogVisible(false)}
+            >
+                <View className="flex-1 items-center justify-center bg-black/45 px-5">
+                    <View className="w-full max-w-[390px] rounded-[28px] bg-white p-5 shadow-2xl">
+                        <View className="mb-5 flex-row items-start justify-between">
+                            <View className="flex-1 flex-row items-center gap-3 pr-4">
+                                <View className="h-11 w-11 items-center justify-center rounded-full bg-[#FFF1E8]">
+                                    <CircleAlert
+                                        size={24}
+                                        color="#C64F00"
+                                        strokeWidth={2.25}
+                                    />
+                                </View>
+                                <Text className="flex-1 text-[20px] font-bold" style={{ color: ON_SURFACE_HEX }}>
+                                    Sair da conta?
+                                </Text>
+                            </View>
+                            <Pressable
+                                accessibilityLabel="Fechar confirmação"
+                                onPress={() => setIsLogoutDialogVisible(false)}
+                                disabled={isLoggingOut}
+                                className="h-9 w-9 items-center justify-center rounded-full bg-[#F1F3FE]"
+                            >
+                                <X size={18} color={ON_SURFACE_VARIANT_HEX} />
+                            </Pressable>
+                        </View>
+
+                        <Text
+                            className="mb-6 text-[15px] leading-[21px]"
+                            style={{ color: ON_SURFACE_VARIANT_HEX }}
+                        >
+                            Você precisará entrar novamente para acessar sua conta. Deseja sair mesmo assim?
+                        </Text>
+
+                        <View className="gap-2.5">
+                            <Pressable
+                                accessibilityLabel="Continuar conectado"
+                                onPress={() => setIsLogoutDialogVisible(false)}
+                                disabled={isLoggingOut}
+                                className="h-12 items-center justify-center rounded-xl bg-[#0058BC]"
+                            >
+                                <Text className="text-[15px] font-bold text-white">
+                                    Continuar conectado
+                                </Text>
+                            </Pressable>
+                            <Pressable
+                                accessibilityLabel="Sair da conta"
+                                onPress={handleLogout}
+                                disabled={isLoggingOut}
+                                className="h-12 items-center justify-center rounded-xl border border-[#F0B7A8] bg-[#FFF8F5]"
+                            >
+                                {isLoggingOut ? (
+                                    <ActivityIndicator size="small" color={ERROR_HEX} />
+                                ) : (
+                                    <Text
+                                        className="text-[15px] font-bold"
+                                        style={{ color: ERROR_HEX }}
+                                    >
+                                        Sair da conta
+                                    </Text>
+                                )}
+                            </Pressable>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
