@@ -2,10 +2,12 @@ import {
     ArrowLeft,
     CarFront,
     Check,
+    CircleAlert,
     MapPin,
     PersonStanding,
     Send,
     Shapes,
+    X,
 } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -15,6 +17,7 @@ import {
     InteractionManager,
     Keyboard,
     KeyboardAvoidingView,
+    Modal,
     Platform,
     Pressable,
     ScrollView,
@@ -22,7 +25,12 @@ import {
     TextInput,
     View,
 } from "react-native";
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import {
+    useFocusEffect,
+    useLocalSearchParams,
+    useNavigation,
+    useRouter,
+} from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { reverseGeocode } from "@/src/features/map/services/reverseGeocode";
 import { createAccident } from "@/src/features/map/services/accidentService";
@@ -73,6 +81,8 @@ const ACCIDENT_TYPE_ICONS = {
 
 export default function ReportFormScreen() {
     const router = useRouter();
+    const navigation = useNavigation();
+    const tabsNavigation = useNavigation("/(tabs)");
     const insets = useSafeAreaInsets();
     const { longitude: longitudeParam, latitude: latitudeParam } =
         useLocalSearchParams<{
@@ -98,10 +108,26 @@ export default function ReportFormScreen() {
     const [createdAt] = useState(() => new Date());
     const scrollViewRef = useRef<ScrollView>(null);
     const [keyboardHeight, setKeyboardHeight] = useState(0);
+    const allowExitRef = useRef(false);
+    const [isExitDialogVisible, setIsExitDialogVisible] = useState(false);
 
     const longitude = Number(longitudeParam);
     const latitude = Number(latitudeParam);
     const hasLocation = Number.isFinite(longitude) && Number.isFinite(latitude);
+
+    const showExitConfirmation = useCallback(() => {
+        setIsExitDialogVisible(true);
+    }, []);
+
+    const handleExitReport = () => {
+        setIsExitDialogVisible(false);
+        allowExitRef.current = true;
+        navigation.dispatch({ type: "POP_TO_TOP" });
+        tabsNavigation.dispatch({
+            type: "JUMP_TO",
+            payload: { name: "map" },
+        });
+    };
 
     const handleBackPress = useCallback(() => {
         if (keyboardHeight > 0) {
@@ -109,11 +135,23 @@ export default function ReportFormScreen() {
             return;
         }
 
-        router.back();
-    }, [keyboardHeight, router]);
+        showExitConfirmation();
+    }, [keyboardHeight, showExitConfirmation]);
 
     useFocusEffect(
         useCallback(() => {
+            allowExitRef.current = false;
+            const beforeRemoveSubscription = navigation.addListener(
+                "beforeRemove",
+                (event) => {
+                    if (allowExitRef.current) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    showExitConfirmation();
+                },
+            );
             const subscription = BackHandler.addEventListener(
                 "hardwareBackPress",
                 () => {
@@ -122,8 +160,11 @@ export default function ReportFormScreen() {
                 },
             );
 
-            return () => subscription.remove();
-        }, [handleBackPress]),
+            return () => {
+                beforeRemoveSubscription();
+                subscription.remove();
+            };
+        }, [handleBackPress, navigation, showExitConfirmation]),
     );
 
     useFocusEffect(
@@ -182,7 +223,10 @@ export default function ReportFormScreen() {
                 [
                     {
                         text: "OK",
-                        onPress: () => router.replace("/report"),
+                        onPress: () => {
+                            allowExitRef.current = true;
+                            router.replace("/report");
+                        },
                     },
                 ],
             );
@@ -582,6 +626,65 @@ export default function ReportFormScreen() {
                     </Pressable>
                 </View>
             </ScrollView>
+            <Modal
+                visible={isExitDialogVisible}
+                transparent
+                animationType="fade"
+                statusBarTranslucent
+                navigationBarTranslucent
+                onRequestClose={() => setIsExitDialogVisible(false)}
+            >
+                <View className="flex-1 items-center justify-center bg-black/45 px-5">
+                    <View className="w-full max-w-[390px] rounded-[28px] bg-white p-5 shadow-2xl">
+                        <View className="mb-5 flex-row items-start justify-between">
+                            <View className="flex-1 flex-row items-center gap-3 pr-4">
+                                <View className="h-11 w-11 items-center justify-center rounded-full bg-[#FFF1E8]">
+                                    <CircleAlert
+                                        size={24}
+                                        color="#C64F00"
+                                        strokeWidth={2.25}
+                                    />
+                                </View>
+                                <Text className="flex-1 text-[20px] font-bold text-[#181C23]">
+                                    Sair do relatório?
+                                </Text>
+                            </View>
+                            <Pressable
+                                accessibilityLabel="Fechar confirmação"
+                                onPress={() => setIsExitDialogVisible(false)}
+                                className="h-9 w-9 items-center justify-center rounded-full bg-[#F1F3FE]"
+                            >
+                                <X size={18} color="#414755" />
+                            </Pressable>
+                        </View>
+
+                        <Text className="mb-6 text-[15px] leading-[21px] text-[#414755]">
+                            Se você sair agora, perderá o progresso deste relatório. Deseja sair mesmo assim?
+                        </Text>
+
+                        <View className="gap-2.5">
+                            <Pressable
+                                accessibilityLabel="Continuar no relato"
+                                onPress={() => setIsExitDialogVisible(false)}
+                                className="h-12 items-center justify-center rounded-xl bg-[#0058BC]"
+                            >
+                                <Text className="text-[15px] font-bold text-white">
+                                    Continuar preenchendo
+                                </Text>
+                            </Pressable>
+                            <Pressable
+                                accessibilityLabel="Sair mesmo assim"
+                                onPress={handleExitReport}
+                                className="h-12 items-center justify-center rounded-xl border border-[#F0B7A8] bg-[#FFF8F5]"
+                            >
+                                <Text className="text-[15px] font-bold text-[#B42318]">
+                                    Sair mesmo assim
+                                </Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </KeyboardAvoidingView>
     );
 }

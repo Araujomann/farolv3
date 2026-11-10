@@ -1,12 +1,11 @@
 import Mapbox, { type MapState } from "@rnmapbox/maps";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import {
     ArrowLeft,
     Check,
     CircleAlert,
     Crosshair,
     Expand,
-    X,
     Minus,
     Plus,
 } from "lucide-react-native";
@@ -20,7 +19,6 @@ import Animated, {
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     BackHandler,
-    Modal,
     Pressable,
     Text,
     useWindowDimensions,
@@ -43,12 +41,12 @@ const mapStyle = {
 
 export default function ReportScreen() {
     const router = useRouter();
+    const tabsNavigation = useNavigation("/(tabs)");
     const insets = useSafeAreaInsets();
     const { width, height } = useWindowDimensions();
     const cameraRef = useRef<Mapbox.Camera>(null);
     const [isMapExpanded, setIsMapExpanded] = useState(false);
     const [isConfirmed, setIsConfirmed] = useState(false);
-    const [isExitDialogVisible, setIsExitDialogVisible] = useState(false);
     const [selectedLocation, setSelectedLocation] =
         useState<[number, number]>(DEFAULT_CENTER);
     const [zoomLevel, setZoomLevel] = useState(INITIAL_ZOOM);
@@ -113,8 +111,11 @@ export default function ReportScreen() {
     };
 
     const handleBackPress = useCallback(() => {
-        setIsExitDialogVisible(true);
-    }, []);
+        tabsNavigation.dispatch({
+            type: "JUMP_TO",
+            payload: { name: "map" },
+        });
+    }, [tabsNavigation]);
 
     useFocusEffect(
         useCallback(() => {
@@ -129,16 +130,6 @@ export default function ReportScreen() {
             return () => subscription.remove();
         }, [handleBackPress]),
     );
-
-    const handleExitReport = () => {
-        setIsExitDialogVisible(false);
-
-        if (router.canGoBack()) {
-            router.back();
-        } else {
-            router.navigate("/map");
-        }
-    };
 
     useEffect(() => {
         expansionProgress.value = withTiming(isMapExpanded ? 1 : 0, {
@@ -438,65 +429,6 @@ export default function ReportScreen() {
                     </Pressable>
             </Animated.View>
 
-            <Modal
-                visible={isExitDialogVisible}
-                transparent
-                animationType="fade"
-                statusBarTranslucent
-                navigationBarTranslucent
-                onRequestClose={() => setIsExitDialogVisible(false)}
-            >
-                <View className="flex-1 items-center justify-center bg-black/45 px-5">
-                    <View className="w-full max-w-[390px] rounded-[28px] bg-white p-5 shadow-2xl">
-                        <View className="mb-5 flex-row items-start justify-between">
-                            <View className="flex-1 flex-row items-center gap-3 pr-4">
-                                <View className="h-11 w-11 items-center justify-center rounded-full bg-[#FFF1E8]">
-                                    <CircleAlert
-                                        size={24}
-                                        color="#C64F00"
-                                        strokeWidth={2.25}
-                                    />
-                                </View>
-                                <Text className="flex-1 text-[20px] font-bold text-[#181C23]">
-                                    Sair do relatório?
-                                </Text>
-                            </View>
-                            <Pressable
-                                accessibilityLabel="Fechar confirmação"
-                                onPress={() => setIsExitDialogVisible(false)}
-                                className="h-9 w-9 items-center justify-center rounded-full bg-[#F1F3FE]"
-                            >
-                                <X size={18} color="#414755" />
-                            </Pressable>
-                        </View>
-
-                        <Text className="mb-6 text-[15px] leading-[21px] text-[#414755]">
-                            Se você sair agora, perderá o progresso deste relatório. Deseja sair mesmo assim?
-                        </Text>
-
-                        <View className="gap-2.5">
-                            <Pressable
-                                accessibilityLabel="Continuar no relato"
-                                onPress={() => setIsExitDialogVisible(false)}
-                                className="h-12 items-center justify-center rounded-xl bg-[#0058BC]"
-                            >
-                                <Text className="text-[15px] font-bold text-white">
-                                    Continuar preenchendo
-                                </Text>
-                            </Pressable>
-                            <Pressable
-                                accessibilityLabel="Sair mesmo assim"
-                                onPress={handleExitReport}
-                                className="h-12 items-center justify-center rounded-xl border border-[#F0B7A8] bg-[#FFF8F5]"
-                            >
-                                <Text className="text-[15px] font-bold text-[#B42318]">
-                                    Sair mesmo assim
-                                </Text>
-                            </Pressable>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
         </View>
     );
 }
