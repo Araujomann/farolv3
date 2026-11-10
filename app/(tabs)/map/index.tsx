@@ -1,5 +1,6 @@
 import { SearchBar } from "@/components";
 import { AccidentMarker, MapFilters, useAccidents } from "@/src/features/map";
+import type { MapPlaceSearchResult } from "@/src/features/map/services/placeSearch";
 import Mapbox from "@rnmapbox/maps";
 import { useFocusEffect } from "expo-router";
 import * as Notifications from "expo-notifications";
@@ -22,6 +23,10 @@ const mapStyle = {
 } as const;
 
 const DEFAULT_CENTER: [number, number] = [-47.47812, -5.52693];
+const SEARCH_ZOOM_LEVELS = {
+    Estabelecimento: 18,
+    Rua: 17,
+} as const;
 const CAMERA_PADDING = {
     paddingTop: 140,
     paddingRight: 48,
@@ -47,13 +52,35 @@ export default function MapScreen() {
         applyFilters,
         clearFilters,
     } = useAccidents();
+    const cameraRef = useRef<Mapbox.Camera>(null);
     const hasFocusedMap = useRef(false);
     const previousLoading = useRef(isLoading);
     const [cameraAccidents, setCameraAccidents] = useState(accidents);
     const [selectedAccidentId, setSelectedAccidentId] = useState<string | null>(
         null,
     );
+    const [searchedPlace, setSearchedPlace] =
+        useState<MapPlaceSearchResult | null>(null);
+    const searchedPlaceZoom = searchedPlace
+        ? SEARCH_ZOOM_LEVELS[searchedPlace.category]
+        : undefined;
+    const [suggestionsHeight, setSuggestionsHeight] = useState(0);
     const [viewMode, setViewMode] = useState<"markers" | "heatmap">("markers");
+
+    const handleSuggestionsHeightChange = useCallback((height: number) => {
+        setSuggestionsHeight(height);
+    }, []);
+
+    const handleSelectPlace = useCallback((place: MapPlaceSearchResult) => {
+        setSelectedAccidentId(null);
+        setSearchedPlace(place);
+        cameraRef.current?.setCamera({
+            centerCoordinate: place.center,
+            zoomLevel: SEARCH_ZOOM_LEVELS[place.category],
+            animationMode: "flyTo",
+            animationDuration: 1200,
+        });
+    }, []);
 
     useFocusEffect(
         useCallback(() => {
@@ -147,12 +174,16 @@ export default function MapScreen() {
 
     return (
         <View className="flex-1">
-            <SearchBar />
+            <SearchBar
+                onSelectPlace={handleSelectPlace}
+                onSuggestionsHeightChange={handleSuggestionsHeightChange}
+            />
             {viewMode === "markers" && (
                 <MapFilters
                     filters={filters}
                     onApply={applyFilters}
                     onClear={clearFilters}
+                    topOffset={suggestionsHeight > 0 ? 92 + suggestionsHeight : 84}
                 />
             )}
 
@@ -177,9 +208,12 @@ export default function MapScreen() {
                 />
 
                 <Mapbox.Camera
-                    bounds={cameraSettings.bounds}
-                    centerCoordinate={cameraSettings.centerCoordinate}
-                    zoomLevel={cameraSettings.zoomLevel}
+                    ref={cameraRef}
+                    bounds={searchedPlace ? undefined : cameraSettings.bounds}
+                    centerCoordinate={
+                        searchedPlace?.center ?? cameraSettings.centerCoordinate
+                    }
+                    zoomLevel={searchedPlaceZoom ?? cameraSettings.zoomLevel}
                     pitch={35}
                     animationMode="flyTo"
                     animationDuration={2000}
