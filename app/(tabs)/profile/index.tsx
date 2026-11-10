@@ -429,7 +429,7 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
 
     return (
         <View
-            className="mt-5 flex-row items-center justify-between rounded-xl border p-5"
+            className="mt-5 flex-row items-center gap-3 rounded-xl border p-6"
             style={{
                 backgroundColor: "#FFFFFF",
                 borderColor: `${level.color}44`,
@@ -441,7 +441,7 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
             }}
         >
             {/* Left side: icon + label */}
-            <View className="flex-row items-center gap-4">
+            <View className="min-w-0 flex-1 flex-row items-center gap-3">
                 <View
                     className="h-12 w-12 items-center justify-center rounded-full"
                     style={{ backgroundColor: level.color }}
@@ -452,7 +452,7 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
                         strokeWidth={2}
                     />
                 </View>
-                <View className="flex-1">
+                <View className="min-w-0 flex-1">
                     <Text
                         className="text-[11px] font-semibold uppercase tracking-widest"
                         style={{ color: "#414755" }}
@@ -462,6 +462,9 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
                     <Text
                         className="text-xl font-semibold"
                         style={{ color: level.color }}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.8}
                     >
                         {level.label}
                     </Text>
@@ -478,12 +481,15 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
             </View>
 
             {/* Right side: points */}
-            <View className="items-end">
+            <View className="max-w-[38%] shrink-0 items-end">
                 <Text
-                    className="text-[28px] font-bold leading-8"
+                    className="text-[24px] font-bold leading-8"
                     style={{ color: "#181C23" }}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
                 >
-                    {points}
+                    {points.toLocaleString("pt-BR")}
                 </Text>
                 <Text
                     className="text-[13px] leading-5"
