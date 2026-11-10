@@ -239,7 +239,9 @@ export default function ProfileScreen() {
                         />
                     </>
                 )}
-                <SettingsList />
+                <SettingsList
+                    onReportsPress={() => router.push("/profile/reports")}
+                />
                 <LogoutSection
                     isLoggingOut={isLoggingOut}
                     onPress={() => setIsLogoutDialogVisible(true)}
@@ -683,7 +685,7 @@ function SettingsDivider() {
     );
 }
 
-function SettingsList() {
+function SettingsList({ onReportsPress }: { onReportsPress: () => void }) {
     return (
         <View
             className="mt-5 overflow-hidden rounded-xl"
@@ -696,7 +698,11 @@ function SettingsList() {
                 elevation: 2,
             }}
         >
-            <SettingsRow icon={History} label="Meus Relatos" />
+            <SettingsRow
+                icon={History}
+                label="Meus Relatos"
+                onPress={onReportsPress}
+            />
             <SettingsDivider />
 
             {/* TODO: Navigate to settings */}
