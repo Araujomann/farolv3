@@ -8,9 +8,8 @@ import { Image } from "expo-image";
 import { CalendarDays, X } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ACCIDENT_APPROVED_EVENT } from "@/src/features/notifications/pushNotifications";
 import prfLogo from "../../../policia-rodoviaria-federal-logo-png_seeklogo-351022.png";
-
-const APPROVED_ACCIDENT_EVENT = "ACCIDENT_APPROVED";
 
 const mapStyle = {
     version: 8,
@@ -100,7 +99,7 @@ export default function MapScreen() {
                         const { type, accidentId } =
                             notification.request.content.data;
                         if (
-                            type === APPROVED_ACCIDENT_EVENT &&
+                            type === ACCIDENT_APPROVED_EVENT &&
                             typeof accidentId === "string"
                         ) {
                             refreshSilently();

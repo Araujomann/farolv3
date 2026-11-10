@@ -3,17 +3,20 @@ import {
     Bell,
     ChevronRight,
     CircleAlert,
+    Crown,
     History,
     Info,
     Settings,
     Shield,
-    Trophy,
+    ShieldCheck,
     User as UserIcon,
     X,
 } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import * as Notifications from "expo-notifications";
 import {
     ActivityIndicator,
+    Animated,
     Alert,
     Modal,
     Pressable,
@@ -21,33 +24,64 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import { Text } from "@/components/ui/text";
+import { getMyGamificationStats } from "@/src/api/profile";
+import { ACCIDENT_APPROVED_EVENT } from "@/src/features/notifications/pushNotifications";
 import { useAuthStore } from "@/src/store/authStore";
-
-// ─────────────────────────────────────────────────────────────
-// TODO: Replace static gamification data with real API values
-// once a gamification endpoint is available.
-// ─────────────────────────────────────────────────────────────
-const GAMIFICATION = {
-    levelLabel: "Guardião",
-    points: 850,
-    progressPercent: 85,
-    pointsToNext: 150,
-    nextLevelLabel: "Guarda-Mor",
-    currentLevelNumber: 2,
-    nextLevelNumber: 3,
-} as const;
 
 const PRIMARY_HEX = "#0058BC";
 const ERROR_HEX = "#BA1A1A";
 const PAGE_BACKGROUND_HEX = "#F2F2F7";
 const SURFACE_HEX = "#FFFFFF";
-const SURFACE_TINT_HEX = "#F1F3FE";
 const SURFACE_ICON_HEX = "#ECECF8";
 const ON_SURFACE_HEX = "#181C23";
 const ON_SURFACE_VARIANT_HEX = "#414755";
+
+const POINTS_PER_APPROVED_REPORT = 100;
+const LEVELS = [
+    {
+        id: "user",
+        label: "Usuário",
+        minApprovedReports: 0,
+        color: "#7A8494",
+        icon: UserIcon,
+    },
+    {
+        id: "guardian",
+        label: "Guardião",
+        minApprovedReports: 1,
+        color: "#1769C2",
+        icon: Shield,
+    },
+    {
+        id: "chief-guard",
+        label: "Guarda-mor",
+        minApprovedReports: 2,
+        color: "#783DB5",
+        icon: ShieldCheck,
+    },
+    {
+        id: "chancellor",
+        label: "Chanceler",
+        minApprovedReports: 4,
+        color: "#84223D",
+        icon: Crown,
+    },
+] as const;
+
+type GamificationLevel = (typeof LEVELS)[number];
+
+function getGamificationLevel(approvedReportsCount: number): GamificationLevel {
+    return LEVELS.reduce<GamificationLevel>(
+        (currentLevel, level) =>
+            approvedReportsCount >= level.minApprovedReports
+                ? level
+                : currentLevel,
+        LEVELS[0],
+    );
+}
 
 export default function ProfileScreen() {
     const insets = useSafeAreaInsets();
@@ -55,6 +89,74 @@ export default function ProfileScreen() {
     const { user, signOut } = useAuthStore();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isLogoutDialogVisible, setIsLogoutDialogVisible] = useState(false);
+    const [approvedReportsCount, setApprovedReportsCount] = useState<
+        number | null
+    >(null);
+    const [isLoadingGamification, setIsLoadingGamification] = useState(true);
+    const [gamificationError, setGamificationError] = useState<string | null>(
+        null,
+    );
+    const gamificationRequestId = useRef(0);
+
+    const loadGamification = useCallback(async () => {
+        const requestId = ++gamificationRequestId.current;
+        setIsLoadingGamification(true);
+        setGamificationError(null);
+
+        try {
+            const { approved_reports_count: count } =
+                await getMyGamificationStats();
+            if (!Number.isSafeInteger(count) || count < 0) {
+                throw new Error(
+                    "A API retornou uma contagem inválida de relatos aprovados.",
+                );
+            }
+
+            if (requestId === gamificationRequestId.current) {
+                setApprovedReportsCount(count);
+            }
+        } catch (error) {
+            if (__DEV__) {
+                console.warn(
+                    "Falha ao carregar a progressão do perfil",
+                    error,
+                );
+            }
+            if (requestId === gamificationRequestId.current) {
+                setGamificationError(
+                    "Não foi possível carregar sua progressão. Verifique a conexão e tente novamente.",
+                );
+            }
+        } finally {
+            if (requestId === gamificationRequestId.current) {
+                setIsLoadingGamification(false);
+            }
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            void loadGamification();
+            const subscription =
+                Notifications.addNotificationReceivedListener(
+                    (notification) => {
+                        const { type, accidentId } =
+                            notification.request.content.data;
+                        if (
+                            type === ACCIDENT_APPROVED_EVENT &&
+                            typeof accidentId === "string"
+                        ) {
+                            void loadGamification();
+                        }
+                    },
+                );
+
+            return () => {
+                gamificationRequestId.current += 1;
+                subscription.remove();
+            };
+        }, [loadGamification]),
+    );
 
     const handleLogout = async () => {
         setIsLoggingOut(true);
@@ -72,13 +174,21 @@ export default function ProfileScreen() {
         }
     };
 
-    const initials =
-        user?.name
-            ?.split(" ")
-            .map((n) => n[0])
-            .slice(0, 2)
-            .join("")
-            .toUpperCase() ?? "?";
+    const level = getGamificationLevel(approvedReportsCount ?? 0);
+    const levelIndex = LEVELS.findIndex(
+        (candidate) => candidate.id === level.id,
+    );
+    const nextLevel = LEVELS[levelIndex + 1];
+    const progressPercent =
+        approvedReportsCount === null || !nextLevel
+            ? 100
+            : Math.min(
+                  100,
+                  Math.max(
+                      0,
+                      (approvedReportsCount / nextLevel.minApprovedReports) * 100,
+                  ),
+              );
 
     return (
         <View className="flex-1" style={{ backgroundColor: PAGE_BACKGROUND_HEX }}>
@@ -98,22 +208,37 @@ export default function ProfileScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 <AvatarSection
-                    initials={initials}
                     name={user?.name}
                     email={user?.email}
+                    level={level}
                 />
-                <LevelCard
-                    levelLabel={GAMIFICATION.levelLabel}
-                    points={GAMIFICATION.points}
-                />
-                <ProgressCard
-                    currentLevel={GAMIFICATION.currentLevelNumber}
-                    nextLevel={GAMIFICATION.nextLevelNumber}
-                    levelLabel={GAMIFICATION.levelLabel}
-                    pointsToNext={GAMIFICATION.pointsToNext}
-                    nextLevelLabel={GAMIFICATION.nextLevelLabel}
-                    progressPercent={GAMIFICATION.progressPercent}
-                />
+                {isLoadingGamification && (
+                    <GamificationLoading />
+                )}
+                {gamificationError && (
+                    <GamificationError
+                        message={gamificationError}
+                        onRetry={() => void loadGamification()}
+                    />
+                )}
+                {approvedReportsCount !== null && (
+                    <>
+                        <LevelCard
+                            level={level}
+                            approvedReportsCount={approvedReportsCount}
+                            points={
+                                approvedReportsCount *
+                                POINTS_PER_APPROVED_REPORT
+                            }
+                        />
+                        <ProgressCard
+                            level={level}
+                            nextLevel={nextLevel}
+                            approvedReportsCount={approvedReportsCount}
+                            progressPercent={progressPercent}
+                        />
+                    </>
+                )}
                 <SettingsList />
                 <LogoutSection
                     isLoggingOut={isLoggingOut}
@@ -249,18 +374,19 @@ function TopAppBar({ paddingTop, onBack }: TopAppBarProps) {
 // ── Avatar Section ───────────────────────────────────────────
 
 type AvatarSectionProps = {
-    initials: string;
     name?: string;
     email?: string;
+    level: GamificationLevel;
 };
 
-function AvatarSection({ initials, name, email }: AvatarSectionProps) {
+function AvatarSection({ name, email, level }: AvatarSectionProps) {
     return (
         <View className="items-center justify-center pb-2 pt-5">
             <View
-                className="h-24 w-24 items-center justify-center rounded-full"
+                accessibilityLabel={`Avatar com destaque do nível ${level.label}`}
+                className="h-[112px] w-[112px] items-center justify-center rounded-full border-[3px] p-[4px]"
                 style={{
-                    backgroundColor: "#E0E7F1",
+                    borderColor: level.color,
                     shadowColor: "#000",
                     shadowOffset: { width: 0, height: 2 },
                     shadowOpacity: 0.1,
@@ -268,7 +394,9 @@ function AvatarSection({ initials, name, email }: AvatarSectionProps) {
                     elevation: 3,
                 }}
             >
-                <UserIcon size={44} color="#7A8BA5" strokeWidth={1.6} />
+                <View className="h-full w-full items-center justify-center rounded-full bg-[#E0E7F1]">
+                    <UserIcon size={44} color="#7A8BA5" strokeWidth={1.6} />
+                </View>
             </View>
 
             <Text
@@ -291,16 +419,20 @@ function AvatarSection({ initials, name, email }: AvatarSectionProps) {
 // ── Level & Points Card ──────────────────────────────────────
 
 type LevelCardProps = {
-    levelLabel: string;
+    level: GamificationLevel;
+    approvedReportsCount: number;
     points: number;
 };
 
-function LevelCard({ levelLabel, points }: LevelCardProps) {
+function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
+    const LevelIcon = level.icon;
+
     return (
         <View
-            className="mt-5 flex-row items-center justify-between rounded-xl p-5"
+            className="mt-5 flex-row items-center justify-between rounded-xl border p-5"
             style={{
                 backgroundColor: "#FFFFFF",
+                borderColor: `${level.color}44`,
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.08,
@@ -312,16 +444,15 @@ function LevelCard({ levelLabel, points }: LevelCardProps) {
             <View className="flex-row items-center gap-4">
                 <View
                     className="h-12 w-12 items-center justify-center rounded-full"
-                    style={{ backgroundColor: "#0070EB" }}
+                    style={{ backgroundColor: level.color }}
                 >
-                    <Shield
+                    <LevelIcon
                         size={24}
                         color="#FFFFFF"
                         strokeWidth={2}
-                        fill="#FFFFFF"
                     />
                 </View>
-                <View>
+                <View className="flex-1">
                     <Text
                         className="text-[11px] font-semibold uppercase tracking-widest"
                         style={{ color: "#414755" }}
@@ -330,9 +461,18 @@ function LevelCard({ levelLabel, points }: LevelCardProps) {
                     </Text>
                     <Text
                         className="text-xl font-semibold"
-                        style={{ color: PRIMARY_HEX }}
+                        style={{ color: level.color }}
                     >
-                        {levelLabel}
+                        {level.label}
+                    </Text>
+                    <Text
+                        className="mt-0.5 text-xs"
+                        style={{ color: ON_SURFACE_VARIANT_HEX }}
+                    >
+                        {approvedReportsCount}{" "}
+                        {approvedReportsCount === 1
+                            ? "relato aprovado"
+                            : "relatos aprovados"}
                     </Text>
                 </View>
             </View>
@@ -360,28 +500,41 @@ function LevelCard({ levelLabel, points }: LevelCardProps) {
 // ── Progress Card ────────────────────────────────────────────
 
 type ProgressCardProps = {
-    currentLevel: number;
-    nextLevel: number;
-    levelLabel: string;
-    pointsToNext: number;
-    nextLevelLabel: string;
+    level: GamificationLevel;
+    nextLevel: GamificationLevel | undefined;
+    approvedReportsCount: number;
     progressPercent: number;
 };
 
 function ProgressCard({
-    currentLevel,
+    level,
     nextLevel,
-    levelLabel,
-    pointsToNext,
-    nextLevelLabel,
+    approvedReportsCount,
     progressPercent,
 }: ProgressCardProps) {
+    const progress = useRef(new Animated.Value(0)).current;
+    const LevelIcon = level.icon;
+    const reportsNeeded = nextLevel
+        ? nextLevel.minApprovedReports - approvedReportsCount
+        : 0;
+
+    useEffect(() => {
+        const animation = Animated.timing(progress, {
+            toValue: progressPercent,
+            duration: 700,
+            useNativeDriver: false,
+        });
+        animation.start();
+
+        return () => animation.stop();
+    }, [progress, progressPercent]);
+
     return (
         <View
             className="relative mt-4 overflow-hidden rounded-xl border p-6"
             style={{
-                backgroundColor: SURFACE_TINT_HEX,
-                borderColor: "#E1E5F1",
+                backgroundColor: SURFACE_HEX,
+                borderColor: `${level.color}44`,
             }}
         >
             {/* Decorative watermark icon */}
@@ -389,7 +542,7 @@ function ProgressCard({
                 className="absolute opacity-10"
                 style={{ right: -8, top: -8 }}
             >
-                <Trophy size={100} color="#000" strokeWidth={1} />
+                <LevelIcon size={100} color={level.color} strokeWidth={1} />
             </View>
 
             {/* Content */}
@@ -398,38 +551,78 @@ function ProgressCard({
                     className="text-base font-semibold"
                     style={{ color: ON_SURFACE_HEX }}
                 >
-                    {`Progresso (Nível ${currentLevel} → ${nextLevel})`}
+                    {nextLevel
+                        ? `Progresso: ${level.label} → ${nextLevel.label}`
+                        : "Nível máximo alcançado"}
                 </Text>
 
                 <Text
                     className="mt-2 text-[13px] leading-5"
                     style={{ color: ON_SURFACE_VARIANT_HEX }}
                 >
-                    Você é um {levelLabel}. Apenas{" "}
-                    <Text
-                        className="font-bold"
-                        style={{ color: PRIMARY_HEX }}
-                    >
-                        {pointsToNext} pontos
-                    </Text>{" "}
-                    para se tornar o {nextLevelLabel} e comandar a proteção da
-                    comunidade!
+                    {nextLevel
+                        ? `Falta${reportsNeeded === 1 ? "" : "m"} ${reportsNeeded} ${reportsNeeded === 1 ? "relato aprovado" : "relatos aprovados"} para alcançar o nível ${nextLevel.label}.`
+                        : `Você alcançou Chanceler com ${approvedReportsCount} relatos aprovados. Continue contribuindo com a comunidade!`}
                 </Text>
 
                 {/* Progress Bar */}
                 <View
-                    className="mt-5 h-2 overflow-hidden rounded-full"
+                    className="mt-5 h-2.5 overflow-hidden rounded-full"
                     style={{ backgroundColor: "#E2E4ED" }}
                 >
-                    <View
+                    <Animated.View
                         className="h-full rounded-full"
                         style={{
-                            width: `${progressPercent}%`,
-                            backgroundColor: PRIMARY_HEX,
+                            width: progress.interpolate({
+                                inputRange: [0, 100],
+                                outputRange: ["0%", "100%"],
+                            }),
+                            backgroundColor: level.color,
                         }}
                     />
                 </View>
+                <Text
+                    className="mt-2 text-right text-xs font-semibold"
+                    style={{ color: level.color }}
+                >
+                    {`${Math.round(progressPercent)}%`}
+                </Text>
             </View>
+        </View>
+    );
+}
+
+function GamificationLoading() {
+    return (
+        <View className="mt-5 flex-row items-center justify-center gap-2 rounded-xl bg-white p-4">
+            <ActivityIndicator size="small" color={PRIMARY_HEX} />
+            <Text className="text-sm" style={{ color: ON_SURFACE_VARIANT_HEX }}>
+                Atualizando sua progressão...
+            </Text>
+        </View>
+    );
+}
+
+type GamificationErrorProps = {
+    message: string;
+    onRetry: () => void;
+};
+
+function GamificationError({ message, onRetry }: GamificationErrorProps) {
+    return (
+        <View className="mt-4 rounded-xl border border-[#F0B7A8] bg-[#FFF8F5] p-4">
+            <Text className="text-sm" style={{ color: ERROR_HEX }}>
+                {message}
+            </Text>
+            <Pressable
+                accessibilityRole="button"
+                onPress={onRetry}
+                className="mt-3 self-start rounded-lg bg-white px-3 py-2"
+            >
+                <Text className="text-sm font-semibold" style={{ color: ERROR_HEX }}>
+                    Tentar novamente
+                </Text>
+            </Pressable>
         </View>
     );
 }

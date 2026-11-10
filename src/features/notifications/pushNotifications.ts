@@ -6,6 +6,7 @@ import { Platform } from "react-native";
 import { api } from "@/src/api/client";
 
 const PUSH_TOKEN_STORAGE_KEY = "expo_push_token";
+export const ACCIDENT_APPROVED_EVENT = "ACCIDENT_APPROVED";
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({

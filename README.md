@@ -52,7 +52,7 @@ Expo após alterar a URL.
 
 The app registers an Expo push token after sign-in when notification permission is granted. Set `EXPO_PUBLIC_EAS_PROJECT_ID` to the app's real EAS project ID (or link the app to EAS so the ID is included in the build), and configure Android FCM v1 and iOS APNs credentials in EAS. Test push notifications on physical devices using a development or production build; Android remote push is not supported in Expo Go, and simulators do not receive pushes.
 
-When the API approves a report, the push includes an `ACCIDENT_APPROVED` event and the report ID. If the map is open, it listens for that event and refreshes its pins without reloading the screen or moving the camera. The map also fetches current data when opened or revisited, in case a push is delayed or not delivered.
+When the API approves a report, the push includes an `ACCIDENT_APPROVED` event and the report ID. If the map is open, it listens for that event and refreshes its pins without reloading the screen or moving the camera. If the profile is open, it refreshes the user's approved-report count and gamification progress. Both screens also fetch current data when opened or revisited, in case a push is delayed or not delivered.
 
 The Crash Map API database must have its Prisma migrations applied, including `20261109211500_add_push_tokens`, for push-token registration and approval events to work. From `crashmap-api`, apply existing migrations with `pnpm exec prisma migrate deploy`.
 
