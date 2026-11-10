@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Building2, MapPin, Search, X } from "lucide-react-native";
+import { Building2, Eraser, MapPin, Search } from "lucide-react-native";
 import { Box } from "../ui/box";
 import { Input, InputField, InputIcon, InputSlot } from "../ui/input";
 import {
@@ -225,10 +225,13 @@ export const SearchBar = ({
         />
 
         {query.length > 0 && (
-          <InputSlot className="pr-3 pl-2" onPress={handleClear}>
-            <Box className="w-4.5 h-4.5 rounded-full bg-gray-500 justify-center items-center">
-              <InputIcon as={X} size={11} color="#ffffff" />
-            </Box>
+          <InputSlot
+            accessibilityRole="button"
+            accessibilityLabel="Limpar busca"
+            className="mr-2 h-9 w-9 rounded-full border border-gray-200 bg-gray-50"
+            onPress={handleClear}
+          >
+            <InputIcon as={Eraser} size={16} color={INACTIVE_COLOR} />
           </InputSlot>
         )}
       </Input>
