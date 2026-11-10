@@ -9,6 +9,7 @@ import { ActivityIndicator, LogBox, View } from 'react-native';
 import Mapbox from '@rnmapbox/maps';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { useAuthStore } from '@/src/store/authStore';
+import { usePushNotifications } from '@/src/features/notifications/usePushNotifications';
 import "react-native-reanimated";
 import "../global.css"
 
@@ -27,6 +28,8 @@ export default function RootLayout() {
     const segments = useSegments();
     const router = useRouter();
     const rootNavigationState = useRootNavigationState();
+
+    usePushNotifications(Boolean(token));
 
     useEffect(() => {
         restoreSession();

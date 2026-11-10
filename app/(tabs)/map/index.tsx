@@ -1,9 +1,10 @@
 import { SearchBar } from "@/components";
 import { AccidentMarker, MapFilters, useAccidents } from "@/src/features/map";
 import Mapbox from "@rnmapbox/maps";
+import { useFocusEffect } from "expo-router";
 import { Image } from "expo-image";
-import { CalendarDays, X } from "lucide-react-native";
-import { useState } from "react";
+import { CalendarDays, RefreshCw, X } from "lucide-react-native";
+import { useCallback, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import prfLogo from "../../../policia-rodoviaria-federal-logo-png_seeklogo-351022.png";
 
@@ -28,10 +29,22 @@ const MARKER_COLORS = {
 
 export default function MapScreen() {
     const { accidents, error, isLoading, retry, filters, applyFilters, clearFilters } = useAccidents();
+    const hasFocusedMap = useRef(false);
     const [selectedAccidentId, setSelectedAccidentId] = useState<string | null>(
         null,
     );
     const [viewMode, setViewMode] = useState<"markers" | "heatmap">("markers");
+
+    useFocusEffect(
+        useCallback(() => {
+            if (hasFocusedMap.current) {
+                retry();
+            } else {
+                hasFocusedMap.current = true;
+            }
+        }, [retry]),
+    );
+
     const longitudes = accidents.map((accident) => accident.longitude);
     const latitudes = accidents.map((accident) => accident.latitude);
     const selectedAccident = accidents.find(
@@ -226,6 +239,26 @@ export default function MapScreen() {
                         </Text>
                     </Pressable>
                 </View>
+
+                <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Atualizar mapa"
+                    accessibilityState={{ disabled: isLoading }}
+                    disabled={isLoading}
+                    onPress={retry}
+                    className={`flex-row items-center gap-2 rounded-full bg-white px-4 py-3 shadow-lg ${
+                        isLoading ? "opacity-60" : ""
+                    }`}
+                >
+                    {isLoading ? (
+                        <ActivityIndicator size="small" color="#0969D7" />
+                    ) : (
+                        <RefreshCw size={16} color="#0969D7" />
+                    )}
+                    <Text className="text-sm font-semibold text-gray-800">
+                        Atualizar
+                    </Text>
+                </Pressable>
 
                 {viewMode === "markers" &&
                     !isLoading &&

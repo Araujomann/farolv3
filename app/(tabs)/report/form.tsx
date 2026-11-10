@@ -10,6 +10,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
     BackHandler,
     InteractionManager,
     Keyboard,
@@ -24,15 +25,20 @@ import {
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { reverseGeocode } from "@/src/features/map/services/reverseGeocode";
-import type { AccidentSeverity } from "@/src/features/map/types/accident.types";
+import { createAccident } from "@/src/features/map/services/accidentService";
+import type {
+    AccidentClassification,
+    AccidentSeverity,
+    AccidentWeatherCondition,
+} from "@/src/features/map/types/accident.types";
 
 const MAX_DESCRIPTION_LENGTH = 1000;
 
-const SEVERITY_OPTIONS: Array<{
+const SEVERITY_OPTIONS: {
     value: Exclude<AccidentSeverity, "unknown">;
     label: string;
     color: string;
-}> = [
+}[] = [
     { value: "low", label: "Baixa", color: "#0969D7" },
     { value: "medium", label: "Média", color: "#D99A24" },
     { value: "high", label: "Alta", color: "#D9534F" },
@@ -40,6 +46,24 @@ const SEVERITY_OPTIONS: Array<{
 ];
 
 const ACCIDENT_TYPES = ["COLISÃO", "ATROPELAMENTO", "OUTRO"] as const;
+
+const CLASSIFICATION_OPTIONS: {
+    value: AccidentClassification;
+    label: string;
+}[] = [
+    { value: "sem_vitima", label: "Sem vítima" },
+    { value: "com_vitima", label: "Com vítima" },
+];
+
+const WEATHER_OPTIONS: {
+    value: AccidentWeatherCondition;
+    label: string;
+}[] = [
+    { value: "ceu_claro", label: "Céu claro" },
+    { value: "nublado", label: "Nublado" },
+    { value: "garoa", label: "Garoa" },
+    { value: "chuva", label: "Chuva" },
+];
 
 const ACCIDENT_TYPE_ICONS = {
     COLISÃO: CarFront,
@@ -64,7 +88,13 @@ export default function ReportFormScreen() {
     const [severity, setSeverity] = useState<
         Exclude<AccidentSeverity, "unknown"> | null
     >(null);
+    const [classification, setClassification] =
+        useState<AccidentClassification | null>(null);
+    const [weather, setWeather] =
+        useState<AccidentWeatherCondition | null>(null);
     const [description, setDescription] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
     const [createdAt] = useState(() => new Date());
     const scrollViewRef = useRef<ScrollView>(null);
     const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -117,6 +147,70 @@ export default function ReportFormScreen() {
         requestAnimationFrame(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
         });
+    };
+
+    const handleSubmit = async () => {
+        setSubmitError(null);
+
+        if (!hasLocation) {
+            setSubmitError("A localização do acidente não está disponível.");
+            return;
+        }
+
+        if (!accidentType || !classification || !weather || !severity) {
+            setSubmitError("Preencha todos os campos obrigatórios.");
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            await createAccident({
+                tipo_acidente: accidentType,
+                classificacao_acidente: classification,
+                condicao_meteorologica: weather,
+                description: description.trim() || undefined,
+                latitude,
+                longitude,
+                occurredAt: createdAt.toISOString(),
+                severity,
+            });
+
+            Alert.alert(
+                "Relato enviado",
+                "Seu relato foi recebido e está aguardando análise da equipe de moderação.",
+                [
+                    {
+                        text: "OK",
+                        onPress: () => router.replace("/report"),
+                    },
+                ],
+            );
+        } catch (error) {
+            const responseMessage =
+                typeof error === "object" &&
+                error !== null &&
+                "response" in error &&
+                typeof error.response === "object" &&
+                error.response !== null &&
+                "data" in error.response &&
+                typeof error.response.data === "object" &&
+                error.response.data !== null &&
+                "error" in error.response.data &&
+                typeof error.response.data.error === "object" &&
+                error.response.data.error !== null &&
+                "message" in error.response.data.error &&
+                typeof error.response.data.error.message === "string"
+                    ? error.response.data.error.message
+                    : null;
+
+            setSubmitError(
+                responseMessage ??
+                    "Não foi possível enviar o relato. Verifique sua conexão e tente novamente.",
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     useEffect(() => {
@@ -312,6 +406,78 @@ export default function ReportFormScreen() {
                     </View>
 
                     <View className="mb-5 rounded-3xl bg-white p-4 shadow-lg">
+                        <FieldLabel label="Classificação" required />
+                        <Text className="mt-1 text-sm text-[#717786]">
+                            Houve vítimas no acidente?
+                        </Text>
+                        <View className="mt-3 flex-row gap-2.5">
+                            {CLASSIFICATION_OPTIONS.map((option) => {
+                                const selected = classification === option.value;
+                                return (
+                                    <Pressable
+                                        key={option.value}
+                                        accessibilityRole="radio"
+                                        accessibilityState={{ selected }}
+                                        onPress={() =>
+                                            setClassification(option.value)
+                                        }
+                                        className={`min-h-12 flex-1 items-center justify-center rounded-2xl border px-3 py-3 ${
+                                            selected
+                                                ? "border-[#0058BC] bg-[#E8F0FF]"
+                                                : "border-[#C1C6D7]/60 bg-white"
+                                        }`}
+                                    >
+                                        <Text
+                                            className={`text-sm font-semibold ${
+                                                selected
+                                                    ? "text-[#0058BC]"
+                                                    : "text-[#414755]"
+                                            }`}
+                                        >
+                                            {option.label}
+                                        </Text>
+                                    </Pressable>
+                                );
+                            })}
+                        </View>
+                    </View>
+
+                    <View className="mb-5 rounded-3xl bg-white p-4 shadow-lg">
+                        <FieldLabel label="Condição meteorológica" required />
+                        <Text className="mt-1 text-sm text-[#717786]">
+                            Como estava o tempo no local?
+                        </Text>
+                        <View className="mt-3 flex-row flex-wrap gap-2">
+                            {WEATHER_OPTIONS.map((option) => {
+                                const selected = weather === option.value;
+                                return (
+                                    <Pressable
+                                        key={option.value}
+                                        accessibilityRole="radio"
+                                        accessibilityState={{ selected }}
+                                        onPress={() => setWeather(option.value)}
+                                        className={`min-h-12 min-w-[45%] flex-1 items-center justify-center rounded-2xl border px-3 py-3 ${
+                                            selected
+                                                ? "border-[#0058BC] bg-[#E8F0FF]"
+                                                : "border-[#C1C6D7]/60 bg-white"
+                                        }`}
+                                    >
+                                        <Text
+                                            className={`text-sm font-semibold ${
+                                                selected
+                                                    ? "text-[#0058BC]"
+                                                    : "text-[#414755]"
+                                            }`}
+                                        >
+                                            {option.label}
+                                        </Text>
+                                    </Pressable>
+                                );
+                            })}
+                        </View>
+                    </View>
+
+                    <View className="mb-5 rounded-3xl bg-white p-4 shadow-lg">
                         <FieldLabel label="Severidade" required />
                         <Text className="mt-1 text-sm text-[#717786]">
                             Como você avalia o ocorrido?
@@ -375,20 +541,44 @@ export default function ReportFormScreen() {
                         </Text>
                     </View>
 
+                    {submitError && (
+                        <View
+                            accessibilityRole="alert"
+                            className="mt-4 rounded-2xl border border-[#F2B8B5] bg-[#FFF1F0] px-4 py-3"
+                        >
+                            <Text className="text-sm font-medium text-[#B42318]">
+                                {submitError}
+                            </Text>
+                        </View>
+                    )}
+
                     <Pressable
                         accessibilityLabel="Enviar relato"
                         accessibilityRole="button"
-                        onPress={() => undefined}
-                        className="mt-5 h-14 flex-row items-center justify-center gap-2 rounded-2xl bg-[#0058BC] px-4 shadow-lg"
+                        disabled={isSubmitting}
+                        onPress={handleSubmit}
+                        className={`mt-5 h-14 flex-row items-center justify-center gap-2 rounded-2xl bg-[#0058BC] px-4 shadow-lg ${
+                            isSubmitting ? "opacity-70" : ""
+                        }`}
                         style={({ pressed }) => ({
-                            opacity: pressed ? 0.82 : 1,
+                            opacity: isSubmitting ? 0.7 : pressed ? 0.82 : 1,
                             transform: [{ scale: pressed ? 0.99 : 1 }],
                         })}
                     >
-                        <Send size={20} color="#FFFFFF" strokeWidth={2.25} />
-                        <Text className="text-[16px] font-bold tracking-wide text-white">
-                            ENVIAR RELATO
-                        </Text>
+                        {isSubmitting ? (
+                            <ActivityIndicator color="#FFFFFF" />
+                        ) : (
+                            <>
+                                <Send
+                                    size={20}
+                                    color="#FFFFFF"
+                                    strokeWidth={2.25}
+                                />
+                                <Text className="text-[16px] font-bold tracking-wide text-white">
+                                    ENVIAR RELATO
+                                </Text>
+                            </>
+                        )}
                     </Pressable>
                 </View>
             </ScrollView>
