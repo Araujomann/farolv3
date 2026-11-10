@@ -3,6 +3,7 @@ import type {
     Accident,
     AccidentMapFilters,
     AccidentMapResponse,
+    CreateAccidentInput,
 } from "../types/accident.types";
 
 const MOJIBAKE_MARKERS = /(?:Ã.|Â.|â.|�)/;
@@ -48,4 +49,10 @@ export const getAccidentsForMap = async (
     const response = await api.get<AccidentMapResponse>("/accidents/map", { params });
 
     return response.data.data.map(normalizeAccident);
+};
+
+export const createAccident = async (input: CreateAccidentInput) => {
+    const response = await api.post<{ data: Accident }>("/accidents/", input);
+
+    return response.data.data;
 };

@@ -58,6 +58,10 @@ export const useAccidents = () => {
         setFilters({});
     }, []);
 
+    const retry = useCallback(() => {
+        setReloadKey((current) => current + 1);
+    }, []);
+
     return {
         accidents,
         isLoading,
@@ -65,6 +69,6 @@ export const useAccidents = () => {
         filters,
         applyFilters,
         clearFilters,
-        retry: () => setReloadKey((current) => current + 1),
+        retry,
     };
 };
