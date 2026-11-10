@@ -27,6 +27,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
 
 import { Text } from "@/components/ui/text";
+import AboutScreen from "@/src/features/profile/components/AboutScreen";
 import { getMyGamificationStats } from "@/src/api/profile";
 import { ACCIDENT_APPROVED_EVENT } from "@/src/features/notifications/pushNotifications";
 import { useAuthStore } from "@/src/store/authStore";
@@ -89,6 +90,7 @@ export default function ProfileScreen() {
     const { user, signOut } = useAuthStore();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isLogoutDialogVisible, setIsLogoutDialogVisible] = useState(false);
+    const [isAboutVisible, setIsAboutVisible] = useState(false);
     const [approvedReportsCount, setApprovedReportsCount] = useState<
         number | null
     >(null);
@@ -241,12 +243,22 @@ export default function ProfileScreen() {
                 )}
                 <SettingsList
                     onReportsPress={() => router.push("/profile/reports")}
+                    onAboutPress={() => setIsAboutVisible(true)}
                 />
                 <LogoutSection
                     isLoggingOut={isLoggingOut}
                     onPress={() => setIsLogoutDialogVisible(true)}
                 />
             </ScrollView>
+
+            <Modal
+                visible={isAboutVisible}
+                animationType="slide"
+                presentationStyle="fullScreen"
+                onRequestClose={() => setIsAboutVisible(false)}
+            >
+                <AboutScreen onClose={() => setIsAboutVisible(false)} />
+            </Modal>
 
             <Modal
                 visible={isLogoutDialogVisible}
@@ -685,7 +697,13 @@ function SettingsDivider() {
     );
 }
 
-function SettingsList({ onReportsPress }: { onReportsPress: () => void }) {
+function SettingsList({
+    onReportsPress,
+    onAboutPress,
+}: {
+    onReportsPress: () => void;
+    onAboutPress: () => void;
+}) {
     return (
         <View
             className="mt-5 overflow-hidden rounded-xl"
@@ -709,8 +727,11 @@ function SettingsList({ onReportsPress }: { onReportsPress: () => void }) {
             <SettingsRow icon={Settings} label="Configurações" />
             <SettingsDivider />
 
-            {/* TODO: Navigate to about */}
-            <SettingsRow icon={Info} label="Sobre o App" />
+            <SettingsRow
+                icon={Info}
+                label="Sobre o App"
+                onPress={onAboutPress}
+            />
         </View>
     );
 }
