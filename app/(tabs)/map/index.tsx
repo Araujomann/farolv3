@@ -2,11 +2,14 @@ import { SearchBar } from "@/components";
 import { AccidentMarker, MapFilters, useAccidents } from "@/src/features/map";
 import Mapbox from "@rnmapbox/maps";
 import { useFocusEffect } from "expo-router";
+import * as Notifications from "expo-notifications";
 import { Image } from "expo-image";
-import { CalendarDays, RefreshCw, X } from "lucide-react-native";
-import { useCallback, useRef, useState } from "react";
+import { CalendarDays, X } from "lucide-react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import prfLogo from "../../../policia-rodoviaria-federal-logo-png_seeklogo-351022.png";
+
+const APPROVED_ACCIDENT_EVENT = "ACCIDENT_APPROVED";
 
 const mapStyle = {
     version: 8,
@@ -19,6 +22,12 @@ const mapStyle = {
 } as const;
 
 const DEFAULT_CENTER: [number, number] = [-47.47812, -5.52693];
+const CAMERA_PADDING = {
+    paddingTop: 140,
+    paddingRight: 48,
+    paddingBottom: 120,
+    paddingLeft: 48,
+};
 const MARKER_COLORS = {
     low: "#0969D7",
     medium: "#D99A24",
@@ -28,8 +37,19 @@ const MARKER_COLORS = {
 } as const;
 
 export default function MapScreen() {
-    const { accidents, error, isLoading, retry, filters, applyFilters, clearFilters } = useAccidents();
+    const {
+        accidents,
+        error,
+        isLoading,
+        retry,
+        refreshSilently,
+        filters,
+        applyFilters,
+        clearFilters,
+    } = useAccidents();
     const hasFocusedMap = useRef(false);
+    const previousLoading = useRef(isLoading);
+    const [cameraAccidents, setCameraAccidents] = useState(accidents);
     const [selectedAccidentId, setSelectedAccidentId] = useState<string | null>(
         null,
     );
@@ -45,8 +65,35 @@ export default function MapScreen() {
         }, [retry]),
     );
 
-    const longitudes = accidents.map((accident) => accident.longitude);
-    const latitudes = accidents.map((accident) => accident.latitude);
+    useFocusEffect(
+        useCallback(() => {
+            const subscription =
+                Notifications.addNotificationReceivedListener(
+                    (notification) => {
+                        const { type, accidentId } =
+                            notification.request.content.data;
+                        if (
+                            type === APPROVED_ACCIDENT_EVENT &&
+                            typeof accidentId === "string"
+                        ) {
+                            refreshSilently();
+                        }
+                    },
+                );
+
+            return () => subscription.remove();
+        }, [refreshSilently]),
+    );
+
+    useEffect(() => {
+        const finishedLoading = previousLoading.current && !isLoading;
+        previousLoading.current = isLoading;
+
+        if (finishedLoading && !error) {
+            setCameraAccidents(accidents);
+        }
+    }, [accidents, error, isLoading]);
+
     const selectedAccident = accidents.find(
         (accident) => accident.id === selectedAccidentId,
     );
@@ -65,26 +112,38 @@ export default function MapScreen() {
             },
         })),
     };
-    const singleAccidentCenter =
-        accidents.length === 1
-            ? ([accidents[0].longitude, accidents[0].latitude] as [
-                  number,
-                  number,
-              ])
-            : undefined;
-    const accidentBounds =
-        accidents.length > 1
-            ? {
-                  ne: [Math.max(...longitudes), Math.max(...latitudes)] as [
-                      number,
-                      number,
-                  ],
-                  sw: [Math.min(...longitudes), Math.min(...latitudes)] as [
-                      number,
-                      number,
-                  ],
-              }
-            : undefined;
+    const cameraSettings = useMemo(() => {
+        const longitudes = cameraAccidents.map(
+            (accident) => accident.longitude,
+        );
+        const latitudes = cameraAccidents.map((accident) => accident.latitude);
+        const singleAccidentCenter =
+            cameraAccidents.length === 1
+                ? ([
+                      cameraAccidents[0].longitude,
+                      cameraAccidents[0].latitude,
+                  ] as [number, number])
+                : undefined;
+        const accidentBounds =
+            cameraAccidents.length > 1
+                ? {
+                      ne: [
+                          Math.max(...longitudes),
+                          Math.max(...latitudes),
+                      ] as [number, number],
+                      sw: [
+                          Math.min(...longitudes),
+                          Math.min(...latitudes),
+                      ] as [number, number],
+                  }
+                : undefined;
+
+        return {
+            bounds: accidentBounds,
+            centerCoordinate: singleAccidentCenter ?? DEFAULT_CENTER,
+            zoomLevel: singleAccidentCenter ? 15 : 17,
+        };
+    }, [cameraAccidents]);
 
     return (
         <View className="flex-1">
@@ -118,25 +177,20 @@ export default function MapScreen() {
                 />
 
                 <Mapbox.Camera
-                    bounds={accidentBounds}
-                    centerCoordinate={singleAccidentCenter ?? DEFAULT_CENTER}
-                    zoomLevel={singleAccidentCenter ? 15 : 17}
+                    bounds={cameraSettings.bounds}
+                    centerCoordinate={cameraSettings.centerCoordinate}
+                    zoomLevel={cameraSettings.zoomLevel}
                     pitch={35}
                     animationMode="flyTo"
                     animationDuration={2000}
-                    padding={{
-                        paddingTop: 140,
-                        paddingRight: 48,
-                        paddingBottom: 120,
-                        paddingLeft: 48,
-                    }}
+                    padding={CAMERA_PADDING}
                 />
 
                 <Mapbox.ShapeSource
                     id="accidents"
                     shape={accidentGeoJson}
                 >
-                    {viewMode === "heatmap" && (
+                    {viewMode === "heatmap" ? (
                         <Mapbox.HeatmapLayer
                             id="accident-heatmap"
                             style={{
@@ -177,7 +231,7 @@ export default function MapScreen() {
                                 heatmapOpacity: 0.88,
                             }}
                         />
-                    )}
+                    ) : undefined}
                 </Mapbox.ShapeSource>
 
                 {viewMode === "markers" &&
@@ -239,26 +293,6 @@ export default function MapScreen() {
                         </Text>
                     </Pressable>
                 </View>
-
-                <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Atualizar mapa"
-                    accessibilityState={{ disabled: isLoading }}
-                    disabled={isLoading}
-                    onPress={retry}
-                    className={`flex-row items-center gap-2 rounded-full bg-white px-4 py-3 shadow-lg ${
-                        isLoading ? "opacity-60" : ""
-                    }`}
-                >
-                    {isLoading ? (
-                        <ActivityIndicator size="small" color="#0969D7" />
-                    ) : (
-                        <RefreshCw size={16} color="#0969D7" />
-                    )}
-                    <Text className="text-sm font-semibold text-gray-800">
-                        Atualizar
-                    </Text>
-                </Pressable>
 
                 {viewMode === "markers" &&
                     !isLoading &&

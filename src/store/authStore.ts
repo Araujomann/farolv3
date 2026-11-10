@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 import { getMeService } from "../api/auth";
+import { unregisterCurrentPushToken } from "../features/notifications/pushNotifications";
 import { AuthActions, AuthState } from "./types";
 
 // Aqui unificamos o State e as Actions
@@ -19,6 +20,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
     // Ação de Logout: Remove do SecureStore e limpa o estado
     signOut: async () => {
+        try {
+            await unregisterCurrentPushToken();
+        } catch (error) {
+            console.error("Falha ao remover o dispositivo das notificações", error);
+        }
+
         await SecureStore.deleteItemAsync("token");
         await SecureStore.deleteItemAsync("refresh_token");
         set({ user: null, token: null, isLoading: false });

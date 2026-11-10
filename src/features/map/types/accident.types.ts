@@ -9,6 +9,17 @@ export type AccidentClassification = "com_vitima" | "sem_vitima";
 export type AccidentWeatherCondition = "ceu_claro" | "chuva" | "nublado" | "garoa";
 export type AccidentSource = "APP" | "PRF";
 
+export type CreateAccidentInput = {
+    tipo_acidente: string;
+    classificacao_acidente: AccidentClassification;
+    condicao_meteorologica: AccidentWeatherCondition;
+    description?: string;
+    latitude: number;
+    longitude: number;
+    occurredAt: string;
+    severity: Exclude<AccidentSeverity, "unknown">;
+};
+
 export type Accident = {
     id: string;
     tipo_acidente: string;

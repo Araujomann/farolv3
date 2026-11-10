@@ -35,6 +35,27 @@ npm run reset-project
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
+## API de autenticação e relatos
+
+Configure `EXPO_PUBLIC_API_URL` no `.env` com a URL base da `crashmap-api`, por
+exemplo `http://<host-da-api>:3333`. O aplicativo usa essa API diretamente para
+login, renovação de sessão e envio de relatos; essa URL não deve apontar para o
+painel web Farol Admin. Em um dispositivo físico, use um endereço da máquina
+acessível pela rede local, não `localhost`.
+
+Os relatos enviados pelo aplicativo ficam pendentes de moderação e só aparecem
+no mapa público depois de aprovados no painel. O painel usa sua própria variável
+de servidor, `CRASHMAP_API_URL`, também apontada para a CrashMap API. Reinicie o
+Expo após alterar a URL.
+
+## Push notifications (Android and iOS)
+
+The app registers an Expo push token after sign-in when notification permission is granted. Set `EXPO_PUBLIC_EAS_PROJECT_ID` to the app's real EAS project ID (or link the app to EAS so the ID is included in the build), and configure Android FCM v1 and iOS APNs credentials in EAS. Test push notifications on physical devices using a development or production build; Android remote push is not supported in Expo Go, and simulators do not receive pushes.
+
+When the API approves a report, the push includes an `ACCIDENT_APPROVED` event and the report ID. If the map is open, it listens for that event and refreshes its pins without reloading the screen or moving the camera. The map also fetches current data when opened or revisited, in case a push is delayed or not delivered.
+
+The Crash Map API database must have its Prisma migrations applied, including `20261109211500_add_push_tokens`, for push-token registration and approval events to work. From `crashmap-api`, apply existing migrations with `pnpm exec prisma migrate deploy`.
+
 ## Learn more
 
 To learn more about developing your project with Expo, look at the following resources:
