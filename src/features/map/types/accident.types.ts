@@ -32,6 +32,37 @@ export type Accident = {
     source: AccidentSource;
 };
 
+export type AccidentComment = {
+    id: string;
+    accident_id: string;
+    created_by_id: string;
+    author_name: string | null;
+    body: string;
+    created_at: string;
+    updated_at: string;
+};
+
+export type AccidentImage = {
+    id: string;
+    image_url: string;
+    caption: string | null;
+};
+
+export type AccidentDetail = Accident & {
+    description: string | null;
+    created_by_id: string | null;
+    created_at: string;
+    moderation_status: "APPROVED" | "PENDING" | "REJECTED";
+    trusted_count?: number;
+    comments: AccidentComment[];
+    images: AccidentImage[];
+};
+
+export type AccidentTrustSummary = {
+    trusted_count: number;
+    trusted_by_me: boolean;
+};
+
 export type AccidentMapFilters = {
     search?: string;
     severity?: AccidentSeverity;

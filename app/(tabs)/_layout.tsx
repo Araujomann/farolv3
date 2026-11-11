@@ -125,6 +125,7 @@ export default function Layout() {
     pathname === "/report" ||
     pathname.endsWith("/report") ||
     pathname.includes("/report/");
+  const isAccidentDetailRoute = pathname.startsWith("/map/");
 
   return (
     <Tabs>
@@ -133,7 +134,7 @@ export default function Layout() {
       <TabList
         className="flex-row items-center justify-between rounded-t-3xl bg-white"
         style={{
-          display: isReportRoute ? "none" : "flex",
+          display: isReportRoute || isAccidentDetailRoute ? "none" : "flex",
           height: 72 + insets.bottom,
           paddingBottom: insets.bottom,
           paddingHorizontal: 8,

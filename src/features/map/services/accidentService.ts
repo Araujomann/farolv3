@@ -1,8 +1,11 @@
 import { api } from "@/src/api/client";
 import type {
     Accident,
+    AccidentComment,
+    AccidentDetail,
     AccidentMapFilters,
     AccidentMapResponse,
+    AccidentTrustSummary,
     CreateAccidentInput,
 } from "../types/accident.types";
 
@@ -53,6 +56,53 @@ export const getAccidentsForMap = async (
 
 export const createAccident = async (input: CreateAccidentInput) => {
     const response = await api.post<{ data: Accident }>("/accidents/", input);
+
+    return response.data.data;
+};
+
+export const getAccidentDetails = async (
+    accidentId: string,
+): Promise<AccidentDetail> => {
+    const response = await api.get<{ data: AccidentDetail }>(
+        `/accidents/${encodeURIComponent(accidentId)}`,
+    );
+
+    return {
+        ...response.data.data,
+        tipo_acidente: repairMojibake(response.data.data.tipo_acidente),
+    };
+};
+
+export const createAccidentComment = async (
+    accidentId: string,
+    body: string,
+): Promise<AccidentComment> => {
+    const response = await api.post<{ data: AccidentComment }>(
+        `/accidents/${encodeURIComponent(accidentId)}/comments`,
+        { body },
+    );
+
+    return response.data.data;
+};
+
+export const getAccidentTrust = async (
+    accidentId: string,
+): Promise<AccidentTrustSummary> => {
+    const response = await api.get<{ data: AccidentTrustSummary }>(
+        `/accidents/${encodeURIComponent(accidentId)}/trust`,
+    );
+
+    return response.data.data;
+};
+
+export const setAccidentTrust = async (
+    accidentId: string,
+    trusted: boolean,
+): Promise<AccidentTrustSummary> => {
+    const url = `/accidents/${encodeURIComponent(accidentId)}/trust`;
+    const response = trusted
+        ? await api.post<{ data: AccidentTrustSummary }>(url)
+        : await api.delete<{ data: AccidentTrustSummary }>(url);
 
     return response.data.data;
 };

@@ -2,10 +2,10 @@ import { SearchBar } from "@/components";
 import { AccidentMarker, MapFilters, useAccidents } from "@/src/features/map";
 import type { MapPlaceSearchResult } from "@/src/features/map/services/placeSearch";
 import Mapbox from "@rnmapbox/maps";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import { Image } from "expo-image";
-import { CalendarDays, X } from "lucide-react-native";
+import { CalendarDays, ChevronDown, X } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -47,6 +47,7 @@ const MARKER_COLORS = {
 } as const;
 
 export default function MapScreen() {
+    const router = useRouter();
     const {
         accidents,
         error,
@@ -419,6 +420,22 @@ export default function MapScreen() {
                             <X size={18} color="#374151" />
                         </Pressable>
                     </View>
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Ver detalhes e comentários do acidente"
+                        onPress={() =>
+                            router.push({
+                                pathname: "/map/[accidentId]",
+                                params: { accidentId: selectedAccident.id },
+                            })
+                        }
+                        className="mt-3 items-center border-t border-gray-100 pt-2"
+                    >
+                        <ChevronDown size={20} color="#6B7280" />
+                        <Text className="text-[11px] font-medium text-gray-500">
+                            Mais detalhes
+                        </Text>
+                    </Pressable>
                 </View>
             )}
 
