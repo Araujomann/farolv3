@@ -2,6 +2,7 @@ import { api } from "./client";
 
 export type GamificationStats = {
     approved_reports_count: number;
+    received_trust_votes_count: number;
 };
 
 type GamificationStatsResponse = {

@@ -1,6 +1,7 @@
 import {
     ArrowLeft,
     Badge,
+    BadgeCheck,
     Bell,
     ChevronRight,
     CircleAlert,
@@ -103,6 +104,9 @@ export default function ProfileScreen() {
     const [approvedReportsCount, setApprovedReportsCount] = useState<
         number | null
     >(null);
+    const [receivedTrustVotesCount, setReceivedTrustVotesCount] = useState<
+        number | null
+    >(null);
     const [isLoadingGamification, setIsLoadingGamification] = useState(true);
     const [gamificationError, setGamificationError] = useState<string | null>(
         null,
@@ -115,16 +119,24 @@ export default function ProfileScreen() {
         setGamificationError(null);
 
         try {
-            const { approved_reports_count: count } =
-                await getMyGamificationStats();
-            if (!Number.isSafeInteger(count) || count < 0) {
+            const {
+                approved_reports_count: approvedCount,
+                received_trust_votes_count: trustVotesCount,
+            } = await getMyGamificationStats();
+            if (
+                !Number.isSafeInteger(approvedCount) ||
+                approvedCount < 0 ||
+                !Number.isSafeInteger(trustVotesCount) ||
+                trustVotesCount < 0
+            ) {
                 throw new Error(
-                    "A API retornou uma contagem inválida de relatos aprovados.",
+                    "A API retornou uma contagem inválida para sua progressão.",
                 );
             }
 
             if (requestId === gamificationRequestId.current) {
-                setApprovedReportsCount(count);
+                setApprovedReportsCount(approvedCount);
+                setReceivedTrustVotesCount(trustVotesCount);
             }
         } catch (error) {
             if (__DEV__) {
@@ -247,6 +259,9 @@ export default function ProfileScreen() {
                             nextLevel={nextLevel}
                             progressPercent={progressPercent}
                         />
+                        {receivedTrustVotesCount !== null && (
+                            <TrustVotesCard count={receivedTrustVotesCount} />
+                        )}
                     </>
                 )}
                 <SettingsList
@@ -609,6 +624,35 @@ function ProgressCard({
                     {`${Math.round(progressPercent)}%`}
                 </Text>
             </View>
+        </View>
+    );
+}
+
+function TrustVotesCard({ count }: { count: number }) {
+    return (
+        <View className="mt-4 flex-row items-center gap-4 rounded-xl border border-[#D8E2FF] bg-white p-5">
+            <View className="h-12 w-12 items-center justify-center rounded-full bg-[#EAF1FF]">
+                <BadgeCheck size={25} color={PRIMARY_HEX} strokeWidth={2.2} />
+            </View>
+            <View className="flex-1">
+                <Text
+                    className="text-base font-semibold"
+                    style={{ color: ON_SURFACE_HEX }}
+                >
+                    Selos de confiança
+                </Text>
+                <Text
+                    className="mt-1 text-[13px]"
+                    style={{ color: ON_SURFACE_VARIANT_HEX }}
+                >
+                    {count === 1
+                        ? "1 voto confiável recebido"
+                        : `${count} votos confiáveis recebidos`}
+                </Text>
+            </View>
+            <Text className="text-2xl font-bold" style={{ color: PRIMARY_HEX }}>
+                {count}
+            </Text>
         </View>
     );
 }
