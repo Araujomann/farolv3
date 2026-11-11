@@ -17,7 +17,7 @@
     "foregroundImage": "./assets/images/app-icon.png",
     "backgroundColor": "#000000"
   },
-  "softwareKeyboardLayoutMode": "resize",
+  "softwareKeyboardLayoutMode": "pan",
   "predictiveBackGestureEnabled": false,
   "package": "com.anonymous.farolv3"
 },

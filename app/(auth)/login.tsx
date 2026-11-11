@@ -5,6 +5,7 @@ import {
     Platform,
     ScrollView,
     TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -89,24 +90,28 @@ export default function LoginScreen() {
 
     return (
         <SafeAreaView
+            edges={["top", "bottom"]}
             style={{
                 flex: 1,
                 backgroundColor: "#FFFFFF",
             }}
         >
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
-            >
-                <ScrollView
-                    contentContainerStyle={{
-                        flexGrow: 1,
-                    }}
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={false}
-                    bounces={false}
-                >
-                    <Box className="flex-1 w-full bg-white px-7">
+            <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+                    <KeyboardAvoidingView
+                        style={{ flex: 1 }}
+                        behavior={Platform.OS === "ios" ? "padding" : "height"}
+                        enabled={Platform.OS === "ios"}
+                    >
+                        <ScrollView
+                            contentContainerStyle={{
+                                flexGrow: 1,
+                            }}
+                            keyboardShouldPersistTaps="handled"
+                            showsVerticalScrollIndicator={false}
+                            bounces={false}
+                        >
+                            <Box className="flex-1 w-full bg-white px-7">
                         {/* ==================================
                 LOGOTIPO
             ================================== */}
@@ -372,28 +377,27 @@ export default function LoginScreen() {
                             </VStack>
                         </Box>
 
-                        {/* ==================================
-                RODAPÉ / CADASTRO
-            ================================== */}
+                            </Box>
+                        </ScrollView>
+                    </KeyboardAvoidingView>
 
-                        <Box className="w-full flex-row items-center justify-center gap-1 pb-5 pt-6">
-                            <Text className="text-center text-sm text-slate-600">
-                                Não tem uma conta?
+                    <Box className="w-full flex-row items-center justify-center gap-1 bg-white px-7 pb-5 pt-6">
+                        <Text className="text-center text-sm text-slate-600">
+                            Não tem uma conta?
+                        </Text>
+
+                        <TouchableOpacity
+                            onPress={() => router.push("/(auth)/register")}
+                            activeOpacity={0.7}
+                            accessibilityRole="button"
+                        >
+                            <Text className="text-sm font-bold text-slate-900">
+                                Cadastre-se
                             </Text>
-
-                            <TouchableOpacity
-                                onPress={() => router.push("/(auth)/register")}
-                                activeOpacity={0.7}
-                                accessibilityRole="button"
-                            >
-                                <Text className="text-sm font-bold text-slate-900">
-                                    Cadastre-se
-                                </Text>
-                            </TouchableOpacity>
-                        </Box>
+                        </TouchableOpacity>
                     </Box>
-                </ScrollView>
-            </KeyboardAvoidingView>
+                </View>
+            </View>
         </SafeAreaView>
     );
 }
