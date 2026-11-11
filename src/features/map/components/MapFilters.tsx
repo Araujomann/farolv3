@@ -34,6 +34,19 @@ const SOURCE_OPTIONS: { value: AccidentSource; label: string }[] = [
     { value: "PRF", label: "PRF (oficial)" },
 ];
 
+type TemporalPeriod = "quarterly" | "semiannual" | "annual" | "biennial";
+
+const TEMPORAL_PERIOD_OPTIONS: {
+    value: TemporalPeriod;
+    label: string;
+    months: number;
+}[] = [
+    { value: "quarterly", label: "Trimestral", months: 3 },
+    { value: "semiannual", label: "Semestral", months: 6 },
+    { value: "annual", label: "Anual", months: 12 },
+    { value: "biennial", label: "Bienal", months: 24 },
+];
+
 type MapFiltersProps = {
     filters: AccidentMapFilters;
     onApply: (filters: AccidentMapFilters) => void;
@@ -50,13 +63,21 @@ export function MapFilters({
     const insets = useSafeAreaInsets();
     const [isOpen, setIsOpen] = useState(false);
     const [draft, setDraft] = useState<AccidentMapFilters>(filters);
+    const [period, setPeriod] = useState<TemporalPeriod | null>(null);
+    const [draftPeriod, setDraftPeriod] = useState<TemporalPeriod | null>(null);
 
-    const activeCount = Object.values(filters).filter(
-        (v) => v !== undefined && v !== "",
-    ).length;
+    const activeCount =
+        Object.entries(filters).filter(
+            ([key, value]) =>
+                key !== "from" &&
+                key !== "to" &&
+                value !== undefined &&
+                value !== "",
+        ).length + (filters.from || filters.to ? 1 : 0);
 
     const handleOpen = () => {
         setDraft(filters);
+        setDraftPeriod(period);
         setIsOpen(true);
     };
 
@@ -67,14 +88,46 @@ export function MapFilters({
         if (draft.condicao_meteorologica)
             cleaned.condicao_meteorologica = draft.condicao_meteorologica;
         if (draft.source) cleaned.source = draft.source;
+        if (draft.from) cleaned.from = draft.from;
+        if (draft.to) cleaned.to = draft.to;
         onApply(cleaned);
+        setPeriod(draftPeriod);
         setIsOpen(false);
     };
 
     const handleClear = () => {
         setDraft({});
+        setDraftPeriod(null);
+        setPeriod(null);
         onClear();
         setIsOpen(false);
+    };
+
+    const togglePeriod = (value: TemporalPeriod, months: number) => {
+        if (draftPeriod === value) {
+            setDraft((prev) => ({ ...prev, from: undefined, to: undefined }));
+            setDraftPeriod(null);
+            return;
+        }
+
+        const now = new Date();
+        const from = new Date(now);
+        const dayOfMonth = from.getDate();
+        from.setDate(1);
+        from.setMonth(from.getMonth() - months);
+        const lastDayOfMonth = new Date(
+            from.getFullYear(),
+            from.getMonth() + 1,
+            0,
+        ).getDate();
+        from.setDate(Math.min(dayOfMonth, lastDayOfMonth));
+
+        setDraft((prev) => ({
+            ...prev,
+            from: from.toISOString(),
+            to: now.toISOString(),
+        }));
+        setDraftPeriod(value);
     };
 
     const toggleFilter = <K extends keyof AccidentMapFilters>(
@@ -136,6 +189,17 @@ export function MapFilters({
                             activeColor={opt.color}
                             dot={opt.color}
                             onPress={() => toggleFilter("severity", opt.value)}
+                        />
+                    ))}
+                </FilterSection>
+
+                <FilterSection title="Período">
+                    {TEMPORAL_PERIOD_OPTIONS.map((opt) => (
+                        <FilterChip
+                            key={opt.value}
+                            label={opt.label}
+                            active={draftPeriod === opt.value}
+                            onPress={() => togglePeriod(opt.value, opt.months)}
                         />
                     ))}
                 </FilterSection>
