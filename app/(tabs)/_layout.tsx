@@ -7,8 +7,14 @@ import {
 } from "expo-router/ui";
 import { usePathname } from "expo-router";
 
+import React from "react";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useProfileTitleColorStore } from "@/src/features/profile/titleColorStore";
+import {
+  AnimatedColorIcon,
+  AnimatedColorText,
+} from "@/components/ui/AnimatedColor";
 
 import {
   House,
@@ -24,15 +30,23 @@ const INACTIVE_COLOR = "#6B7280";
 type TabButtonProps = TabTriggerSlotProps & {
   icon: LucideIcon;
   label: string;
+  titleColor: string;
+  isProfileSelected: boolean;
 };
 
 function TabButton({
   icon: Icon,
   label,
   isFocused,
+  titleColor,
+  isProfileSelected,
   ...props
 }: TabButtonProps) {
-  const color = isFocused ? ACTIVE_COLOR : INACTIVE_COLOR;
+  const color = isProfileSelected
+    ? titleColor
+    : isFocused
+      ? ACTIVE_COLOR
+      : INACTIVE_COLOR;
 
   return (
     <Pressable
@@ -40,17 +54,16 @@ function TabButton({
       className="flex-1"
     >
       <View className="flex-1 items-center justify-center gap-1">
-        <Icon
+        <AnimatedColorIcon
           size={23}
           color={color}
           strokeWidth={2.4}
+          icon={Icon}
         />
 
         <Text
           className="text-xs font-semibold"
-          style={{
-            color,
-          }}
+          style={{ color }}
         >
           {label}
         </Text>
@@ -59,11 +72,22 @@ function TabButton({
   );
 }
 
+type ReportTabProps = TabTriggerSlotProps & {
+  titleColor: string;
+  isProfileSelected: boolean;
+};
+
 function ReportTab({
   isFocused,
+  titleColor,
+  isProfileSelected,
   ...props
-}: TabTriggerSlotProps) {
-  const textColor = isFocused ? ACTIVE_COLOR : INACTIVE_COLOR;
+}: ReportTabProps) {
+  const textColor = isProfileSelected
+    ? titleColor
+    : isFocused
+      ? ACTIVE_COLOR
+      : INACTIVE_COLOR;
 
   return (
     <Pressable
@@ -75,14 +99,14 @@ function ReportTab({
         <View className="h-8" />
 
         {/* Rótulo alinhado com os demais */}
-        <Text
-          className="text-xs font-semibold"
-          style={{
-            color: textColor,
-          }}
-        >
-          Relatar
-        </Text>
+        <AnimatedColorText
+          color={textColor}
+          renderText={(color) => (
+            <Text className="text-xs font-semibold" style={{ color }}>
+              Relatar
+            </Text>
+          )}
+        />
 
         {/* Botão flutuante */}
         <View
@@ -121,6 +145,8 @@ function ReportTab({
 export default function Layout() {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
+  const titleColor = useProfileTitleColorStore((state) => state.titleColor);
+  const isProfileSelected = pathname === "/profile";
   const isReportRoute =
     pathname === "/report" ||
     pathname.endsWith("/report") ||
@@ -159,6 +185,8 @@ export default function Layout() {
           <TabButton
             icon={House}
             label="Home"
+            titleColor={titleColor}
+            isProfileSelected={isProfileSelected}
           />
         </TabTrigger>
 
@@ -171,6 +199,8 @@ export default function Layout() {
           <TabButton
             icon={Map}
             label="Mapa"
+            titleColor={titleColor}
+            isProfileSelected={isProfileSelected}
           />
         </TabTrigger>
 
@@ -180,7 +210,10 @@ export default function Layout() {
           href="/report"
           asChild
         >
-          <ReportTab />
+          <ReportTab
+            titleColor={titleColor}
+            isProfileSelected={isProfileSelected}
+          />
         </TabTrigger>
 
         {/* PERFIL */}
@@ -192,6 +225,8 @@ export default function Layout() {
           <TabButton
             icon={User}
             label="Perfil"
+            titleColor={titleColor}
+            isProfileSelected={isProfileSelected}
           />
         </TabTrigger>
       </TabList>

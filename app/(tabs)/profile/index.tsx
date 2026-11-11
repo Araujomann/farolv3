@@ -13,8 +13,9 @@ import {
     Swords,
     User as UserIcon,
     X,
+    type LucideIcon,
 } from "lucide-react-native";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as Notifications from "expo-notifications";
 import {
     ActivityIndicator,
@@ -33,6 +34,11 @@ import AboutScreen from "@/src/features/profile/components/AboutScreen";
 import { getMyGamificationStats } from "@/src/api/profile";
 import { ACCIDENT_APPROVED_EVENT } from "@/src/features/notifications/pushNotifications";
 import { useAuthStore } from "@/src/store/authStore";
+import { useProfileTitleColorStore } from "@/src/features/profile/titleColorStore";
+import {
+    AnimatedColorIcon,
+    AnimatedColorText,
+} from "@/components/ui/AnimatedColor";
 
 const PRIMARY_HEX = "#0058BC";
 const ERROR_HEX = "#BA1A1A";
@@ -98,6 +104,10 @@ export default function ProfileScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { user, signOut } = useAuthStore();
+    const setTitleColor = useProfileTitleColorStore(
+        (state) => state.setTitleColor,
+    );
+    const titleColor = useProfileTitleColorStore((state) => state.titleColor);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isLogoutDialogVisible, setIsLogoutDialogVisible] = useState(false);
     const [isAboutVisible, setIsAboutVisible] = useState(false);
@@ -198,6 +208,10 @@ export default function ProfileScreen() {
     };
 
     const level = getGamificationLevel(approvedReportsCount ?? 0);
+    useEffect(() => {
+        setTitleColor(level.color);
+    }, [level.color, setTitleColor]);
+
     const levelIndex = LEVELS.findIndex(
         (candidate) => candidate.id === level.id,
     );
@@ -219,6 +233,7 @@ export default function ProfileScreen() {
             <TopAppBar
                 paddingTop={insets.top}
                 onBack={() => router.back()}
+                titleColor={titleColor}
             />
 
             {/* ── Main Content ── */}
@@ -260,13 +275,17 @@ export default function ProfileScreen() {
                             progressPercent={progressPercent}
                         />
                         {receivedTrustVotesCount !== null && (
-                            <TrustVotesCard count={receivedTrustVotesCount} />
+                            <TrustVotesCard
+                                count={receivedTrustVotesCount}
+                                titleColor={titleColor}
+                            />
                         )}
                     </>
                 )}
                 <SettingsList
                     onReportsPress={() => router.push("/profile/reports")}
                     onAboutPress={() => setIsAboutVisible(true)}
+                    titleColor={titleColor}
                 />
                 <LogoutSection
                     isLoggingOut={isLoggingOut}
@@ -368,9 +387,10 @@ export default function ProfileScreen() {
 type TopAppBarProps = {
     paddingTop: number;
     onBack: () => void;
+    titleColor: string;
 };
 
-function TopAppBar({ paddingTop, onBack }: TopAppBarProps) {
+function TopAppBar({ paddingTop, onBack, titleColor }: TopAppBarProps) {
     return (
         <View
             className="flex-row items-center justify-between px-4"
@@ -385,7 +405,12 @@ function TopAppBar({ paddingTop, onBack }: TopAppBarProps) {
                 hitSlop={8}
             >
                 <View className="h-11 w-11 items-center justify-center">
-                    <ArrowLeft size={24} color={PRIMARY_HEX} strokeWidth={2} />
+                    <AnimatedColorIcon
+                        icon={ArrowLeft}
+                        size={24}
+                        color={titleColor}
+                        strokeWidth={2}
+                    />
                 </View>
             </Pressable>
 
@@ -401,7 +426,12 @@ function TopAppBar({ paddingTop, onBack }: TopAppBarProps) {
                 // TODO: Navigate to notifications when implemented
             >
                 <View className="h-11 w-11 items-center justify-center">
-                    <Bell size={24} color={PRIMARY_HEX} strokeWidth={2} />
+                    <AnimatedColorIcon
+                        icon={Bell}
+                        size={24}
+                        color={titleColor}
+                        strokeWidth={2}
+                    />
                 </View>
             </Pressable>
         </View>
@@ -628,11 +658,22 @@ function ProgressCard({
     );
 }
 
-function TrustVotesCard({ count }: { count: number }) {
+function TrustVotesCard({
+    count,
+    titleColor,
+}: {
+    count: number;
+    titleColor: string;
+}) {
     return (
         <View className="mt-4 flex-row items-center gap-4 rounded-xl border border-[#D8E2FF] bg-white p-5">
             <View className="h-12 w-12 items-center justify-center rounded-full bg-[#EAF1FF]">
-                <BadgeCheck size={25} color={PRIMARY_HEX} strokeWidth={2.2} />
+                <AnimatedColorIcon
+                    icon={BadgeCheck}
+                    size={25}
+                    color={titleColor}
+                    strokeWidth={2.2}
+                />
             </View>
             <View className="flex-1">
                 <Text
@@ -650,9 +691,14 @@ function TrustVotesCard({ count }: { count: number }) {
                         : `${count} votos confiáveis recebidos`}
                 </Text>
             </View>
-            <Text className="text-2xl font-bold" style={{ color: PRIMARY_HEX }}>
-                {count}
-            </Text>
+            <AnimatedColorText
+                color={titleColor}
+                renderText={(color) => (
+                    <Text className="text-2xl font-bold" style={{ color }}>
+                        {count}
+                    </Text>
+                )}
+            />
         </View>
     );
 }
@@ -696,16 +742,18 @@ function GamificationError({ message, onRetry }: GamificationErrorProps) {
 // ── Settings List ────────────────────────────────────────────
 
 type SettingsRowProps = {
-    icon: React.ComponentType<{
-        size: number;
-        color: string;
-        strokeWidth: number;
-    }>;
+    icon: LucideIcon;
     label: string;
+    iconColor: string;
     onPress?: () => void;
 };
 
-function SettingsRow({ icon: Icon, label, onPress }: SettingsRowProps) {
+function SettingsRow({
+    icon: Icon,
+    label,
+    iconColor,
+    onPress,
+}: SettingsRowProps) {
     return (
         <Pressable
             onPress={onPress}
@@ -719,7 +767,12 @@ function SettingsRow({ icon: Icon, label, onPress }: SettingsRowProps) {
                     className="h-8 w-8 items-center justify-center rounded-lg"
                     style={{ backgroundColor: SURFACE_ICON_HEX }}
                 >
-                    <Icon size={20} color={PRIMARY_HEX} strokeWidth={2} />
+                    <AnimatedColorIcon
+                        icon={Icon}
+                        size={20}
+                        color={iconColor}
+                        strokeWidth={2}
+                    />
                 </View>
                 <Text
                     className="text-base"
@@ -728,7 +781,12 @@ function SettingsRow({ icon: Icon, label, onPress }: SettingsRowProps) {
                     {label}
                 </Text>
             </View>
-            <ChevronRight size={20} color="#717786" strokeWidth={2} />
+            <AnimatedColorIcon
+                icon={ChevronRight}
+                size={20}
+                color={iconColor}
+                strokeWidth={2}
+            />
         </Pressable>
     );
 }
@@ -745,9 +803,11 @@ function SettingsDivider() {
 function SettingsList({
     onReportsPress,
     onAboutPress,
+    titleColor,
 }: {
     onReportsPress: () => void;
     onAboutPress: () => void;
+    titleColor: string;
 }) {
     return (
         <View
@@ -765,17 +825,23 @@ function SettingsList({
                 icon={History}
                 label="Meus Relatos"
                 onPress={onReportsPress}
+                iconColor={titleColor}
             />
             <SettingsDivider />
 
             {/* TODO: Navigate to settings */}
-            <SettingsRow icon={Settings} label="Configurações" />
+            <SettingsRow
+                icon={Settings}
+                label="Configurações"
+                iconColor={titleColor}
+            />
             <SettingsDivider />
 
             <SettingsRow
                 icon={Info}
                 label="Sobre o App"
                 onPress={onAboutPress}
+                iconColor={titleColor}
             />
         </View>
     );
