@@ -13,13 +13,14 @@
     },
 
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE"
-      },
-      "softwareKeyboardLayoutMode": "resize",
-      "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.farolv3"
-    },
+  "adaptiveIcon": {
+    "foregroundImage": "./assets/images/app-icon.png",
+    "backgroundColor": "#000000"
+  },
+  "softwareKeyboardLayoutMode": "resize",
+  "predictiveBackGestureEnabled": false,
+  "package": "com.anonymous.farolv3"
+},
 
     "web": {
       "bundler": "metro",

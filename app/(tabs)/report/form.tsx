@@ -12,7 +12,6 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
-    Alert,
     BackHandler,
     InteractionManager,
     Keyboard,
@@ -217,19 +216,8 @@ export default function ReportFormScreen() {
                 severity,
             });
 
-            Alert.alert(
-                "Relato enviado",
-                "Seu relato foi recebido e está aguardando análise da equipe de moderação.",
-                [
-                    {
-                        text: "OK",
-                        onPress: () => {
-                            allowExitRef.current = true;
-                            router.replace("/report");
-                        },
-                    },
-                ],
-            );
+            allowExitRef.current = true;
+            router.replace("/report/success");
         } catch (error) {
             const responseMessage =
                 typeof error === "object" &&
