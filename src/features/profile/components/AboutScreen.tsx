@@ -96,15 +96,15 @@ export default function AboutScreen({ onClose }: AboutScreenProps) {
             >
                 <View className="items-center rounded-2xl bg-white px-6 py-7">
                     <Image
-                        source={require("../../../../assets/images/splash-new-icon.png")}
+                        source={require("../../../../assets/images/app-icon.png")}
                         accessibilityLabel="Símbolo do Farol"
-                        className="h-[76px] w-[76px] rounded-2xl"
+                        className=" w-36 h-23 rounded-2xl"
                     />
                     <Text className="mt-4 text-[26px] font-bold" style={{ color: TEXT_COLOR }}>
                         Farol
                     </Text>
                     <Text
-                        className="mt-2 text-center text-[15px] leading-[22px]"
+                        className="mt-2 text-center text-[15px] leading-5.5"
                         style={{ color: MUTED_COLOR }}
                     >
                         Informação para seguir com mais atenção e consciência no trânsito.
