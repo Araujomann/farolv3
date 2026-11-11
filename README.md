@@ -56,6 +56,16 @@ When the API approves a report, the push includes an `ACCIDENT_APPROVED` event a
 
 The Crash Map API database must have its Prisma migrations applied, including `20261109211500_add_push_tokens`, for push-token registration and approval events to work. From `crashmap-api`, apply existing migrations with `pnpm exec prisma migrate deploy`.
 
+## Avisos administrativos
+
+Moderadores e administradores publicam comunicados pelo menu **Avisos à
+comunidade** no Farol Admin. No aplicativo, os avisos aparecem em um painel
+deslizante ao tocar no sino do perfil; não há uma tela separada para isso. A
+API mantém os 50 comunicados mais recentes e exige autenticação para listá-los.
+
+Inclua a migration `20261111030000_add_administrative_notices` ao aplicar as
+migrations do Crash Map API.
+
 ## Learn more
 
 To learn more about developing your project with Expo, look at the following resources:

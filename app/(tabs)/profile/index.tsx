@@ -39,6 +39,7 @@ import {
     AnimatedColorIcon,
     AnimatedColorText,
 } from "@/components/ui/AnimatedColor";
+import { AdministrativeNoticesPanel } from "@/src/features/notifications/components/AdministrativeNoticesPanel";
 
 const PRIMARY_HEX = "#0058BC";
 const ERROR_HEX = "#BA1A1A";
@@ -111,6 +112,8 @@ export default function ProfileScreen() {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isLogoutDialogVisible, setIsLogoutDialogVisible] = useState(false);
     const [isAboutVisible, setIsAboutVisible] = useState(false);
+    const [isAdministrativeNoticesVisible, setIsAdministrativeNoticesVisible] =
+        useState(false);
     const [approvedReportsCount, setApprovedReportsCount] = useState<
         number | null
     >(null);
@@ -233,6 +236,7 @@ export default function ProfileScreen() {
             <TopAppBar
                 paddingTop={insets.top}
                 onBack={() => router.back()}
+                onNoticesPress={() => setIsAdministrativeNoticesVisible(true)}
                 titleColor={titleColor}
             />
 
@@ -374,6 +378,12 @@ export default function ProfileScreen() {
                     </View>
                 </View>
             </Modal>
+
+            <AdministrativeNoticesPanel
+                isVisible={isAdministrativeNoticesVisible}
+                onClose={() => setIsAdministrativeNoticesVisible(false)}
+                titleColor={titleColor}
+            />
         </View>
     );
 }
@@ -387,10 +397,16 @@ export default function ProfileScreen() {
 type TopAppBarProps = {
     paddingTop: number;
     onBack: () => void;
+    onNoticesPress: () => void;
     titleColor: string;
 };
 
-function TopAppBar({ paddingTop, onBack, titleColor }: TopAppBarProps) {
+function TopAppBar({
+    paddingTop,
+    onBack,
+    onNoticesPress,
+    titleColor,
+}: TopAppBarProps) {
     return (
         <View
             className="flex-row items-center justify-between px-4"
@@ -422,8 +438,10 @@ function TopAppBar({ paddingTop, onBack, titleColor }: TopAppBarProps) {
             </Text>
 
             <Pressable
+                accessibilityLabel="Avisos administrativos"
+                accessibilityRole="button"
                 hitSlop={8}
-                // TODO: Navigate to notifications when implemented
+                onPress={onNoticesPress}
             >
                 <View className="h-11 w-11 items-center justify-center">
                     <AnimatedColorIcon
