@@ -176,10 +176,10 @@ export function AdministrativeNoticesPanel({
                             </View>
                             <View className="flex-1">
                                 <Text className="text-[19px] font-bold" style={{ color: INK_HEX }}>
-                                    Avisos do Farol
+                                    Avisos 
                                 </Text>
                                 <Text className="mt-0.5 text-[12px]" style={{ color: MUTED_HEX }}>
-                                    Comunicados da equipe para a comunidade
+                                    Comunicados oficiais 
                                 </Text>
                             </View>
                         </View>
