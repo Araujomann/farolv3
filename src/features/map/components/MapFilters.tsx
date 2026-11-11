@@ -51,6 +51,7 @@ type MapFiltersProps = {
     filters: AccidentMapFilters;
     onApply: (filters: AccidentMapFilters) => void;
     onClear: () => void;
+    onInteraction: () => void;
     topOffset?: number;
 };
 
@@ -58,6 +59,7 @@ export function MapFilters({
     filters,
     onApply,
     onClear,
+    onInteraction,
     topOffset = 84,
 }: MapFiltersProps) {
     const insets = useSafeAreaInsets();
@@ -144,6 +146,7 @@ export function MapFilters({
         return (
             <Pressable
                 onPress={handleOpen}
+                onTouchStart={onInteraction}
                 className="absolute right-4 z-10 flex-row items-center gap-1.5 rounded-full bg-white px-4 py-2.5 shadow-lg"
                 style={{ top: insets.top + topOffset }}
             >
@@ -163,7 +166,10 @@ export function MapFilters({
     }
 
     return (
-        <View className="absolute bottom-0 left-0 right-0 z-20 rounded-t-3xl bg-white pb-8 pt-4 shadow-2xl">
+        <View
+            className="absolute bottom-0 left-0 right-0 z-20 rounded-t-3xl bg-white pb-8 pt-4 shadow-2xl"
+            onTouchStart={onInteraction}
+        >
             <View className="mb-4 flex-row items-center justify-between px-5">
                 <Text className="text-lg font-bold text-gray-900">
                     Filtros

@@ -7,7 +7,13 @@ import * as Notifications from "expo-notifications";
 import { Image } from "expo-image";
 import { CalendarDays, X } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import {
+    ActivityIndicator,
+    Keyboard,
+    Pressable,
+    Text,
+    View,
+} from "react-native";
 import { ACCIDENT_APPROVED_EVENT } from "@/src/features/notifications/pushNotifications";
 import prfLogo from "../../../policia-rodoviaria-federal-logo-png_seeklogo-351022.png";
 
@@ -182,6 +188,7 @@ export default function MapScreen() {
                     filters={filters}
                     onApply={applyFilters}
                     onClear={clearFilters}
+                    onInteraction={Keyboard.dismiss}
                     topOffset={suggestionsHeight > 0 ? 92 + suggestionsHeight : 84}
                 />
             )}
@@ -189,6 +196,7 @@ export default function MapScreen() {
             <Mapbox.MapView
                 style={{ flex: 1 }}
                 styleJSON={JSON.stringify(mapStyle)}
+                onTouchStart={Keyboard.dismiss}
             >
                 <Mapbox.StyleImport
                     id="basemap"
@@ -280,7 +288,10 @@ export default function MapScreen() {
                     ))}
             </Mapbox.MapView>
 
-            <View className="absolute bottom-7 left-4 items-start gap-2">
+            <View
+                className="absolute bottom-7 left-4 items-start gap-2"
+                onTouchStart={Keyboard.dismiss}
+            >
                 <View className="flex-row rounded-full bg-white p-1 shadow-lg">
                     <Pressable
                         accessibilityLabel="Exibir marcadores de acidentes"
@@ -358,7 +369,10 @@ export default function MapScreen() {
             </View>
 
             {selectedAccident && (
-                <View className="absolute bottom-24 left-4 right-4 overflow-hidden rounded-3xl bg-white px-4 py-4 shadow-xl">
+                <View
+                    className="absolute bottom-24 left-4 right-4 overflow-hidden rounded-3xl bg-white px-4 py-4 shadow-xl"
+                    onTouchStart={Keyboard.dismiss}
+                >
                     {selectedAccident.source === "PRF" && (
                         <Image
                             source={prfLogo}
@@ -418,7 +432,10 @@ export default function MapScreen() {
             )}
 
             {error && !isLoading && (
-                <View className="absolute left-4 right-4 top-28 items-center rounded-2xl bg-white px-4 py-3 shadow-lg">
+                <View
+                    className="absolute left-4 right-4 top-28 items-center rounded-2xl bg-white px-4 py-3 shadow-lg"
+                    onTouchStart={Keyboard.dismiss}
+                >
                     <Text className="text-center text-sm font-medium text-gray-700">
                         {error}
                     </Text>
