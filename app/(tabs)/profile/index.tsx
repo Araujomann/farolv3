@@ -1,14 +1,15 @@
 import {
     ArrowLeft,
+    Badge,
     Bell,
     ChevronRight,
     CircleAlert,
-    Crown,
     History,
     Info,
     Settings,
     Shield,
-    ShieldCheck,
+    Sprout,
+    Swords,
     User as UserIcon,
     X,
 } from "lucide-react-native";
@@ -47,28 +48,36 @@ const LEVELS = [
         label: "Usuário",
         minApprovedReports: 0,
         color: "#7A8494",
-        icon: UserIcon,
+        icon: Sprout,
+        message:
+            "Seja bem-vindo à comunidade! Toda grande jornada começa com o primeiro passo. Contribua com seus primeiros 2 relatos aprovados e desperte como Guardião — o início da sua ascensão.",
     },
     {
         id: "guardian",
         label: "Guardião",
-        minApprovedReports: 1,
+        minApprovedReports: 2,
         color: "#1769C2",
         icon: Shield,
+        message:
+            "Sua jornada começa a ganhar forma. A comunidade reconheceu seu valor e agora você é um Guardião. Ainda há um caminho a trilhar: conquiste mais 2 relatos aprovados e desperte como Guarda-mor.",
     },
     {
         id: "chief-guard",
         label: "Guarda-mor",
-        minApprovedReports: 2,
+        minApprovedReports: 4,
         color: "#783DB5",
-        icon: ShieldCheck,
+        icon: Swords,
+        message:
+            "Sua dedicação já inspira confiança. Você ascendeu a Guarda-mor — um pilar da comunidade. Falta pouco para o topo: com mais 2 relatos aprovados, você receberá o título de Chanceler.",
     },
     {
         id: "chancellor",
         label: "Chanceler",
-        minApprovedReports: 4,
+        minApprovedReports: 6,
         color: "#84223D",
-        icon: Crown,
+        icon: Badge,
+        message:
+            "Poucos chegam tão longe. Você agora é um Chanceler — a voz de autoridade e sabedoria da comunidade. Seu legado está selado. Continue zelando pela qualidade e inspire os novos a seguirem seus passos.",
     },
 ] as const;
 
@@ -236,7 +245,6 @@ export default function ProfileScreen() {
                         <ProgressCard
                             level={level}
                             nextLevel={nextLevel}
-                            approvedReportsCount={approvedReportsCount}
                             progressPercent={progressPercent}
                         />
                     </>
@@ -522,21 +530,16 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
 type ProgressCardProps = {
     level: GamificationLevel;
     nextLevel: GamificationLevel | undefined;
-    approvedReportsCount: number;
     progressPercent: number;
 };
 
 function ProgressCard({
     level,
     nextLevel,
-    approvedReportsCount,
     progressPercent,
 }: ProgressCardProps) {
     const progress = useRef(new Animated.Value(0)).current;
     const LevelIcon = level.icon;
-    const reportsNeeded = nextLevel
-        ? nextLevel.minApprovedReports - approvedReportsCount
-        : 0;
 
     useEffect(() => {
         const animation = Animated.timing(progress, {
@@ -580,9 +583,7 @@ function ProgressCard({
                     className="mt-2 text-[13px] leading-5"
                     style={{ color: ON_SURFACE_VARIANT_HEX }}
                 >
-                    {nextLevel
-                        ? `Falta${reportsNeeded === 1 ? "" : "m"} ${reportsNeeded} ${reportsNeeded === 1 ? "relato aprovado" : "relatos aprovados"} para alcançar o nível ${nextLevel.label}.`
-                        : `Você alcançou Chanceler com ${approvedReportsCount} relatos aprovados. Continue contribuindo com a comunidade!`}
+                    {level.message}
                 </Text>
 
                 {/* Progress Bar */}
