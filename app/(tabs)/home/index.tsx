@@ -204,57 +204,6 @@ function TrendCard({
                 : "Sem registros"
             : `${change > 0 ? "+" : ""}${change}%`;
 
-    return (
-        <View
-            className="flex-row items-center justify-between rounded-3xl bg-white p-4"
-            style={CARD_SHADOW}
-        >
-            <View className="mr-3 flex-1 flex-row items-center">
-                <View
-                    className="mr-3 h-11 w-11 items-center justify-center rounded-full"
-                    style={{ backgroundColor: COLORS.surfaceIcon }}
-                >
-                    <TrendingUp
-                        size={22}
-                        color={COLORS.primary}
-                        strokeWidth={2.2}
-                    />
-                </View>
-                <View className="flex-1">
-                    <Text
-                        className="text-base font-bold"
-                        style={{ color: COLORS.text }}
-                    >
-                        Tendência dos últimos 30 dias
-                    </Text>
-                    <Text
-                        className="mt-0.5 text-xs"
-                        style={{ color: COLORS.secondaryText }}
-                    >
-                        {formatNumber(currentCount)} acidentes aprovados
-                    </Text>
-                </View>
-            </View>
-            <View
-                className="min-w-[84px] items-center rounded-2xl px-3 py-2"
-                style={{ backgroundColor: changeBackground }}
-            >
-                <TrendIcon size={18} color={changeColor} strokeWidth={2.5} />
-                <Text
-                    className="mt-1 text-sm font-bold"
-                    style={{ color: changeColor }}
-                >
-                    {changeLabel}
-                </Text>
-                <Text
-                    className="text-[10px]"
-                    style={{ color: COLORS.secondaryText }}
-                >
-                    vs. período anterior
-                </Text>
-            </View>
-        </View>
-    );
 }
 
 function TimeOfDayCard({
@@ -532,16 +481,10 @@ function RecentAccidentsCard({
                             </Text>
                         </View>
                         <View
-                            className="rounded-full px-2.5 py-1"
-                            style={{ backgroundColor: COLORS.positiveBackground }}
+                            className="rounded-4xl px-2.5 py-1"
+                            style={{ backgroundColor: COLORS.severity[accident.severity as keyof typeof COLORS.severity] }}
                         >
-                            <Text
-                                className="text-[10px] font-semibold"
-                                style={{ color: COLORS.positive }}
-                            >
-                                Aprovado
-                            </Text>
-                        </View>
+                    </View>
                     </Pressable>
                 ))
             )}
@@ -593,7 +536,7 @@ function PersonalContribution({
                     accessibilityLabel="Ver meus relatos"
                     onPress={onReportsPress}
                     className="h-9 w-9 items-center justify-center rounded-full"
-                    style={{ backgroundColor: COLORS.surfaceIcon }}
+                    style={{ backgroundColor: COLORS.surfaceIcon  }}
                 >
                     <ChevronRight size={19} color={COLORS.primary} />
                 </Pressable>
@@ -661,7 +604,7 @@ function PersonalContribution({
                     className="mt-4 flex-row items-center"
                 >
                     <Text
-                        className="text-sm font-semibold"
+                        className="text-sm font-semibold ml-2"
                         style={{ color: COLORS.primary }}
                     >
                         Ver meus relatos
@@ -903,7 +846,7 @@ export default function HomeScreen() {
                         <View className="mb-3 flex-row gap-3">
                             <MetricCard
                                 icon={Car}
-                                label="Acidentes aprovados"
+                                label="Acidentes ocorridos"
                                 value={overview.approved_accidents_count}
                                 detail="Registros disponíveis"
                             />
@@ -921,13 +864,9 @@ export default function HomeScreen() {
                                 value={overview.high_severity_accidents_count}
                                 detail="Alta ou crítica"
                             />
-                            <View className="flex-1 justify-center">
-                                <TrendCard
-                                    currentCount={overview.current_30_days_count}
-                                    previousCount={overview.previous_30_days_count}
-                                />
-                            </View>
+                            
                         </View>
+                        
                         <View className="mb-4">
                             <TimeOfDayCard periods={overview.time_of_day} />
                         </View>
