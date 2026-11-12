@@ -77,3 +77,27 @@ export const getMeService = async () => {
     const response = await api.get<GetMeResponse>("/users/me");
     return response.data.data;
 }
+
+// ==========================================
+// VERIFICAÇÃO DE EMAIL
+// ==========================================
+
+export type VerifyEmailPayload = {
+    token: string;
+}
+
+type VerifyEmailResponse = {
+    data: {
+        message: string;
+    };
+}
+
+export const verifyEmailService = async (token: string) => {
+    const response = await api.post<VerifyEmailResponse>("/auth/verify-email", { token });
+    return response.data.data.message;
+}
+
+export const resendVerificationEmailService = async (email: string) => {
+    const response = await api.post("/auth/resend-verification", { email });
+    return response.data;
+}

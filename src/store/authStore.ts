@@ -31,6 +31,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
         set({ user: null, token: null, isLoading: false });
     },
 
+    // Atualiza o usuário diretamente (útil após verificação de e-mail)
+    setUser: (user) => {
+        set({ user });
+    },
+
     // Busca o token salvo ao iniciar o app
     restoreSession: async () => {
         try {

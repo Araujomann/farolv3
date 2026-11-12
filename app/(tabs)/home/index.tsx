@@ -16,7 +16,9 @@ import {
     Clock3,
     MapPin,
     RefreshCw,
+    Shield,
     ShieldAlert,
+    ShieldCheck,
     TrendingUp,
     Users,
 } from "lucide-react-native";

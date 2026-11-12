@@ -253,6 +253,7 @@ export default function ProfileScreen() {
                     name={user?.name}
                     email={user?.email}
                     level={level}
+                    is_email_verified={user?.is_email_verified}
                 />
                 {isLoadingGamification && (
                     <GamificationLoading />
@@ -462,14 +463,33 @@ type AvatarSectionProps = {
     name?: string;
     email?: string;
     level: GamificationLevel;
+    is_email_verified?: boolean;
 };
 
-function AvatarSection({ name, email, level }: AvatarSectionProps) {
+function AvatarSection({ name, email, level, is_email_verified }: AvatarSectionProps) {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const opacityAnim = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(scaleAnim, {
+                toValue: is_email_verified ? 1 : 1,
+                duration: 300,
+                useNativeDriver: true,
+            }),
+            Animated.timing(opacityAnim, {
+                toValue: is_email_verified ? 1 : 1,
+                duration: 300,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, [is_email_verified, scaleAnim, opacityAnim]);
+
     return (
         <View className="items-center justify-center pb-2 pt-5">
-            <View
+            <Animated.View
                 accessibilityLabel={`Avatar com destaque do nível ${level.label}`}
-                className="h-[112px] w-[112px] items-center justify-center rounded-full border-[3px] p-[4px]"
+                className="h-[112px] w-[112px] items-center justify-center rounded-full border-[3px] p-[4px] relative"
                 style={{
                     borderColor: level.color,
                     shadowColor: "#000",
@@ -477,12 +497,28 @@ function AvatarSection({ name, email, level }: AvatarSectionProps) {
                     shadowOpacity: 0.1,
                     shadowRadius: 4,
                     elevation: 3,
+                    transform: [{ scale: scaleAnim }],
+                    opacity: opacityAnim,
                 }}
             >
                 <View className="h-full w-full items-center justify-center rounded-full bg-[#E0E7F1]">
                     <UserIcon size={44} color="#7A8BA5" strokeWidth={1.6} />
                 </View>
-            </View>
+                
+                {/* Verificação de e-mail badge */}
+                {!is_email_verified && (
+                    <Animated.View 
+                        className="absolute bottom-0 right-0 h-6 w-6 items-center justify-center rounded-full bg-red-500 border-2 border-white"
+                        accessibilityLabel="E-mail não verificado"
+                        style={{
+                            transform: [{ scale: scaleAnim }],
+                            opacity: opacityAnim,
+                        }}
+                    >
+                        <CircleAlert size={12} color="#FFFFFF" strokeWidth={1.5} />
+                    </Animated.View>
+                )}
+            </Animated.View>
 
             <Text
                 className="mt-3 text-[22px] font-bold leading-7"
@@ -491,12 +527,22 @@ function AvatarSection({ name, email, level }: AvatarSectionProps) {
                 {name ?? "Usuário"}
             </Text>
 
-            <Text
-                className="mt-1 text-[15px] leading-5"
-                style={{ color: "#414755" }}
-            >
-                {email?.trim() || "—"}
-            </Text>
+            <View className="flex-row items-center gap-2 mt-1">
+                <Text
+                    className="text-[15px] leading-5"
+                    style={{ color: "#414755" }}
+                >
+                    {email?.trim() || "—"}
+                </Text>
+                {!is_email_verified && (
+                    <Text
+                        className="text-[12px] font-semibold"
+                        style={{ color: "#F59E0B" }}
+                    >
+                        Não verificado
+                    </Text>
+                )}
+            </View>
         </View>
     );
 }

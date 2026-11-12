@@ -33,6 +33,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { reverseGeocode } from "@/src/features/map/services/reverseGeocode";
 import { createAccident } from "@/src/features/map/services/accidentService";
+import { useAuthStore } from "@/src/store/authStore";
 import type {
     AccidentClassification,
     AccidentSeverity,
@@ -109,6 +110,8 @@ export default function ReportFormScreen() {
     const [keyboardHeight, setKeyboardHeight] = useState(0);
     const allowExitRef = useRef(false);
     const [isExitDialogVisible, setIsExitDialogVisible] = useState(false);
+
+    const { user } = useAuthStore();
 
     const longitude = Number(longitudeParam);
     const latitude = Number(latitudeParam);
@@ -191,6 +194,14 @@ export default function ReportFormScreen() {
 
     const handleSubmit = async () => {
         setSubmitError(null);
+
+        // Verificação de e-mail não verificado
+        if (!user?.is_email_verified) {
+            setSubmitError(
+                "Para enviar um relato, é necessário verificar seu e-mail. Por favor, clique no link de verificação enviado para o seu e-mail e tente novamente.",
+            );
+            return;
+        }
 
         if (!hasLocation) {
             setSubmitError("A localização do acidente não está disponível.");

@@ -150,10 +150,13 @@ export default function RegisterScreen() {
         tokens.accessToken,
         tokens.refreshToken
       );
+
+      // Redireciona para a tela de lembrete de verificação
+      router.replace("/(auth)/verify-reminder");
     } catch (error: any) {
       const message =
         error?.response?.data?.error?.message ??
-        "Não foi possível criar a conta. Tente novamente.";
+        "Falha ao criar a conta. Tente novamente.";
 
       setServerError(message);
     }

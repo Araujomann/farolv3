@@ -24,7 +24,7 @@ Mapbox.setAccessToken(mapboxToken);
 LogBox.ignoreLogs(['Unable to activate keep awake']);
 
 export default function RootLayout() {
-    const { token, isLoading, restoreSession } = useAuthStore();
+    const { token, isLoading, user, restoreSession } = useAuthStore();
     const segments = useSegments();
     const router = useRouter();
     const rootNavigationState = useRootNavigationState();
@@ -50,11 +50,16 @@ export default function RootLayout() {
             // Sem token → vai para login
             router.replace("/(auth)/login");
         } else if (token && !inTabsGroup && !inPasswordRecovery) {
-            // Com token mas fora da área logada → vai para home
-            router.replace("/(tabs)/home");
+            // Com token mas fora da área logada
+            // Verifica se precisa verificar e-mail
+            if (!user?.is_email_verified) {
+                router.replace("/(auth)/verify-reminder");
+            } else {
+                router.replace("/(tabs)/home");
+            }
         }
 
-    }, [token, isLoading, rootNavigationState?.key, segments]);
+    }, [token, isLoading, rootNavigationState?.key, segments, user?.is_email_verified]);
 
     return (
         <GluestackUIProvider mode="dark">
