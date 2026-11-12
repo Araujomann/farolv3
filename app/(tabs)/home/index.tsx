@@ -14,6 +14,7 @@ import {
     Car,
     ChevronRight,
     Clock3,
+    Mail,
     MapPin,
     RefreshCw,
     Shield,
@@ -757,6 +758,15 @@ export default function HomeScreen() {
                 }
             >
                 <View className="mb-5">
+                    {/* Badge de Verificação de E-mail */}
+                    {!user?.is_email_verified && (
+                        <View className="mb-3 flex-row items-center gap-2 rounded-xl bg-amber-100 px-3 py-2">
+                            <Mail size={16} color="#F59E0B" strokeWidth={2} />
+                            <Text className="text-xs font-medium text-amber-700">
+                                Verifique seu e-mail para relatar acidentes
+                            </Text>
+                        </View>
+                    )}
                     <View className="mb-5 flex-row items-center">
                         <View
                             className="mr-2 h-9 w-9 items-center justify-center rounded-xl"
