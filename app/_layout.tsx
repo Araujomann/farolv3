@@ -41,11 +41,15 @@ export default function RootLayout() {
 
         const inAuthGroup = segments[0] === "(auth)";
         const inTabsGroup = segments[0] === "(tabs)";
+        const inPasswordRecovery =
+            inAuthGroup &&
+            (segments[1] === "forgot-password" ||
+                segments[1] === "reset-password");
 
         if (!token && !inAuthGroup) {
             // Sem token → vai para login
             router.replace("/(auth)/login");
-        } else if (token && !inTabsGroup) {
+        } else if (token && !inTabsGroup && !inPasswordRecovery) {
             // Com token mas fora da área logada → vai para home
             router.replace("/(tabs)/home");
         }

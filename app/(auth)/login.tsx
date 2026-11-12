@@ -336,9 +336,19 @@ export default function LoginScreen() {
 
                                     {/* TEXTO DE RECUPERAÇÃO */}
 
-                                    <Text className="text-xs font-medium text-slate-500">
+                                    <TouchableOpacity
+                                        onPress={() =>
+                                            router.push(
+                                                "/(auth)/forgot-password",
+                                            )
+                                        }
+                                        activeOpacity={0.7}
+                                        accessibilityRole="button"
+                                    >
+                                        <Text className="text-xs font-medium text-[#0058BC]">
                                         Esqueceu a senha?
-                                    </Text>
+                                        </Text>
+                                    </TouchableOpacity>
                                 </Box>
 
                                 {/* ==============================
