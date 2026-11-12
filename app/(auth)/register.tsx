@@ -152,8 +152,7 @@ export default function RegisterScreen() {
       );
     } catch (error: any) {
       const message =
-        error?.response?.data?.message ??
-        error?.response?.data?.errors?.[0]?.message ??
+        error?.response?.data?.error?.message ??
         "Não foi possível criar a conta. Tente novamente.";
 
       setServerError(message);
