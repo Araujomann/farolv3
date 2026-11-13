@@ -7,14 +7,30 @@ import {
 } from "expo-router/ui";
 import { usePathname } from "expo-router";
 
-import React from "react";
-import { Pressable, Text, View } from "react-native";
+import React, { useEffect } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import Animated, {
+  type SharedValue,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useProfileTitleColorStore } from "@/src/features/profile/titleColorStore";
 import {
-  AnimatedColorIcon,
-  AnimatedColorText,
+  afterUiSettles,
+  TITLE_COLOR_TRANSITION_MS,
+  titleColorEasing,
+  useProfileTitleColorStore,
+} from "@/src/features/profile/titleColorStore";
+import {
+  mixHex,
+  useOverLayerStyle,
+  useUnderLayerStyle,
 } from "@/components/ui/AnimatedColor";
+import {
+  TitleColorIcon,
+  useTitleColor,
+} from "@/src/features/profile/components/TitleColor";
 
 import {
   House,
@@ -26,27 +42,43 @@ import {
 
 const ACTIVE_COLOR = "#0969D7";
 const INACTIVE_COLOR = "#6B7280";
+const LEAVE_PROFILE_TRANSITION_MS = 700;
+
+/**
+ * Cor do rótulo: mistura a cor normal da aba com a cor do título conforme
+ * `profileMix` (0 = cores normais, 1 = cor do título). Roda na thread de UI.
+ */
+function useTabLabelStyle(baseColor: string, profileMix: SharedValue<number>) {
+  const titleColor = useTitleColor();
+
+  return useAnimatedStyle(
+    () => ({
+      color: mixHex(baseColor, titleColor.value, profileMix.value),
+    }),
+    [baseColor],
+  );
+}
 
 type TabButtonProps = TabTriggerSlotProps & {
   icon: LucideIcon;
   label: string;
-  titleColor: string;
-  isProfileSelected: boolean;
+  profileMix: SharedValue<number>;
 };
+
+const TAB_ICON_SIZE = 23;
+const TAB_ICON_STROKE = 2.4;
 
 function TabButton({
   icon: Icon,
   label,
   isFocused,
-  titleColor,
-  isProfileSelected,
+  profileMix,
   ...props
 }: TabButtonProps) {
-  const color = isProfileSelected
-    ? titleColor
-    : isFocused
-      ? ACTIVE_COLOR
-      : INACTIVE_COLOR;
+  const baseColor = isFocused ? ACTIVE_COLOR : INACTIVE_COLOR;
+  const baseIconStyle = useUnderLayerStyle(profileMix);
+  const titleIconStyle = useOverLayerStyle(profileMix);
+  const labelStyle = useTabLabelStyle(baseColor, profileMix);
 
   return (
     <Pressable
@@ -54,40 +86,44 @@ function TabButton({
       className="flex-1"
     >
       <View className="flex-1 items-center justify-center gap-1">
-        <AnimatedColorIcon
-          size={23}
-          color={color}
-          strokeWidth={2.4}
-          icon={Icon}
-        />
+        <View style={styles.icon}>
+          <Animated.View style={[StyleSheet.absoluteFill, baseIconStyle]}>
+            <Icon
+              size={TAB_ICON_SIZE}
+              color={baseColor}
+              strokeWidth={TAB_ICON_STROKE}
+            />
+          </Animated.View>
+          <Animated.View style={[StyleSheet.absoluteFill, titleIconStyle]}>
+            <TitleColorIcon
+              icon={Icon}
+              size={TAB_ICON_SIZE}
+              strokeWidth={TAB_ICON_STROKE}
+            />
+          </Animated.View>
+        </View>
 
-        <Text
-          className="text-xs font-semibold"
-          style={{ color }}
-        >
+        <Animated.Text style={[styles.label, labelStyle]}>
           {label}
-        </Text>
+        </Animated.Text>
       </View>
     </Pressable>
   );
 }
 
 type ReportTabProps = TabTriggerSlotProps & {
-  titleColor: string;
-  isProfileSelected: boolean;
+  profileMix: SharedValue<number>;
 };
 
 function ReportTab({
   isFocused,
-  titleColor,
-  isProfileSelected,
+  profileMix,
   ...props
 }: ReportTabProps) {
-  const textColor = isProfileSelected
-    ? titleColor
-    : isFocused
-      ? ACTIVE_COLOR
-      : INACTIVE_COLOR;
+  const labelStyle = useTabLabelStyle(
+    isFocused ? ACTIVE_COLOR : INACTIVE_COLOR,
+    profileMix,
+  );
 
   return (
     <Pressable
@@ -99,14 +135,9 @@ function ReportTab({
         <View className="h-8" />
 
         {/* Rótulo alinhado com os demais */}
-        <AnimatedColorText
-          color={textColor}
-          renderText={(color) => (
-            <Text className="text-xs font-semibold" style={{ color }}>
-              Relatar
-            </Text>
-          )}
-        />
+        <Animated.Text style={[styles.label, labelStyle]}>
+          Relatar
+        </Animated.Text>
 
         {/* Botão flutuante */}
         <View
@@ -145,8 +176,27 @@ function ReportTab({
 export default function Layout() {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
-  const titleColor = useProfileTitleColorStore((state) => state.titleColor);
+  const isTitleColorResolved = useProfileTitleColorStore(
+    (state) => state.isTitleColorResolved,
+  );
   const isProfileSelected = pathname === "/profile";
+  // Só aplica a cor do título depois que ela é conhecida, evitando uma
+  // troca intermediária para uma cor provisória.
+  const shouldUseTitleColor = isProfileSelected && isTitleColorResolved;
+  const profileMix = useSharedValue(0);
+
+  useEffect(() => {
+    // Espera a tela montar e a UI assentar; a animação em si roda
+    // inteiramente na thread de UI.
+    return afterUiSettles(() => {
+      profileMix.value = withTiming(shouldUseTitleColor ? 1 : 0, {
+        duration: shouldUseTitleColor
+          ? TITLE_COLOR_TRANSITION_MS
+          : LEAVE_PROFILE_TRANSITION_MS,
+        easing: titleColorEasing,
+      });
+    });
+  }, [profileMix, shouldUseTitleColor]);
   const isReportRoute =
     pathname === "/report" ||
     pathname.endsWith("/report") ||
@@ -185,8 +235,7 @@ export default function Layout() {
           <TabButton
             icon={House}
             label="Home"
-            titleColor={titleColor}
-            isProfileSelected={isProfileSelected}
+            profileMix={profileMix}
           />
         </TabTrigger>
 
@@ -199,8 +248,7 @@ export default function Layout() {
           <TabButton
             icon={Map}
             label="Mapa"
-            titleColor={titleColor}
-            isProfileSelected={isProfileSelected}
+            profileMix={profileMix}
           />
         </TabTrigger>
 
@@ -211,8 +259,7 @@ export default function Layout() {
           asChild
         >
           <ReportTab
-            titleColor={titleColor}
-            isProfileSelected={isProfileSelected}
+            profileMix={profileMix}
           />
         </TabTrigger>
 
@@ -225,11 +272,22 @@ export default function Layout() {
           <TabButton
             icon={User}
             label="Perfil"
-            titleColor={titleColor}
-            isProfileSelected={isProfileSelected}
+            profileMix={profileMix}
           />
         </TabTrigger>
       </TabList>
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  icon: {
+    width: TAB_ICON_SIZE,
+    height: TAB_ICON_SIZE,
+  },
+  label: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "600",
+  },
+});

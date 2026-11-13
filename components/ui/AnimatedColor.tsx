@@ -1,132 +1,83 @@
-import React, {
-    type ReactNode,
-    useLayoutEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
-import {
-    Animated,
-    StyleSheet,
-    View,
-} from "react-native";
+import React from "react";
+import { StyleSheet, View } from "react-native";
+import Animated, {
+    type SharedValue,
+    useAnimatedStyle,
+} from "react-native-reanimated";
 import type { LucideIcon } from "lucide-react-native";
 
-type AnimatedColorProps = {
-    color: string;
-};
+/**
+ * Interpola linearmente duas cores `#RRGGBB`. Roda tanto na thread JS quanto
+ * na thread de UI (worklet), e devolve sempre `#RRGGBB` — o que permite
+ * concatenar um canal alfa (ex.: `${cor}44`).
+ */
+export function mixHex(from: string, to: string, t: number): string {
+    "worklet";
+    const a = from.length === 7 && from[0] === "#" ? parseInt(from.slice(1), 16) : NaN;
+    const b = to.length === 7 && to[0] === "#" ? parseInt(to.slice(1), 16) : NaN;
+    if (Number.isNaN(a) || Number.isNaN(b)) {
+        return t < 0.5 ? from : to;
+    }
 
-function useColorCrossfade(color: string) {
-    const currentColor = useRef(color);
-    const [previousColor, setPreviousColor] = useState<string | null>(null);
-    const opacity = useRef(new Animated.Value(1)).current;
+    const amount = t <= 0 ? 0 : t >= 1 ? 1 : t;
+    const channel = (shift: number) => {
+        const start = (a >> shift) & 255;
+        const end = (b >> shift) & 255;
+        return Math.round(start + (end - start) * amount);
+    };
 
-    useLayoutEffect(() => {
-        if (currentColor.current === color) {
-            return;
-        }
-
-        const fromColor = currentColor.current;
-        currentColor.current = color;
-        setPreviousColor(fromColor);
-        opacity.setValue(0);
-
-        const animation = Animated.timing(opacity, {
-            toValue: 1,
-            duration: 350,
-            useNativeDriver: true,
-        });
-        animation.start(({ finished }) => {
-            if (finished) {
-                setPreviousColor(null);
-            }
-        });
-
-        return () => animation.stop();
-    }, [color, opacity]);
-
-    return { previousColor, opacity };
+    return (
+        "#" +
+        ((1 << 24) | (channel(16) << 16) | (channel(8) << 8) | channel(0))
+            .toString(16)
+            .slice(1)
+            .toUpperCase()
+    );
 }
 
-type AnimatedColorIconProps = AnimatedColorProps & {
+/** Opacidade da camada de baixo: some quando a de cima está totalmente visível. */
+export function useUnderLayerStyle(progress: SharedValue<number>) {
+    return useAnimatedStyle(() => ({
+        opacity: progress.value >= 0.999 ? 0 : 1,
+    }));
+}
+
+/** Opacidade da camada de cima: acompanha o progresso. */
+export function useOverLayerStyle(progress: SharedValue<number>) {
+    return useAnimatedStyle(() => ({ opacity: progress.value }));
+}
+
+type CrossfadeIconProps = {
     icon: LucideIcon;
     size: number;
     strokeWidth: number;
+    fromColor: string;
+    toColor: string;
+    progress: SharedValue<number>;
 };
 
-export function AnimatedColorIcon({
+/**
+ * Ícone que transiciona de cor com um crossfade de opacidade executado
+ * inteiramente na thread de UI — sem re-render do SVG a cada frame.
+ */
+export function CrossfadeIcon({
     icon: Icon,
     size,
     strokeWidth,
-    color,
-}: AnimatedColorIconProps) {
-    const AnimatedIcon = useMemo(
-        () => Animated.createAnimatedComponent(Icon),
-        [Icon],
-    );
-    const currentColor = useRef(color);
-    const [colorRange, setColorRange] = useState({
-        from: color,
-        to: color,
-    });
-    const progress = useRef(new Animated.Value(1)).current;
-
-    useLayoutEffect(() => {
-        if (currentColor.current === color) {
-            return;
-        }
-
-        const from = currentColor.current;
-        currentColor.current = color;
-        setColorRange({ from, to: color });
-        progress.setValue(0);
-
-        const animation = Animated.timing(progress, {
-            toValue: 1,
-            duration: 350,
-            useNativeDriver: false,
-        });
-        animation.start();
-
-        return () => animation.stop();
-    }, [color, progress]);
-
-    const animatedColor = progress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [colorRange.from, colorRange.to],
-    });
+    fromColor,
+    toColor,
+    progress,
+}: CrossfadeIconProps) {
+    const underStyle = useUnderLayerStyle(progress);
+    const overStyle = useOverLayerStyle(progress);
 
     return (
-        <AnimatedIcon
-            size={size}
-            color={animatedColor}
-            strokeWidth={strokeWidth}
-        />
-    );
-}
-
-type AnimatedColorTextProps = AnimatedColorProps & {
-    renderText: (color: string) => ReactNode;
-};
-
-export function AnimatedColorText({
-    color,
-    renderText,
-}: AnimatedColorTextProps) {
-    const { previousColor, opacity } = useColorCrossfade(color);
-
-    return (
-        <View>
-            {previousColor !== null && (
-                <View
-                    pointerEvents="none"
-                    style={StyleSheet.absoluteFill}
-                >
-                    {renderText(previousColor)}
-                </View>
-            )}
-            <Animated.View style={{ opacity }}>
-                {renderText(color)}
+        <View style={{ width: size, height: size }}>
+            <Animated.View style={[StyleSheet.absoluteFill, underStyle]}>
+                <Icon size={size} color={fromColor} strokeWidth={strokeWidth} />
+            </Animated.View>
+            <Animated.View style={[StyleSheet.absoluteFill, overStyle]}>
+                <Icon size={size} color={toColor} strokeWidth={strokeWidth} />
             </Animated.View>
         </View>
     );

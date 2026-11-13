@@ -36,10 +36,12 @@ import { ACCIDENT_APPROVED_EVENT } from "@/src/features/notifications/pushNotifi
 import { useAuthStore } from "@/src/store/authStore";
 import { verifyEmailFromAppRoute } from "@/src/features/auth/verifyEmailRoute";
 import { useProfileTitleColorStore } from "@/src/features/profile/titleColorStore";
+import Reanimated, { useAnimatedStyle } from "react-native-reanimated";
 import {
-    AnimatedColorIcon,
-    AnimatedColorText,
-} from "@/components/ui/AnimatedColor";
+    TitleColorIcon,
+    TitleColorText,
+    useTitleColor,
+} from "@/src/features/profile/components/TitleColor";
 import { AdministrativeNoticesPanel } from "@/src/features/notifications/components/AdministrativeNoticesPanel";
 
 const PRIMARY_HEX = "#0058BC";
@@ -212,9 +214,14 @@ export default function ProfileScreen() {
     };
 
     const level = getGamificationLevel(approvedReportsCount ?? 0);
+    const hasLoadedLevel = approvedReportsCount !== null;
     useEffect(() => {
-        setTitleColor(level.color);
-    }, [level.color, setTitleColor]);
+        // Só aplica a cor quando o nível real é conhecido, evitando uma
+        // transição intermediária para a cor do nível inicial.
+        if (hasLoadedLevel) {
+            setTitleColor(level.color);
+        }
+    }, [hasLoadedLevel, level.color, setTitleColor]);
 
     const levelIndex = LEVELS.findIndex(
         (candidate) => candidate.id === level.id,
@@ -238,7 +245,6 @@ export default function ProfileScreen() {
                 paddingTop={insets.top}
                 onBack={() => router.back()}
                 onNoticesPress={() => setIsAdministrativeNoticesVisible(true)}
-                titleColor={titleColor}
             />
 
             {/* ── Main Content ── */}
@@ -282,17 +288,13 @@ export default function ProfileScreen() {
                             progressPercent={progressPercent}
                         />
                         {receivedTrustVotesCount !== null && (
-                            <TrustVotesCard
-                                count={receivedTrustVotesCount}
-                                titleColor={titleColor}
-                            />
+                            <TrustVotesCard count={receivedTrustVotesCount} />
                         )}
                     </>
                 )}
                 <SettingsList
                     onReportsPress={() => router.push("/profile/reports")}
                     onAboutPress={() => setIsAboutVisible(true)}
-                    titleColor={titleColor}
                 />
                 <LogoutSection
                     isLoggingOut={isLoggingOut}
@@ -401,14 +403,12 @@ type TopAppBarProps = {
     paddingTop: number;
     onBack: () => void;
     onNoticesPress: () => void;
-    titleColor: string;
 };
 
 function TopAppBar({
     paddingTop,
     onBack,
     onNoticesPress,
-    titleColor,
 }: TopAppBarProps) {
     return (
         <View
@@ -424,10 +424,9 @@ function TopAppBar({
                 hitSlop={8}
             >
                 <View className="h-11 w-11 items-center justify-center">
-                    <AnimatedColorIcon
+                    <TitleColorIcon
                         icon={ArrowLeft}
                         size={24}
-                        color={titleColor}
                         strokeWidth={2}
                     />
                 </View>
@@ -447,10 +446,9 @@ function TopAppBar({
                 onPress={onNoticesPress}
             >
                 <View className="h-11 w-11 items-center justify-center">
-                    <AnimatedColorIcon
+                    <TitleColorIcon
                         icon={Bell}
                         size={24}
-                        color={titleColor}
                         strokeWidth={2}
                     />
                 </View>
@@ -472,6 +470,10 @@ type AvatarSectionProps = {
 function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }: AvatarSectionProps) {
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const opacityAnim = useRef(new Animated.Value(1)).current;
+    const titleColor = useTitleColor();
+    const borderStyle = useAnimatedStyle(() => ({
+        borderColor: titleColor.value,
+    }));
 
     useEffect(() => {
         Animated.parallel([
@@ -494,7 +496,7 @@ function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }:
                 accessibilityLabel={`Avatar com destaque do nível ${level.label}`}
                 className="h-[112px] w-[112px] items-center justify-center rounded-full border-[3px] p-[4px] relative"
                 style={{
-                    borderColor: level.color,
+                    borderColor: "transparent",
                     shadowColor: "#000",
                     shadowOffset: { width: 0, height: 2 },
                     shadowOpacity: 0.1,
@@ -504,6 +506,22 @@ function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }:
                     opacity: opacityAnim,
                 }}
             >
+                {/* Anel com a cor do título (animado na thread de UI) */}
+                <Reanimated.View
+                    pointerEvents="none"
+                    style={[
+                        {
+                            position: "absolute",
+                            top: -3,
+                            right: -3,
+                            bottom: -3,
+                            left: -3,
+                            borderRadius: 999,
+                            borderWidth: 3,
+                        },
+                        borderStyle,
+                    ]}
+                />
                 <View className="h-full w-full items-center justify-center rounded-full bg-[#E0E7F1]">
                     <UserIcon size={44} color="#7A8BA5" strokeWidth={1.6} />
                 </View>
@@ -565,34 +583,54 @@ type LevelCardProps = {
     points: number;
 };
 
+/** Borda translúcida na cor do título, animada na thread de UI. */
+function useTitleBorderStyle() {
+    const titleColor = useTitleColor();
+    return useAnimatedStyle(() => ({
+        borderColor: `${titleColor.value}44`,
+    }));
+}
+
+/** Fundo na cor do título, animado na thread de UI. */
+function useTitleBackgroundStyle() {
+    const titleColor = useTitleColor();
+    return useAnimatedStyle(() => ({
+        backgroundColor: titleColor.value,
+    }));
+}
+
 function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
     const LevelIcon = level.icon;
+    const borderStyle = useTitleBorderStyle();
+    const iconBackgroundStyle = useTitleBackgroundStyle();
 
     return (
-        <View
+        <Reanimated.View
             className="mt-5 flex-row items-center gap-3 rounded-xl border p-6"
-            style={{
-                backgroundColor: "#FFFFFF",
-                borderColor: `${level.color}44`,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.08,
-                shadowRadius: 12,
-                elevation: 4,
-            }}
+            style={[
+                {
+                    backgroundColor: "#FFFFFF",
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.08,
+                    shadowRadius: 12,
+                    elevation: 4,
+                },
+                borderStyle,
+            ]}
         >
             {/* Left side: icon + label */}
             <View className="min-w-0 flex-1 flex-row items-center gap-3">
-                <View
+                <Reanimated.View
                     className="h-12 w-12 items-center justify-center rounded-full"
-                    style={{ backgroundColor: level.color }}
+                    style={iconBackgroundStyle}
                 >
                     <LevelIcon
                         size={24}
                         color="#FFFFFF"
                         strokeWidth={2}
                     />
-                </View>
+                </Reanimated.View>
                 <View className="min-w-0 flex-1">
                     <Text
                         className="text-[11px] font-semibold uppercase tracking-widest"
@@ -600,15 +638,14 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
                     >
                         Nível Atual
                     </Text>
-                    <Text
+                    <TitleColorText
                         className="text-xl font-semibold"
-                        style={{ color: level.color }}
                         numberOfLines={1}
                         adjustsFontSizeToFit
                         minimumFontScale={0.8}
                     >
                         {level.label}
-                    </Text>
+                    </TitleColorText>
                     <Text
                         className="mt-0.5 text-xs"
                         style={{ color: ON_SURFACE_VARIANT_HEX }}
@@ -639,7 +676,7 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
                     pontos
                 </Text>
             </View>
-        </View>
+        </Reanimated.View>
     );
 }
 
@@ -659,6 +696,8 @@ function ProgressCard({
 }: ProgressCardProps) {
     const progress = useRef(new Animated.Value(0)).current;
     const LevelIcon = level.icon;
+    const borderStyle = useTitleBorderStyle();
+    const barColorStyle = useTitleBackgroundStyle();
 
     useEffect(() => {
         const animation = Animated.timing(progress, {
@@ -672,19 +711,16 @@ function ProgressCard({
     }, [progress, progressPercent]);
 
     return (
-        <View
+        <Reanimated.View
             className="relative mt-4 overflow-hidden rounded-xl border p-6"
-            style={{
-                backgroundColor: SURFACE_HEX,
-                borderColor: `${level.color}44`,
-            }}
+            style={[{ backgroundColor: SURFACE_HEX }, borderStyle]}
         >
             {/* Decorative watermark icon */}
             <View
                 className="absolute opacity-10"
                 style={{ right: -8, top: -8 }}
             >
-                <LevelIcon size={100} color={level.color} strokeWidth={1} />
+                <TitleColorIcon icon={LevelIcon} size={100} strokeWidth={1} />
             </View>
 
             {/* Content */}
@@ -711,41 +747,35 @@ function ProgressCard({
                     style={{ backgroundColor: "#E2E4ED" }}
                 >
                     <Animated.View
-                        className="h-full rounded-full"
+                        className="h-full overflow-hidden rounded-full"
                         style={{
                             width: progress.interpolate({
                                 inputRange: [0, 100],
                                 outputRange: ["0%", "100%"],
                             }),
-                            backgroundColor: level.color,
                         }}
-                    />
+                    >
+                        <Reanimated.View
+                            className="h-full w-full"
+                            style={barColorStyle}
+                        />
+                    </Animated.View>
                 </View>
-                <Text
-                    className="mt-2 text-right text-xs font-semibold"
-                    style={{ color: level.color }}
-                >
+                <TitleColorText className="mt-2 text-right text-xs font-semibold">
                     {`${Math.round(progressPercent)}%`}
-                </Text>
+                </TitleColorText>
             </View>
-        </View>
+        </Reanimated.View>
     );
 }
 
-function TrustVotesCard({
-    count,
-    titleColor,
-}: {
-    count: number;
-    titleColor: string;
-}) {
+function TrustVotesCard({ count }: { count: number }) {
     return (
         <View className="mt-4 flex-row items-center gap-4 rounded-xl border border-[#D8E2FF] bg-white p-5">
             <View className="h-12 w-12 items-center justify-center rounded-full bg-[#EAF1FF]">
-                <AnimatedColorIcon
+                <TitleColorIcon
                     icon={BadgeCheck}
                     size={25}
-                    color={titleColor}
                     strokeWidth={2.2}
                 />
             </View>
@@ -765,14 +795,9 @@ function TrustVotesCard({
                         : `${count} votos confiáveis recebidos`}
                 </Text>
             </View>
-            <AnimatedColorText
-                color={titleColor}
-                renderText={(color) => (
-                    <Text className="text-2xl font-bold" style={{ color }}>
-                        {count}
-                    </Text>
-                )}
-            />
+            <TitleColorText className="text-2xl font-bold">
+                {count}
+            </TitleColorText>
         </View>
     );
 }
@@ -818,14 +843,12 @@ function GamificationError({ message, onRetry }: GamificationErrorProps) {
 type SettingsRowProps = {
     icon: LucideIcon;
     label: string;
-    iconColor: string;
     onPress?: () => void;
 };
 
 function SettingsRow({
     icon: Icon,
     label,
-    iconColor,
     onPress,
 }: SettingsRowProps) {
     return (
@@ -841,12 +864,7 @@ function SettingsRow({
                     className="h-8 w-8 items-center justify-center rounded-lg"
                     style={{ backgroundColor: SURFACE_ICON_HEX }}
                 >
-                    <AnimatedColorIcon
-                        icon={Icon}
-                        size={20}
-                        color={iconColor}
-                        strokeWidth={2}
-                    />
+                    <TitleColorIcon icon={Icon} size={20} strokeWidth={2} />
                 </View>
                 <Text
                     className="text-base"
@@ -855,12 +873,7 @@ function SettingsRow({
                     {label}
                 </Text>
             </View>
-            <AnimatedColorIcon
-                icon={ChevronRight}
-                size={20}
-                color={iconColor}
-                strokeWidth={2}
-            />
+            <TitleColorIcon icon={ChevronRight} size={20} strokeWidth={2} />
         </Pressable>
     );
 }
@@ -877,11 +890,9 @@ function SettingsDivider() {
 function SettingsList({
     onReportsPress,
     onAboutPress,
-    titleColor,
 }: {
     onReportsPress: () => void;
     onAboutPress: () => void;
-    titleColor: string;
 }) {
     return (
         <View
@@ -899,7 +910,6 @@ function SettingsList({
                 icon={History}
                 label="Meus Relatos"
                 onPress={onReportsPress}
-                iconColor={titleColor}
             />
             <SettingsDivider />
 
@@ -907,7 +917,6 @@ function SettingsList({
             <SettingsRow
                 icon={Settings}
                 label="Configurações"
-                iconColor={titleColor}
             />
             <SettingsDivider />
 
@@ -915,7 +924,6 @@ function SettingsList({
                 icon={Info}
                 label="Sobre o App"
                 onPress={onAboutPress}
-                iconColor={titleColor}
             />
         </View>
     );
