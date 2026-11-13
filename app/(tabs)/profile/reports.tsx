@@ -165,7 +165,7 @@ export default function MyReportsScreen() {
                 <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={t("settings.backToProfile")}
-                    onPress={() => router.back()}
+                    onPress={() => router.dismissTo("/profile")}
                     className="h-11 w-11 items-center justify-center"
                 >
                     <ArrowLeft size={24} color={colors.primary} />

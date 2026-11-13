@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { ACCIDENT_APPROVED_EVENT } from "@/src/features/notifications/pushNotifications";
-import prfLogo from "../../../policia-rodoviaria-federal-logo-png_seeklogo-351022.png";
+import prfLogo from "../../../assets/images/prf-logo.png";
 
 import { useAppTheme } from "@/src/theme/useAppTheme";
 import {
@@ -391,7 +391,7 @@ export default function MapScreen() {
                                 top: 0,
                                 width: 120,
                                 height: 120,
-                                opacity: 0.11,
+                                opacity: isDark ? 0.16 : 0.11,
                             }}
                         />
                     )}

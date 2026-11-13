@@ -268,9 +268,11 @@ export default function Layout() {
         </TabTrigger>
 
         {/* PERFIL */}
+        {/* Sempre reabre na raiz do perfil, sem restaurar subtelas antigas */}
         <TabTrigger
           name="profile"
           href="/profile"
+          reset="always"
           asChild
         >
           <TabButton

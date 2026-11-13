@@ -27,6 +27,7 @@ import {
 import { useCallback, useRef, useState } from "react";
 import {
     ActivityIndicator,
+    Image,
     Pressable,
     RefreshControl,
     ScrollView,
@@ -771,12 +772,13 @@ export default function HomeScreen() {
                         </Pressable>
                     )}
                     <View className="mb-5 flex-row items-center">
-                        <View
-                            className="mr-2 h-9 w-9 items-center justify-center rounded-xl"
-                            style={{ backgroundColor: COLORS.primary }}
-                        >
-                            <MapPin size={20} color="#FFFFFF" strokeWidth={2.4} />
-                        </View>
+                        <Image
+                            source={require("../../../assets/images/farol-logo.png")}
+                            accessibilityIgnoresInvertColors
+                            resizeMode="contain"
+                            className="mr-2"
+                            style={{ width: 30, height: 36 }}
+                        />
                         <Text
                             className="text-xl font-display-extrabold"
                             style={{ color: COLORS.text }}

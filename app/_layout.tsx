@@ -7,6 +7,7 @@ import {
 } from "expo-router";
 import { ActivityIndicator, LogBox, View } from 'react-native';
 import Mapbox from '@rnmapbox/maps';
+import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import {
     Inter_400Regular,
@@ -44,6 +45,11 @@ if (!mapboxToken) {
 Mapbox.setAccessToken(mapboxToken);
 
 LogBox.ignoreLogs(['Unable to activate keep awake']);
+
+// Mantém a splash nativa (escudo do Farol sobre o azul) até sessão, fontes,
+// tema e idioma estarem prontos, e então some com um fade suave.
+SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.setOptions({ duration: 400, fade: true });
 
 export default function RootLayout() {
     const { token, isLoading, user, restoreSession, emailVerificationPrompt } =
@@ -83,6 +89,13 @@ export default function RootLayout() {
     };
 
     usePushNotifications(Boolean(token));
+
+    const isAppReady =
+        !isLoading && fontsReady && isThemeHydrated && isLanguageHydrated;
+
+    useEffect(() => {
+        if (isAppReady) SplashScreen.hide();
+    }, [isAppReady]);
 
     useEffect(() => {
         restoreSession();
@@ -147,7 +160,7 @@ export default function RootLayout() {
                         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                     </Stack>
-                    {(isLoading || !fontsReady || !isThemeHydrated || !isLanguageHydrated) && (
+                    {!isAppReady && (
                         <View
                             className="absolute inset-0 items-center justify-center"
                             style={{ backgroundColor: colors.background }}
