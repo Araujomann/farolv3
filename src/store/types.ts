@@ -32,6 +32,8 @@ export type AuthActions = {
     ) => Promise<void>;
     dismissEmailVerificationPrompt: () => void;
     signOut: () => Promise<void>;
+    /** Limpa a sessão local após a conta ser excluída no servidor. */
+    clearDeletedAccountSession: () => Promise<void>;
     restoreSession: () => Promise<void>;
     setUser: (user: User) => void;
 };

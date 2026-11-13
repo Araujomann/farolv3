@@ -65,6 +65,11 @@ export async function registerForPushNotifications() {
     await SecureStore.setItemAsync(PUSH_TOKEN_STORAGE_KEY, pushToken);
 }
 
+/** Esquece o token salvo localmente sem chamar a API (ex.: conta excluída). */
+export async function forgetStoredPushToken() {
+    await SecureStore.deleteItemAsync(PUSH_TOKEN_STORAGE_KEY);
+}
+
 export async function unregisterCurrentPushToken() {
     const pushToken = await SecureStore.getItemAsync(PUSH_TOKEN_STORAGE_KEY);
     if (!pushToken) {

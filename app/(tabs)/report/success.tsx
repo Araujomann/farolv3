@@ -19,11 +19,12 @@ import { ArrowLeft, ArrowRight } from "lucide-react-native";
 import { useNavigation } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const GREEN = "#34C759";
-const GRAY = "#9CA3AF";
-const PRIMARY = "#0058BC";
-
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import { useTranslation } from "@/src/i18n";
+const GREEN = "#34C759";
 export default function ReportSuccessScreen() {
+    const { t } = useTranslation();
+    const { colors } = useAppTheme();
     const navigation = useNavigation();
     const tabsNavigation = useNavigation("/(tabs)");
     const insets = useSafeAreaInsets();
@@ -137,13 +138,13 @@ export default function ReportSuccessScreen() {
     const heroSize = 156;
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+        <View style={{ flex: 1, backgroundColor: colors.surface }}>
             <Animated.View
                 style={[
                     {
                         flex: 1,
                         overflow: "hidden",
-                        backgroundColor: "#FFFFFF",
+                        backgroundColor: colors.surface,
                     },
                     exitStyle,
                 ]}
@@ -176,7 +177,7 @@ export default function ReportSuccessScreen() {
                             width: graySize,
                             height: graySize,
                             borderRadius: graySize / 2,
-                            backgroundColor: GRAY,
+                            backgroundColor: colors.outline,
                         },
                         grayGlowStyle,
                     ]}
@@ -214,7 +215,7 @@ export default function ReportSuccessScreen() {
 
                 {/* Botão superior de voltar */}
                 <Pressable
-                    accessibilityLabel="Voltar para o início"
+                    accessibilityLabel={t("report.success.backHome")}
                     accessibilityRole="button"
                     onPress={returnHome}
                     style={({ pressed }) => ({
@@ -227,12 +228,12 @@ export default function ReportSuccessScreen() {
                         alignItems: "center",
                         justifyContent: "center",
                         borderRadius: 24,
-                        backgroundColor: "rgba(224, 226, 237, 0.62)",
+                        backgroundColor: colors.surfaceMuted,
                         opacity: pressed ? 0.72 : 1,
                         transform: [{ scale: pressed ? 0.96 : 1 }],
                     })}
                 >
-                    <ArrowLeft size={22} color="#181C23" strokeWidth={2.2} />
+                    <ArrowLeft size={22} color={colors.onSurface} strokeWidth={2.2} />
                 </Pressable>
 
                 {/* Texto decorativo para telas maiores */}
@@ -244,13 +245,13 @@ export default function ReportSuccessScreen() {
                             position: "absolute",
                             left: -38,
                             top: "38%",
-                            color: "rgba(24,28,35,0.1)",
+                            color: `${colors.onSurface}1A`,
                             fontSize: 92,
                             fontFamily: "PlusJakartaSans_700Bold",
                             transform: [{ rotate: "-90deg" }],
                         }}
                     >
-                        Enviado!
+                        {t("report.success.sent")}
                     </Text>
                 )}
 
@@ -282,10 +283,10 @@ export default function ReportSuccessScreen() {
                                 width: "100%",
                                 padding: 20,
                                 borderLeftWidth: 3,
-                                borderLeftColor: PRIMARY,
+                                borderLeftColor: colors.primary,
                                 borderRadius: 20,
-                                backgroundColor: "#F8F9FF",
-                                shadowColor: "#181C23",
+                                backgroundColor: colors.background,
+                                shadowColor: colors.onSurface,
                                 shadowOffset: { width: 0, height: 12 },
                                 shadowOpacity: 0.08,
                                 shadowRadius: 24,
@@ -296,27 +297,25 @@ export default function ReportSuccessScreen() {
                                 accessibilityRole="header"
                                 style={{
                                     marginBottom: 12,
-                                    color: "#181C23",
+                                    color: colors.onSurface,
                                     fontSize: 40,
                                     fontFamily: "PlusJakartaSans_700Bold",
                                     lineHeight: 46,
                                 }}
                             >
-                                Relato{"\n"}Enviado!
+                                {t("report.success.title")}
                             </Text>
 
                             <Text className="font-body"
                                 style={{
                                     width: "100%",
-                                    color: "#414755",
+                                    color: colors.onSurfaceVariant,
                                     fontSize: 17,
                                     lineHeight: 25,
                                     flexShrink: 1,
                                 }}
                             >
-                                Seu relato foi enviado com sucesso e será analisado
-                                pela nossa equipe. Agradecemos pela contribuição para uma
-                                cidade mais segura!
+                                {t("report.success.message")}
                             </Text>
                         </View>
                     </Animated.View>
@@ -328,12 +327,12 @@ export default function ReportSuccessScreen() {
                         paddingHorizontal: 24,
                         paddingTop: 12,
                         paddingBottom: insets.bottom + 24,
-                        backgroundColor: "#FFFFFF",
+                        backgroundColor: colors.surface,
                     }}
                 >
                     <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel="Voltar para o Início"
+                        accessibilityLabel={t("report.success.backHomeButton")}
                         onPress={returnHome}
                         style={({ pressed }) => ({
                             height: 64,
@@ -341,11 +340,11 @@ export default function ReportSuccessScreen() {
                             alignItems: "center",
                             justifyContent: "space-between",
                             borderRadius: 32,
-                            backgroundColor: PRIMARY,
+                            backgroundColor: colors.primary,
                             paddingHorizontal: 28,
                             opacity: pressed ? 0.9 : 1,
                             transform: [{ scale: pressed ? 0.98 : 1 }],
-                            shadowColor: PRIMARY,
+                            shadowColor: colors.primary,
                             shadowOffset: { width: 0, height: 8 },
                             shadowOpacity: 0.3,
                             shadowRadius: 18,
@@ -362,7 +361,7 @@ export default function ReportSuccessScreen() {
                                 fontFamily: "Inter_700Bold",
                             }}
                         >
-                            Voltar para o Início
+                            {t("report.success.backHomeButton")}
                         </Text>
 
                         <View

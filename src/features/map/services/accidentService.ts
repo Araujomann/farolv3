@@ -54,6 +54,14 @@ export const getAccidentsForMap = async (
     return response.data.data.map(normalizeAccident);
 };
 
+export const getAccidentsMapVersion = async (): Promise<string> => {
+    const response = await api.get<{ data: { version: string } }>(
+        "/accidents/map/version",
+    );
+
+    return response.data.data.version;
+};
+
 export const createAccident = async (input: CreateAccidentInput) => {
     const response = await api.post<{ data: Accident }>("/accidents/", input);
 

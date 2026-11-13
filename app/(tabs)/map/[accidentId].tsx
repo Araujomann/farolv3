@@ -42,27 +42,17 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const PRIMARY = "#0058BC";
-const PAGE_BACKGROUND = "#F2F2F7";
-const SEVERITY_LABELS = {
-    low: "Baixa",
-    medium: "Média",
-    high: "Alta",
-    critical: "Crítica",
-    unknown: "Não informada",
-} as const;
-const CLASSIFICATION_LABELS = {
-    com_vitima: "Com vítima",
-    sem_vitima: "Sem vítima",
-} as const;
-const WEATHER_LABELS = {
-    ceu_claro: "Céu claro",
-    chuva: "Chuva",
-    nublado: "Nublado",
-    garoa: "Garoa",
-} as const;
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import {
+    formatDateTime as formatDate,
+    tr,
+    translateAccidentType,
+    useTranslation,
+} from "@/src/i18n";
 
 export default function AccidentDetailsScreen() {
+    const { t } = useTranslation();
+    const { colors } = useAppTheme();
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const params = useLocalSearchParams<{ accidentId?: string | string[] }>();
@@ -118,7 +108,7 @@ export default function AccidentDetailsScreen() {
     const loadAccident = useCallback(async () => {
         const currentRequestId = ++requestId.current;
         if (!accidentId) {
-            setError("Não foi possível identificar este acidente.");
+            setError(tr("accident.invalidId"));
             setIsLoading(false);
             return;
         }
@@ -159,7 +149,7 @@ export default function AccidentDetailsScreen() {
                         );
                     }
                     setTrustError(
-                        "Não foi possível carregar os votos de confiança. Você ainda pode consultar os detalhes do acidente.",
+                        tr("accident.trustLoadError"),
                     );
                 }
                 setActiveImage(0);
@@ -170,7 +160,7 @@ export default function AccidentDetailsScreen() {
             }
             if (requestId.current === currentRequestId) {
                 setError(
-                    "Não foi possível carregar os detalhes deste acidente. Verifique a conexão e tente novamente.",
+                    tr("accident.loadError"),
                 );
             }
         } finally {
@@ -247,7 +237,7 @@ export default function AccidentDetailsScreen() {
                 console.warn("Falha ao publicar comentário", commentError);
             }
             setCommentError(
-                "Não foi possível publicar seu comentário. Verifique sua conexão e tente novamente.",
+                tr("accident.commentError"),
             );
         } finally {
             setIsSendingComment(false);
@@ -275,7 +265,7 @@ export default function AccidentDetailsScreen() {
                 console.warn("Falha ao atualizar selo de confiança", trustError);
             }
             setTrustError(
-                "Não foi possível atualizar o selo de confiança. Verifique sua conexão e tente novamente.",
+                tr("accident.trustError"),
             );
         } finally {
             setIsUpdatingTrust(false);
@@ -293,8 +283,8 @@ export default function AccidentDetailsScreen() {
                 console.warn("Falha ao abrir a localização", openError);
             }
             Alert.alert(
-                "Não foi possível abrir o mapa",
-                "Tente novamente em instantes.",
+                tr("accident.openMapErrorTitle"),
+                tr("accident.openMapErrorMessage"),
             );
         }
     }, [accident]);
@@ -311,38 +301,38 @@ export default function AccidentDetailsScreen() {
     return (
         <KeyboardAvoidingView
             className="flex-1"
-            style={{ backgroundColor: PAGE_BACKGROUND }}
+            style={{ backgroundColor: colors.background }}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
         >
             <View
-                className="flex-row items-center border-b border-gray-100 bg-white px-4 pb-3"
+                className="flex-row items-center border-b border-gray-100 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-4 pb-3"
                 style={{ paddingTop: insets.top + 8 }}
             >
                 <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Voltar ao mapa"
+                    accessibilityLabel={t("accident.backToMap")}
                     onPress={() => router.back()}
-                    className="h-10 w-10 items-center justify-center rounded-full bg-gray-50"
+                    className="h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-[#242833]"
                 >
-                    <ArrowLeft size={20} color={PRIMARY} />
+                    <ArrowLeft size={20} color={colors.primary} />
                 </Pressable>
-                <Text className="flex-1 text-center text-lg font-body-bold text-[#181C23]">
-                    Detalhes do acidente
+                <Text className="flex-1 text-center text-lg font-body-bold text-[#181C23] dark:text-[#ECEEF4]">
+                    {t("accident.title")}
                 </Text>
                 <View className="h-10 w-10" />
             </View>
 
             {isLoading && !accident ? (
                 <View className="flex-1 items-center justify-center px-6">
-                    <ActivityIndicator size="large" color={PRIMARY} />
-                    <Text className="font-body mt-3 text-sm text-gray-600">
-                        Carregando detalhes...
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text className="font-body mt-3 text-sm text-gray-600 dark:text-[#AAB0BD]">
+                        {t("accident.loading")}
                     </Text>
                 </View>
             ) : error && !accident ? (
                 <View className="flex-1 items-center justify-center px-6">
-                    <Text className="font-body text-center text-sm text-gray-700">
+                    <Text className="font-body text-center text-sm text-gray-700 dark:text-[#AAB0BD]">
                         {error}
                     </Text>
                     <Pressable
@@ -350,7 +340,7 @@ export default function AccidentDetailsScreen() {
                         className="mt-4 rounded-full bg-[#0058BC] px-5 py-3"
                     >
                         <Text className="font-body-semibold text-white">
-                            Tentar novamente
+                            {t("common.retry")}
                         </Text>
                     </Pressable>
                 </View>
@@ -368,7 +358,7 @@ export default function AccidentDetailsScreen() {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    <View className="overflow-hidden rounded-2xl bg-white">
+                    <View className="overflow-hidden rounded-2xl bg-white dark:bg-[#1A1D24]">
                         {accident.images.length > 0 ? (
                             <View>
                                 <ScrollView
@@ -395,7 +385,7 @@ export default function AccidentDetailsScreen() {
                                             contentFit="cover"
                                             accessibilityLabel={
                                                 image.caption ??
-                                                "Imagem do acidente"
+                                                t("accident.imageFallback")
                                             }
                                             style={{
                                                 width: imageWidth,
@@ -411,8 +401,8 @@ export default function AccidentDetailsScreen() {
                                                 key={image.id}
                                                 className={`h-2 w-2 rounded-full ${
                                                     index === activeImage
-                                                        ? "bg-white"
-                                                        : "bg-white/50"
+                                                        ? "bg-white dark:bg-[#1A1D24]"
+                                                        : "bg-white/50 dark:bg-[#1A1D24]/50"
                                                 }`}
                                             />
                                         ))}
@@ -420,125 +410,122 @@ export default function AccidentDetailsScreen() {
                                 )}
                             </View>
                         ) : (
-                            <View className="h-[180px] items-center justify-center bg-[#EAF1FF]">
-                                <MapPin size={34} color={PRIMARY} />
-                                <Text className="mt-2 text-sm font-body-medium text-[#414755]">
-                                    Sem imagem para este acidente
+                            <View className="h-[180px] items-center justify-center bg-[#EAF1FF] dark:bg-[#16253F]">
+                                <MapPin size={34} color={colors.primary} />
+                                <Text className="mt-2 text-sm font-body-medium text-[#414755] dark:text-[#AAB0BD]">
+                                    {t("accident.noImage")}
                                 </Text>
                             </View>
                         )}
                         <View className="p-4">
                             <View className="flex-row items-start justify-between gap-3">
-                                <Text className="flex-1 text-[22px] font-display text-[#181C23]">
-                                    {accident.tipo_acidente ||
-                                        "Ocorrência registrada"}
+                                <Text className="flex-1 text-[22px] font-display text-[#181C23] dark:text-[#ECEEF4]">
+                                    {accident.tipo_acidente
+                                        ? translateAccidentType(accident.tipo_acidente)
+                                        : t("map.occurrence")}
                                 </Text>
-                                <View className="rounded-full bg-[#FFF1E8] px-3 py-1.5">
-                                    <Text className="text-xs font-body-semibold text-[#B42318]">
-                                        {SEVERITY_LABELS[accident.severity]}
+                                <View className="rounded-full bg-[#FFF1E8] dark:bg-[#2B2313] px-3 py-1.5">
+                                    <Text className="text-xs font-body-semibold text-[#B42318] dark:text-[#FF7B70]">
+                                        {t(`enums.severity.${accident.severity}`)}
                                     </Text>
                                 </View>
                             </View>
                             <View className="mt-3 flex-row flex-wrap gap-2">
                                 <InfoChip
-                                    icon={<CalendarDays size={15} color="#5D5E63" />}
+                                    icon={<CalendarDays size={15} color={colors.onSurfaceVariant} />}
                                     label={formatDate(accident.occurred_at)}
                                 />
                                 <InfoChip
-                                    icon={<ShieldCheck size={15} color="#5D5E63" />}
-                                    label={
-                                        CLASSIFICATION_LABELS[
-                                            accident.classificacao_acidente
-                                        ]
-                                    }
+                                    icon={<ShieldCheck size={15} color={colors.onSurfaceVariant} />}
+                                    label={t(
+                                        `enums.classification.${accident.classificacao_acidente}`,
+                                    )}
                                 />
                                 <InfoChip
-                                    icon={<MapPin size={15} color="#5D5E63" />}
-                                    label={
-                                        WEATHER_LABELS[
-                                            accident.condicao_meteorologica
-                                        ]
-                                    }
+                                    icon={<MapPin size={15} color={colors.onSurfaceVariant} />}
+                                    label={t(
+                                        `enums.weather.${accident.condicao_meteorologica}`,
+                                    )}
                                 />
                             </View>
                         </View>
                     </View>
 
                     {accident.description && (
-                        <SectionCard title="Descrição">
-                            <Text className="font-body text-[15px] leading-[22px] text-[#414755]">
+                        <SectionCard title={t("accident.description")}>
+                            <Text className="font-body text-[15px] leading-[22px] text-[#414755] dark:text-[#AAB0BD]">
                                 {accident.description}
                             </Text>
                         </SectionCard>
                     )}
 
-                    <SectionCard title="Localização">
+                    <SectionCard title={t("accident.location")}>
                         <View className="flex-row items-center gap-2">
-                            <MapPin size={18} color={PRIMARY} />
+                            <MapPin size={18} color={colors.primary} />
                             {isLoadingAddress ? (
                                 <View className="flex-1 flex-row items-center gap-2">
                                     <ActivityIndicator
                                         size="small"
-                                        color={PRIMARY}
+                                        color={colors.primary}
                                     />
-                                    <Text className="font-body flex-1 text-sm text-[#414755]">
-                                        Buscando endereço...
+                                    <Text className="font-body flex-1 text-sm text-[#414755] dark:text-[#AAB0BD]">
+                                        {t("accident.searchingAddress")}
                                     </Text>
                                 </View>
                             ) : (
-                                <Text className="font-body flex-1 text-sm text-[#414755]">
-                                    {address ?? "Endereço não disponível"}
+                                <Text className="font-body flex-1 text-sm text-[#414755] dark:text-[#AAB0BD]">
+                                    {address ?? t("accident.addressUnavailable")}
                                 </Text>
                             )}
                         </View>
                         <Pressable
                             accessibilityRole="button"
                             onPress={() => void handleOpenMap()}
-                            className="mt-3 items-center rounded-xl bg-[#F1F3FE] py-3"
+                            className="mt-3 items-center rounded-xl bg-[#F1F3FE] dark:bg-[#242833] py-3"
                         >
-                            <Text className="text-sm font-body-semibold text-[#0058BC]">
-                                Abrir localização no mapa
+                            <Text className="text-sm font-body-semibold text-[#0058BC] dark:text-[#3B87F5]">
+                                {t("accident.openLocation")}
                             </Text>
                         </Pressable>
                     </SectionCard>
 
-                    <SectionCard title="Fonte do relato">
+                    <SectionCard title={t("accident.reportSource")}>
                         <View className="flex-row items-center justify-between">
                             <View className="flex-row items-center gap-2">
                                 <BadgeCheck
                                     size={20}
-                                    color={accident.source === "PRF" ? "#14804A" : PRIMARY}
+                                    color={accident.source === "PRF" ? colors.success : colors.primary}
                                 />
-                                <Text className="text-sm font-body-semibold text-[#181C23]">
+                                <Text className="text-sm font-body-semibold text-[#181C23] dark:text-[#ECEEF4]">
                                     {accident.source === "PRF"
-                                        ? "Polícia Rodoviária Federal"
-                                        : "Relato da comunidade"}
+                                        ? t("accident.sourcePrf")
+                                        : t("accident.sourceCommunity")}
                                 </Text>
                             </View>
-                            <Text className="font-body text-xs text-gray-500">
+                            <Text className="font-body text-xs text-gray-500 dark:text-[#8B92A1]">
                                 {formatDate(accident.created_at)}
                             </Text>
                         </View>
                     </SectionCard>
 
-                    <View className="mt-4 rounded-2xl bg-white p-4">
+                    <View className="mt-4 rounded-2xl bg-white dark:bg-[#1A1D24] p-4">
                         <View className="flex-row items-center justify-between gap-3">
                             <View className="flex-1">
-                                <Text className="text-xs font-body-semibold uppercase tracking-wide text-[#5D5E63]">
-                                    Confiabilidade
+                                <Text className="text-xs font-body-semibold uppercase tracking-wide text-[#5D5E63] dark:text-[#AAB0BD]">
+                                    {t("accident.reliability")}
                                 </Text>
-                                <Text className="font-body mt-1 text-sm text-[#414755]">
+                                <Text className="font-body mt-1 text-sm text-[#414755] dark:text-[#AAB0BD]">
                                     {trustedByMe
-                                        ? "Você marcou este relato como confiável."
-                                        : "Testemunhou ou confirma esse acidente? Participe!"}
+                                        ? t("accident.trustedByYou")
+                                        : t("accident.trustInvite")}
                                 </Text>
                             </View>
-                            <View className="items-center rounded-xl bg-[#F1F3FE] px-3 py-2">
-                                <Text className="text-xl font-display text-[#0058BC]">
+                            <View className="items-center rounded-xl bg-[#F1F3FE] dark:bg-[#242833] px-3 py-2">
+                                <Text className="text-xl font-display text-[#0058BC] dark:text-[#3B87F5]">
                                     {accident.trusted_count}
                                 </Text>
-                                <Text className="font-body text-[10px] text-[#414755]">
-                                    selos
+                                <Text className="font-body text-[10px] text-[#414755] dark:text-[#AAB0BD]">
+                                    {t("accident.seals", { count: accident.trusted_count ?? 0 })}
                                 </Text>
                             </View>
                         </View>
@@ -552,55 +539,57 @@ export default function AccidentDetailsScreen() {
                             onPress={() => void handleToggleTrust()}
                             className={`mt-4 flex-row items-center justify-center gap-2 rounded-xl py-3 ${
                                 trustedByMe
-                                    ? "bg-[#EAF7EF]"
+                                    ? "bg-[#EAF7EF] dark:bg-[#12271B]"
                                     : "bg-[#0058BC]"
                             } ${!canTrust || isUpdatingTrust ? "opacity-60" : ""}`}
                         >
                             {isUpdatingTrust ? (
                                 <ActivityIndicator
                                     size="small"
-                                    color={trustedByMe ? "#14804A" : "#FFFFFF"}
+                                    color={trustedByMe ? colors.success : "#FFFFFF"}
                                 />
                             ) : (
                                 <BadgeCheck
                                     size={19}
-                                    color={trustedByMe ? "#14804A" : "#FFFFFF"}
+                                    color={trustedByMe ? colors.success : "#FFFFFF"}
                                 />
                             )}
                             <Text
                                 className={`text-sm font-body-semibold ${
                                     trustedByMe
-                                        ? "text-[#14804A]"
+                                        ? "text-[#14804A] dark:text-[#5BD48A]"
                                         : "text-white"
                                 }`}
                             >
                                 {trustedByMe
-                                    ? "Retirar selo confiável"
+                                    ? t("accident.removeTrust")
                                     : canTrust
-                                      ? "Marcar como confiável"
+                                      ? t("accident.markTrusted")
                                       : isOwnReport
-                                        ? "Você é autor deste relato"
+                                        ? t("accident.ownReport")
                                         : !isEmailVerified
-                                          ? "Confirme seu e-mail para votar"
-                                          : "Selo disponível para relatos da comunidade"}
+                                          ? t("accident.verifyToVote")
+                                          : t("accident.trustOnlyCommunity")}
                             </Text>
                         </Pressable>
                     </View>
                     {trustError && (
                         <Text
                             accessibilityRole="alert"
-                            className="font-body mt-3 text-xs text-[#BA1A1A]"
+                            className="font-body mt-3 text-xs text-[#BA1A1A] dark:text-[#FF7B70]"
                         >
                             {trustError}
                         </Text>
                     )}
 
                     <SectionCard
-                        title={`Comentários (${accident.comments.length})`}
+                        title={t("accident.comments", {
+                            count: String(accident.comments.length),
+                        })}
                     >
                         {accident.comments.length === 0 ? (
-                            <Text className="font-body py-2 text-sm text-gray-500">
-                                Nenhum comentário até o momento.
+                            <Text className="font-body py-2 text-sm text-gray-500 dark:text-[#8B92A1]">
+                                {t("accident.noComments")}
                             </Text>
                         ) : (
                             <View className="gap-4">
@@ -609,23 +598,23 @@ export default function AccidentDetailsScreen() {
                                         key={item.id}
                                         className="flex-row gap-3"
                                     >
-                                        <View className="h-9 w-9 items-center justify-center rounded-full bg-[#F1F3FE]">
+                                        <View className="h-9 w-9 items-center justify-center rounded-full bg-[#F1F3FE] dark:bg-[#242833]">
                                             <UserRound
                                                 size={18}
-                                                color="#5D5E63"
+                                                color={colors.onSurfaceVariant}
                                             />
                                         </View>
                                         <View className="flex-1">
                                             <View className="flex-row flex-wrap items-center justify-between gap-x-2">
-                                                <Text className="text-xs font-body-semibold text-[#181C23]">
+                                                <Text className="text-xs font-body-semibold text-[#181C23] dark:text-[#ECEEF4]">
                                                     {item.author_name ??
-                                                        "Pessoa da comunidade"}
+                                                        t("accident.communityMember")}
                                                 </Text>
-                                                <Text className="font-body text-[11px] text-gray-500">
+                                                <Text className="font-body text-[11px] text-gray-500 dark:text-[#8B92A1]">
                                                     {formatDate(item.created_at)}
                                                 </Text>
                                             </View>
-                                            <Text className="font-body mt-1 text-sm leading-5 text-[#414755]">
+                                            <Text className="font-body mt-1 text-sm leading-5 text-[#414755] dark:text-[#AAB0BD]">
                                                 {item.body}
                                             </Text>
                                         </View>
@@ -638,12 +627,12 @@ export default function AccidentDetailsScreen() {
                             <View className="mt-4">
                                 <View className="flex-row items-end gap-2">
                                     <TextInput
-                                        accessibilityLabel="Adicionar comentário"
+                                        accessibilityLabel={t("accident.addComment")}
                                         value={comment}
                                         onChangeText={setComment}
                                         onFocus={scrollToComment}
-                                        placeholder="Adicionar comentário..."
-                                        placeholderTextColor="#717786"
+                                        placeholder={t("accident.addCommentPlaceholder")}
+                                        placeholderTextColor={colors.outline}
                                         maxLength={2000}
                                         multiline
                                         editable={!isSendingComment}
@@ -651,7 +640,7 @@ export default function AccidentDetailsScreen() {
                                         onSubmitEditing={() =>
                                             void handleSendComment()
                                         }
-                                        className="font-body min-h-11 flex-1 rounded-2xl bg-[#F1F3FE] px-4 py-3 pl-3 text-[15px] text-[#181C23]"
+                                        className="font-body min-h-11 flex-1 rounded-2xl bg-[#F1F3FE] dark:bg-[#242833] px-4 py-3 pl-3 text-[15px] text-[#181C23] dark:text-[#ECEEF4]"
                                         style={{
                                             maxHeight: 120,
                                             textAlignVertical: "top",
@@ -659,7 +648,7 @@ export default function AccidentDetailsScreen() {
                                     />
                                     <Pressable
                                         accessibilityRole="button"
-                                        accessibilityLabel="Enviar comentário"
+                                        accessibilityLabel={t("accident.sendComment")}
                                         accessibilityState={{
                                             disabled:
                                                 !comment.trim() ||
@@ -689,7 +678,7 @@ export default function AccidentDetailsScreen() {
                                 {commentError && (
                                     <Text
                                         accessibilityRole="alert"
-                                        className="font-body mt-2 text-xs text-[#BA1A1A]"
+                                        className="font-body mt-2 text-xs text-[#BA1A1A] dark:text-[#FF7B70]"
                                     >
                                         {commentError}
                                     </Text>
@@ -698,17 +687,16 @@ export default function AccidentDetailsScreen() {
                         ) : (
                             <Pressable
                                 accessibilityRole="button"
-                                accessibilityLabel="Verificar e-mail para comentar"
+                                accessibilityLabel={t("accident.verifyToComment")}
                                 onPress={() =>
                                     router.push(verifyEmailFromAppRoute)
                                 }
-                                className="mt-4 rounded-xl bg-amber-50 px-3 py-3"
+                                className="mt-4 rounded-xl bg-amber-50 dark:bg-[#2B2313] px-3 py-3"
                             >
-                                <Text className="font-body text-sm text-amber-800">
-                                    Confirme seu e-mail para participar dos
-                                    comentários e votar.{" "}
-                                    <Text className="text-sm font-body-bold text-[#0058BC]">
-                                        Verificar agora
+                                <Text className="font-body text-sm text-amber-800 dark:text-[#F5D58A]">
+                                    {t("accident.verifyToCommentText")}{" "}
+                                    <Text className="text-sm font-body-bold text-[#0058BC] dark:text-[#3B87F5]">
+                                        {t("accident.verifyNow")}
                                     </Text>
                                 </Text>
                             </Pressable>
@@ -728,8 +716,8 @@ function SectionCard({
     children: ReactNode;
 }) {
     return (
-        <View className="mt-4 rounded-2xl bg-white p-4">
-            <Text className="mb-3 text-xs font-body-semibold uppercase tracking-wide text-[#5D5E63]">
+        <View className="mt-4 rounded-2xl bg-white dark:bg-[#1A1D24] p-4">
+            <Text className="mb-3 text-xs font-body-semibold uppercase tracking-wide text-[#5D5E63] dark:text-[#AAB0BD]">
                 {title}
             </Text>
             {children}
@@ -739,19 +727,9 @@ function SectionCard({
 
 function InfoChip({ icon, label }: { icon: ReactNode; label: string }) {
     return (
-        <View className="flex-row items-center gap-1.5 rounded-full bg-[#F1F3FE] px-2.5 py-1.5">
+        <View className="flex-row items-center gap-1.5 rounded-full bg-[#F1F3FE] dark:bg-[#242833] px-2.5 py-1.5">
             {icon}
-            <Text className="text-xs font-body-medium text-[#414755]">{label}</Text>
+            <Text className="text-xs font-body-medium text-[#414755] dark:text-[#AAB0BD]">{label}</Text>
         </View>
     );
-}
-
-function formatDate(value: string) {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "Data não informada";
-
-    return new Intl.DateTimeFormat("pt-BR", {
-        dateStyle: "short",
-        timeStyle: "short",
-    }).format(date);
 }

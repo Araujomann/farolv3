@@ -1,7 +1,10 @@
 import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 import { getMeService } from "../api/auth";
-import { unregisterCurrentPushToken } from "../features/notifications/pushNotifications";
+import {
+    forgetStoredPushToken,
+    unregisterCurrentPushToken,
+} from "../features/notifications/pushNotifications";
 import { AuthActions, AuthState } from "./types";
 
 // Aqui unificamos o State e as Actions
@@ -39,6 +42,17 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
         await SecureStore.deleteItemAsync("token");
         await SecureStore.deleteItemAsync("refresh_token");
+        set({ user: null, token: null, isLoading: false, emailVerificationPrompt: null });
+    },
+
+    // Conta excluída: o servidor já removeu tokens e dispositivos em cascata,
+    // então só limpamos o que está salvo no aparelho.
+    clearDeletedAccountSession: async () => {
+        await Promise.allSettled([
+            forgetStoredPushToken(),
+            SecureStore.deleteItemAsync("token"),
+            SecureStore.deleteItemAsync("refresh_token"),
+        ]);
         set({ user: null, token: null, isLoading: false, emailVerificationPrompt: null });
     },
 

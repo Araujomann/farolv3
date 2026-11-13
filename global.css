@@ -659,6 +659,13 @@
   --color-input-placeholder: rgb(var(--on-surface-variant));
   --color-input-border: rgb(var(--outline-variant));
 
+  /* -------------------------------------------------------
+     Texto padrão (usado pelos componentes Text/InputField)
+     Acompanha o tema claro/escuro.
+     ------------------------------------------------------- */
+  --color-foreground: rgb(var(--on-surface));
+  --color-muted-foreground: rgb(var(--on-surface-variant));
+
 
   /* -------------------------------------------------------
      Success

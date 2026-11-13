@@ -44,6 +44,9 @@ import { Box } from "@/components/ui/box";
 import { registerService } from "@/src/api/auth";
 import { useAuthStore } from "@/src/store/authStore";
 
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import { useTranslation, type TranslationKey } from "@/src/i18n";
+import { type AppColors } from "@/src/theme/colors";
 // ==========================================
 // VALIDAÇÃO
 // ==========================================
@@ -54,36 +57,36 @@ const registerSchema = z
       .string()
       .trim()
       .min(2, {
-        message: "O nome deve ter ao menos 2 caracteres",
+        message: "auth.validation.nameMin",
       })
       .max(120),
 
     email: z.email({
-      message: "E-mail inválido",
+      message: "auth.validation.invalidEmail",
     }),
 
     password: z
       .string()
       .min(8, {
-        message: "A senha deve ter ao menos 8 caracteres",
+        message: "auth.validation.passwordMin",
       })
       .max(128),
 
     confirmPassword: z.string().min(1, {
-      message: "Confirme sua senha",
+      message: "auth.validation.confirmPassword",
     }),
 
     acceptedTerms: z.boolean().refine(
       (value) => value,
       {
-        message: "Você precisa aceitar os termos.",
+        message: "auth.validation.acceptTerms",
       }
     ),
   })
   .refine(
     (data) => data.password === data.confirmPassword,
     {
-      message: "As senhas não coincidem",
+      message: "auth.validation.passwordsMismatch",
       path: ["confirmPassword"],
     }
   );
@@ -95,6 +98,9 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 // ==========================================
 
 export default function RegisterScreen() {
+  const styles = createStyles(useAppTheme().colors);
+  const { colors, isDark } = useAppTheme();
+  const { t } = useTranslation();
   const router = useRouter();
 
   const signIn = useAuthStore(
@@ -154,11 +160,11 @@ export default function RegisterScreen() {
         "register"
       );
     } catch (error: any) {
-      const message =
-        error?.response?.data?.error?.message ??
-        "Falha ao criar a conta. Tente novamente.";
-
-      setServerError(message);
+      setServerError(
+        error?.response?.data?.error?.code === "AUTH_EMAIL_ALREADY_IN_USE"
+          ? t("auth.register.emailInUse")
+          : t("auth.register.genericError")
+      );
     }
   };
 
@@ -172,8 +178,8 @@ export default function RegisterScreen() {
       style={styles.safeArea}
     >
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#EEF2F6"
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.surfaceMuted}
       />
 
       <View style={styles.screen}>
@@ -187,11 +193,11 @@ export default function RegisterScreen() {
             activeOpacity={0.7}
             style={styles.backButton}
             accessibilityRole="button"
-            accessibilityLabel="Voltar"
+            accessibilityLabel={t("common.back")}
           >
             <ChevronLeft
               size={20}
-              color="#475569"
+              color={colors.onSurfaceVariant}
               strokeWidth={2}
             />
           </TouchableOpacity>
@@ -206,7 +212,7 @@ export default function RegisterScreen() {
               )}
               style={styles.brandIcon}
               resizeMode="contain"
-              accessibilityLabel="Ícone do Farol"
+              accessibilityLabel={t("auth.logoLabel")}
             />
 
             <Text className="font-body" style={styles.brandName}>
@@ -237,7 +243,7 @@ export default function RegisterScreen() {
               showsVerticalScrollIndicator={false}
               bounces={false}
             >
-              <Box className="flex-1 w-full bg-white px-7">
+              <Box className="flex-1 w-full bg-white dark:bg-[#1A1D24] px-7">
 
             {/* ==================================
                 CONTEÚDO CENTRAL
@@ -251,12 +257,12 @@ export default function RegisterScreen() {
                 space="xs"
                 className="mb-9 items-center"
               >
-                <Text className="text-center text-2xl font-display tracking-tight text-slate-900">
-                  Criar uma conta
+                <Text className="text-center text-2xl font-display tracking-tight text-slate-900 dark:text-[#ECEEF4]">
+                  {t("auth.register.title")}
                 </Text>
 
-                <Text className="text-center text-xs font-body-medium text-slate-500">
-                  Preencha seus dados para começar a navegar com segurança
+                <Text className="text-center text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
+                  {t("auth.register.subtitle")}
                 </Text>
               </VStack>
 
@@ -273,8 +279,8 @@ export default function RegisterScreen() {
                 <VStack space="xs">
                   <Box className="relative">
 
-                    <Text className="absolute -top-2 left-3 z-10 bg-white px-1 text-xs font-body-medium text-slate-500">
-                      Nome Completo
+                    <Text className="absolute -top-2 left-3 z-10 bg-white dark:bg-[#1A1D24] px-1 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
+                      {t("auth.register.fullName")}
                     </Text>
 
                     <Controller
@@ -289,26 +295,26 @@ export default function RegisterScreen() {
                       }) => (
                         <Input
                           isInvalid={!!errors.name}
-                          className="h-12 rounded-xl border-slate-300 bg-white px-3 dark:bg-white"
+                          className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
                         >
                           <InputSlot className="pl-0">
                             <InputIcon
                               as={User}
-                              className="text-slate-400"
+                              className="text-slate-400 dark:text-[#8B92A1]"
                             />
                           </InputSlot>
 
                           <InputField
-                            placeholder="Ex: Lucas Santana"
-                            placeholderTextColor="#94a3b8"
+                            placeholder={t("auth.register.namePlaceholder")}
+                            placeholderTextColor={colors.outline}
                             autoCapitalize="words"
                             autoCorrect={false}
                             autoComplete="name"
                             onBlur={onBlur}
                             onChangeText={onChange}
                             value={value}
-                            className="text-sm font-body-medium text-slate-800"
-                            accessibilityLabel="Nome completo"
+                            className="text-sm font-body-medium text-slate-800 dark:text-[#ECEEF4]"
+                            accessibilityLabel={t("auth.register.fullNameLabel")}
                           />
                         </Input>
                       )}
@@ -316,8 +322,8 @@ export default function RegisterScreen() {
                   </Box>
 
                   {errors.name && (
-                    <Text className="font-body text-xs text-red-600">
-                      {errors.name.message}
+                    <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
+                      {t(errors.name.message as TranslationKey)}
                     </Text>
                   )}
                 </VStack>
@@ -329,8 +335,8 @@ export default function RegisterScreen() {
                 <VStack space="xs">
                   <Box className="relative">
 
-                    <Text className="absolute -top-2 left-3 z-10 bg-white px-1 text-xs font-body-medium text-slate-500">
-                      E-mail
+                    <Text className="absolute -top-2 left-3 z-10 bg-white dark:bg-[#1A1D24] px-1 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
+                      {t("auth.email")}
                     </Text>
 
                     <Controller
@@ -345,18 +351,18 @@ export default function RegisterScreen() {
                       }) => (
                         <Input
                           isInvalid={!!errors.email}
-                          className="h-12 rounded-xl border-slate-300 bg-white px-3 dark:bg-white"
+                          className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
                         >
                           <InputSlot className="pl-0">
                             <InputIcon
                               as={Mail}
-                              className="text-slate-400"
+                              className="text-slate-400 dark:text-[#8B92A1]"
                             />
                           </InputSlot>
 
                           <InputField
-                            placeholder="Digite seu e-mail"
-                            placeholderTextColor="#94a3b8"
+                            placeholder={t("auth.emailPlaceholder")}
+                            placeholderTextColor={colors.outline}
                             keyboardType="email-address"
                             autoCapitalize="none"
                             autoCorrect={false}
@@ -364,8 +370,8 @@ export default function RegisterScreen() {
                             onBlur={onBlur}
                             onChangeText={onChange}
                             value={value}
-                            className="text-sm font-body-medium text-slate-800"
-                            accessibilityLabel="E-mail"
+                            className="text-sm font-body-medium text-slate-800 dark:text-[#ECEEF4]"
+                            accessibilityLabel={t("auth.email")}
                           />
                         </Input>
                       )}
@@ -373,8 +379,8 @@ export default function RegisterScreen() {
                   </Box>
 
                   {errors.email && (
-                    <Text className="font-body text-xs text-red-600">
-                      {errors.email.message}
+                    <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
+                      {t(errors.email.message as TranslationKey)}
                     </Text>
                   )}
                 </VStack>
@@ -386,8 +392,8 @@ export default function RegisterScreen() {
                 <VStack space="xs">
                   <Box className="relative">
 
-                    <Text className="absolute -top-2 left-3 z-10 bg-white px-1 text-xs font-body-medium text-slate-500">
-                      Senha
+                    <Text className="absolute -top-2 left-3 z-10 bg-white dark:bg-[#1A1D24] px-1 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
+                      {t("auth.password")}
                     </Text>
 
                     <Controller
@@ -402,25 +408,25 @@ export default function RegisterScreen() {
                       }) => (
                         <Input
                           isInvalid={!!errors.password}
-                          className="h-12 rounded-xl border-slate-300 bg-white px-3 dark:bg-white"
+                          className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
                         >
                           <InputSlot className="pl-0">
                             <InputIcon
                               as={Lock}
-                              className="text-slate-400"
+                              className="text-slate-400 dark:text-[#8B92A1]"
                             />
                           </InputSlot>
 
                           <InputField
                             placeholder="••••••••"
-                            placeholderTextColor="#94a3b8"
+                            placeholderTextColor={colors.outline}
                             secureTextEntry={!showPassword}
                             autoComplete="new-password"
                             onBlur={onBlur}
                             onChangeText={onChange}
                             value={value}
-                            className="text-sm font-body-medium text-slate-800"
-                            accessibilityLabel="Senha"
+                            className="text-sm font-body-medium text-slate-800 dark:text-[#ECEEF4]"
+                            accessibilityLabel={t("auth.password")}
                           />
 
                           <InputSlot
@@ -432,8 +438,8 @@ export default function RegisterScreen() {
                             }
                             accessibilityLabel={
                               showPassword
-                                ? "Ocultar senha"
-                                : "Mostrar senha"
+                                ? t("auth.hidePassword")
+                                : t("auth.showPassword")
                             }
                           >
                             <InputIcon
@@ -442,7 +448,7 @@ export default function RegisterScreen() {
                                   ? Eye
                                   : EyeOff
                               }
-                              className="text-slate-400"
+                              className="text-slate-400 dark:text-[#8B92A1]"
                             />
                           </InputSlot>
                         </Input>
@@ -451,8 +457,8 @@ export default function RegisterScreen() {
                   </Box>
 
                   {errors.password && (
-                    <Text className="font-body text-xs text-red-600">
-                      {errors.password.message}
+                    <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
+                      {t(errors.password.message as TranslationKey)}
                     </Text>
                   )}
                 </VStack>
@@ -464,8 +470,8 @@ export default function RegisterScreen() {
                 <VStack space="xs">
                   <Box className="relative">
 
-                    <Text className="absolute -top-2 left-3 z-10 bg-white px-1 text-xs font-body-medium text-slate-500">
-                      Confirmar Senha
+                    <Text className="absolute -top-2 left-3 z-10 bg-white dark:bg-[#1A1D24] px-1 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
+                      {t("auth.register.confirmPassword")}
                     </Text>
 
                     <Controller
@@ -482,18 +488,18 @@ export default function RegisterScreen() {
                           isInvalid={
                             !!errors.confirmPassword
                           }
-                          className="h-12 rounded-xl border-slate-300 bg-white px-3 dark:bg-white"
+                          className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
                         >
                           <InputSlot className="pl-0">
                             <InputIcon
                               as={Lock}
-                              className="text-slate-400"
+                              className="text-slate-400 dark:text-[#8B92A1]"
                             />
                           </InputSlot>
 
                           <InputField
                             placeholder="••••••••"
-                            placeholderTextColor="#94a3b8"
+                            placeholderTextColor={colors.outline}
                             secureTextEntry={
                               !showConfirmPassword
                             }
@@ -501,8 +507,8 @@ export default function RegisterScreen() {
                             onBlur={onBlur}
                             onChangeText={onChange}
                             value={value}
-                            className="text-sm font-body-medium text-slate-800"
-                            accessibilityLabel="Confirmar senha"
+                            className="text-sm font-body-medium text-slate-800 dark:text-[#ECEEF4]"
+                            accessibilityLabel={t("auth.register.confirmPasswordLabel")}
                           />
 
                           <InputSlot
@@ -514,8 +520,8 @@ export default function RegisterScreen() {
                             }
                             accessibilityLabel={
                               showConfirmPassword
-                                ? "Ocultar senha"
-                                : "Mostrar senha"
+                                ? t("auth.hidePassword")
+                                : t("auth.showPassword")
                             }
                           >
                             <InputIcon
@@ -524,7 +530,7 @@ export default function RegisterScreen() {
                                   ? Eye
                                   : EyeOff
                               }
-                              className="text-slate-400"
+                              className="text-slate-400 dark:text-[#8B92A1]"
                             />
                           </InputSlot>
                         </Input>
@@ -533,8 +539,8 @@ export default function RegisterScreen() {
                   </Box>
 
                   {errors.confirmPassword && (
-                    <Text className="font-body text-xs text-red-600">
-                      {errors.confirmPassword.message}
+                    <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
+                      {t(errors.confirmPassword.message as TranslationKey)}
                     </Text>
                   )}
                 </VStack>
@@ -575,14 +581,14 @@ export default function RegisterScreen() {
                         )}
                       </View>
 
-                      <Text className="flex-1 text-xs font-body-medium text-slate-500">
-                        Concordo com os{" "}
-                        <Text className="text-xs font-body-semibold text-[#0058BC]">
-                          Termos de Uso
+                      <Text className="flex-1 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
+                        {t("auth.register.agreePrefix")}{" "}
+                        <Text className="text-xs font-body-semibold text-[#0058BC] dark:text-[#3B87F5]">
+                          {t("auth.register.terms")}
                         </Text>
-                        {" "}e{" "}
-                        <Text className="text-xs font-body-semibold text-[#0058BC]">
-                          Privacidade
+                        {" "}{t("auth.register.and")}{" "}
+                        <Text className="text-xs font-body-semibold text-[#0058BC] dark:text-[#3B87F5]">
+                          {t("auth.register.privacy")}
                         </Text>
                       </Text>
                     </Pressable>
@@ -590,8 +596,8 @@ export default function RegisterScreen() {
                 />
 
                 {errors.acceptedTerms && (
-                  <Text className="font-body text-xs text-red-600">
-                    {errors.acceptedTerms.message}
+                  <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
+                    {t(errors.acceptedTerms.message as TranslationKey)}
                   </Text>
                 )}
 
@@ -600,8 +606,8 @@ export default function RegisterScreen() {
                 ============================== */}
 
                 {serverError && (
-                  <Box className="rounded-xl bg-red-50 px-4 py-3">
-                    <Text className="font-body text-sm text-red-700">
+                  <Box className="rounded-xl bg-red-50 dark:bg-[#2C1715] px-4 py-3">
+                    <Text className="font-body text-sm text-red-700 dark:text-[#FF7B70]">
                       {serverError}
                     </Text>
                   </Box>
@@ -625,7 +631,7 @@ export default function RegisterScreen() {
                     <ButtonSpinner className="text-white" />
                   ) : (
                     <ButtonText className="text-sm font-body-medium text-white">
-                      Cadastrar
+                      {t("auth.register.submit")}
                     </ButtonText>
                   )}
                 </Button>
@@ -637,9 +643,9 @@ export default function RegisterScreen() {
             </ScrollView>
           </KeyboardAvoidingView>
 
-          <Box className="w-full flex-row items-center justify-center gap-1 bg-white px-7 pb-5 pt-6">
-            <Text className="font-body text-center text-sm text-slate-600">
-              Já tem uma conta?
+          <Box className="w-full flex-row items-center justify-center gap-1 bg-white dark:bg-[#1A1D24] px-7 pb-5 pt-6">
+            <Text className="font-body text-center text-sm text-slate-600 dark:text-[#AAB0BD]">
+              {t("auth.register.hasAccount")}
             </Text>
 
             <TouchableOpacity
@@ -647,8 +653,8 @@ export default function RegisterScreen() {
               activeOpacity={0.7}
               accessibilityRole="button"
             >
-              <Text className="text-sm font-body-bold text-slate-900">
-                Entrar
+              <Text className="text-sm font-body-bold text-slate-900 dark:text-[#ECEEF4]">
+                {t("auth.register.signIn")}
               </Text>
             </TouchableOpacity>
           </Box>
@@ -662,10 +668,10 @@ export default function RegisterScreen() {
 // ESTILOS DO CABEÇALHO
 // ==========================================
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
   },
 
   screen: {
@@ -674,7 +680,7 @@ const styles = StyleSheet.create({
 
   header: {
     height: 60,
-    backgroundColor: "#EEF2F6",
+    backgroundColor: colors.surfaceMuted,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 18,
@@ -684,7 +690,7 @@ const styles = StyleSheet.create({
   backButton: {
     width: 32,
     height: 32,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
@@ -711,12 +717,12 @@ const styles = StyleSheet.create({
   brandName: {
     fontSize: 16,
     fontFamily: "PlusJakartaSans_700Bold",
-    color: "#17243A",
+    color: colors.onSurface,
   },
 
   panel: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     overflow: "hidden",
@@ -727,14 +733,14 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.outlineVariant,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
 
   checkboxChecked: {
-    backgroundColor: "#0058BC",
-    borderColor: "#0058BC",
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
 });

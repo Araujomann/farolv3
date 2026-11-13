@@ -17,10 +17,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Text } from "@/components/ui/text";
 
-const PRIMARY_COLOR = "#0058BC";
-const PAGE_COLOR = "#F2F2F7";
-const TEXT_COLOR = "#181C23";
-const MUTED_COLOR = "#626B7A";
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import { useTranslation } from "@/src/i18n";
 
 type AboutScreenProps = {
     onClose: () => void;
@@ -33,16 +31,17 @@ type AboutItemProps = {
 };
 
 function AboutItem({ icon: Icon, title, description }: AboutItemProps) {
+    const { colors } = useAppTheme();
     return (
         <View className="flex-row gap-3 px-4 py-4">
-            <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#EAF1FC]">
-                <Icon size={21} color={PRIMARY_COLOR} strokeWidth={2} />
+            <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#EAF1FC] dark:bg-[#16253F]">
+                <Icon size={21} color={colors.primary} strokeWidth={2} />
             </View>
             <View className="flex-1 gap-1">
-                <Text className="text-[15px] font-body-semibold" style={{ color: TEXT_COLOR }}>
+                <Text className="text-[15px] font-body-semibold" style={{ color: colors.onSurface }}>
                     {title}
                 </Text>
-                <Text className="font-body text-[14px] leading-[21px]" style={{ color: MUTED_COLOR }}>
+                <Text className="font-body text-[14px] leading-[21px]" style={{ color: colors.onSurfaceVariant }}>
                     {description}
                 </Text>
             </View>
@@ -55,33 +54,35 @@ function Divider() {
 }
 
 export default function AboutScreen({ onClose }: AboutScreenProps) {
+    const { t } = useTranslation();
+    const { colors } = useAppTheme();
     const insets = useSafeAreaInsets();
     const version = Constants.expoConfig?.version ?? "—";
 
     return (
-        <View className="flex-1" style={{ backgroundColor: PAGE_COLOR }}>
+        <View className="flex-1" style={{ backgroundColor: colors.background }}>
             <View
                 className="flex-row items-center px-4"
                 style={{
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: colors.surface,
                     paddingTop: insets.top + 4,
                     height: 56 + insets.top,
                 }}
             >
                 <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Fechar sobre o app"
+                    accessibilityLabel={t("about.close")}
                     onPress={onClose}
                     hitSlop={8}
                     className="h-11 w-11 items-center justify-center"
                 >
-                    <ArrowLeft size={24} color={PRIMARY_COLOR} strokeWidth={2} />
+                    <ArrowLeft size={24} color={colors.primary} strokeWidth={2} />
                 </Pressable>
                 <Text
                     className="flex-1 text-center text-lg font-body-semibold"
-                    style={{ color: TEXT_COLOR, marginRight: 44 }}
+                    style={{ color: colors.onSurface, marginRight: 44 }}
                 >
-                    Sobre o app
+                    {t("about.title")}
                 </Text>
             </View>
 
@@ -94,41 +95,38 @@ export default function AboutScreen({ onClose }: AboutScreenProps) {
                 }}
                 showsVerticalScrollIndicator={false}
             >
-                <View className="items-center rounded-2xl bg-white px-6 py-7">
+                <View className="items-center rounded-2xl bg-white dark:bg-[#1A1D24] px-6 py-7">
                     <Image
                         source={require("../../../../assets/images/app-icon.png")}
-                        accessibilityLabel="Símbolo do Farol"
+                        accessibilityLabel={t("about.logoLabel")}
                         className=" w-36 h-23 rounded-2xl"
                     />
-                    <Text className="mt-4 text-[26px] font-display" style={{ color: TEXT_COLOR }}>
+                    <Text className="mt-4 text-[26px] font-display" style={{ color: colors.onSurface }}>
                         Farol
                     </Text>
                     <Text
                         className="font-body mt-2 text-center text-[15px] leading-5.5"
-                        style={{ color: MUTED_COLOR }}
+                        style={{ color: colors.onSurfaceVariant }}
                     >
-                        Informação para seguir com mais atenção e consciência no trânsito.
+                        {t("about.tagline")}
                     </Text>
                 </View>
 
                 <Text
                     className="mb-2 mt-6 text-[17px] font-body-bold"
-                    style={{ color: TEXT_COLOR }}
+                    style={{ color: colors.onSurface }}
                 >
-                    Sobre o Farol
+                    {t("about.aboutTitle")}
                 </Text>
                 <Text
                     className="font-body text-[15px] leading-[23px]"
-                    style={{ color: MUTED_COLOR }}
+                    style={{ color: colors.onSurfaceVariant }}
                 >
-                    O Farol reúne informações sobre ocorrências no trânsito para
-                    ajudar você a consultar o mapa e compartilhar relatos de forma
-                    responsável. A proposta é ampliar o acesso à informação e
-                    incentivar uma cultura de mais atenção nas vias.
+                    {t("about.aboutBody")}
                 </Text>
 
                 <View
-                    className="mt-5 overflow-hidden rounded-2xl bg-white"
+                    className="mt-5 overflow-hidden rounded-2xl bg-white dark:bg-[#1A1D24]"
                     style={{
                         shadowColor: "#000",
                         shadowOffset: { width: 0, height: 1 },
@@ -139,49 +137,46 @@ export default function AboutScreen({ onClose }: AboutScreenProps) {
                 >
                     <AboutItem
                         icon={MapPinned}
-                        title="Informação no mapa"
-                        description="Consulte ocorrências de diferentes fontes, incluindo dados oficiais da PRF e relatos enviados pela comunidade."
+                        title={t("about.mapTitle")}
+                        description={t("about.mapBody")}
                     />
                     <Divider />
                     <AboutItem
                         icon={ClipboardCheck}
-                        title="Relatos com moderação"
-                        description="Os relatos enviados pelo app passam por análise antes de aparecerem no mapa público. Você pode acompanhar o status em Meus Relatos."
+                        title={t("about.moderationTitle")}
+                        description={t("about.moderationBody")}
                     />
                     <Divider />
                     <AboutItem
                         icon={ShieldCheck}
-                        title="Fontes identificadas"
-                        description="Os registros são apresentados com sua origem, para ajudar você a entender de onde vêm as informações."
+                        title={t("about.sourcesTitle")}
+                        description={t("about.sourcesBody")}
                     />
                 </View>
 
-                <View className="mt-5 flex-row gap-3 rounded-2xl border border-[#F3D28C] bg-[#FFF8E8] p-4">
+                <View className="mt-5 flex-row gap-3 rounded-2xl border border-[#F3D28C] dark:border-[#4A3B1A] bg-[#FFF8E8] dark:bg-[#2B2313] p-4">
                     <View className="mt-0.5">
                         <ShieldAlert
                             size={22}
-                            color="#9B6500"
+                            color={colors.warning}
                             strokeWidth={2}
                         />
                     </View>
                     <View className="flex-1 gap-1">
-                        <Text className="text-[15px] font-body-semibold" style={{ color: "#704800" }}>
-                            Use com responsabilidade
+                        <Text className="text-[15px] font-body-semibold" style={{ color: colors.onWarningContainer }}>
+                            {t("about.responsibilityTitle")}
                         </Text>
-                        <Text className="font-body text-[14px] leading-[21px]" style={{ color: "#704800" }}>
-                            O Farol é informativo e não substitui os canais oficiais
-                            de emergência. Em uma emergência em rodovia federal,
-                            acione a PRF pelo 191. Consulte ou envie informações
-                            somente quando estiver em segurança.
+                        <Text className="font-body text-[14px] leading-[21px]" style={{ color: colors.onWarningContainer }}>
+                            {t("about.responsibilityBody")}
                         </Text>
                     </View>
                 </View>
 
                 <Text
                     className="font-body mt-6 text-center text-[13px]"
-                    style={{ color: MUTED_COLOR }}
+                    style={{ color: colors.onSurfaceVariant }}
                 >
-                    Farol · Versão {version}
+                    {t("about.version", { version: String(version) })}
                 </Text>
             </ScrollView>
         </View>

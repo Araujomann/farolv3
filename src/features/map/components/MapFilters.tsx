@@ -10,41 +10,44 @@ import type {
     AccidentWeatherCondition,
 } from "../types/accident.types";
 
-const SEVERITY_OPTIONS: { value: AccidentSeverity; label: string; color: string }[] = [
-    { value: "low", label: "Baixa", color: "#0969D7" },
-    { value: "medium", label: "Média", color: "#D99A24" },
-    { value: "high", label: "Alta", color: "#D9534F" },
-    { value: "critical", label: "Crítica", color: "#B42318" },
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import { useTranslation, type TranslationKey } from "@/src/i18n";
+import { SEVERITY_COLORS } from "@/src/theme/colors";
+const SEVERITY_OPTIONS: { value: AccidentSeverity; label: TranslationKey; color: string }[] = [
+    { value: "low", label: "enums.severity.low", color: SEVERITY_COLORS.low },
+    { value: "medium", label: "enums.severity.medium", color: SEVERITY_COLORS.medium },
+    { value: "high", label: "enums.severity.high", color: SEVERITY_COLORS.high },
+    { value: "critical", label: "enums.severity.critical", color: SEVERITY_COLORS.critical },
 ];
 
-const CLASSIFICATION_OPTIONS: { value: AccidentClassification; label: string }[] = [
-    { value: "sem_vitima", label: "Sem vítima" },
-    { value: "com_vitima", label: "Com vítima" },
+const CLASSIFICATION_OPTIONS: { value: AccidentClassification; label: TranslationKey }[] = [
+    { value: "sem_vitima", label: "enums.classification.sem_vitima" },
+    { value: "com_vitima", label: "enums.classification.com_vitima" },
 ];
 
-const WEATHER_OPTIONS: { value: AccidentWeatherCondition; label: string; icon: string }[] = [
-    { value: "ceu_claro", label: "Céu claro", icon: "☀️" },
-    { value: "chuva", label: "Chuva", icon: "🌧️" },
-    { value: "nublado", label: "Nublado", icon: "☁️" },
-    { value: "garoa", label: "Garoa", icon: "🌦️" },
+const WEATHER_OPTIONS: { value: AccidentWeatherCondition; label: TranslationKey; icon: string }[] = [
+    { value: "ceu_claro", label: "enums.weather.ceu_claro", icon: "☀️" },
+    { value: "chuva", label: "enums.weather.chuva", icon: "🌧️" },
+    { value: "nublado", label: "enums.weather.nublado", icon: "☁️" },
+    { value: "garoa", label: "enums.weather.garoa", icon: "🌦️" },
 ];
 
-const SOURCE_OPTIONS: { value: AccidentSource; label: string }[] = [
-    { value: "APP", label: "Usuários" },
-    { value: "PRF", label: "PRF (oficial)" },
+const SOURCE_OPTIONS: { value: AccidentSource; label: TranslationKey }[] = [
+    { value: "APP", label: "enums.source.APP" },
+    { value: "PRF", label: "enums.source.PRF" },
 ];
 
 type TemporalPeriod = "quarterly" | "semiannual" | "annual" | "biennial";
 
 const TEMPORAL_PERIOD_OPTIONS: {
     value: TemporalPeriod;
-    label: string;
+    label: TranslationKey;
     months: number;
 }[] = [
-    { value: "quarterly", label: "Trimestral", months: 3 },
-    { value: "semiannual", label: "Semestral", months: 6 },
-    { value: "annual", label: "Anual", months: 12 },
-    { value: "biennial", label: "Bienal", months: 24 },
+    { value: "quarterly", label: "filters.quarterly", months: 3 },
+    { value: "semiannual", label: "filters.semiannual", months: 6 },
+    { value: "annual", label: "filters.annual", months: 12 },
+    { value: "biennial", label: "filters.biennial", months: 24 },
 ];
 
 type MapFiltersProps = {
@@ -62,6 +65,8 @@ export function MapFilters({
     onInteraction,
     topOffset = 84,
 }: MapFiltersProps) {
+    const { t } = useTranslation();
+    const { colors } = useAppTheme();
     const insets = useSafeAreaInsets();
     const [isOpen, setIsOpen] = useState(false);
     const [draft, setDraft] = useState<AccidentMapFilters>(filters);
@@ -147,12 +152,12 @@ export function MapFilters({
             <Pressable
                 onPress={handleOpen}
                 onTouchStart={onInteraction}
-                className="absolute right-4 z-10 flex-row items-center gap-1.5 rounded-full bg-white px-4 py-2.5 shadow-lg"
+                className="absolute right-4 z-10 flex-row items-center gap-1.5 rounded-full bg-white dark:bg-[#1A1D24] px-4 py-2.5 shadow-lg"
                 style={{ top: insets.top + topOffset }}
             >
-                <SlidersHorizontal size={16} color="#374151" />
-                <Text className="text-sm font-body-semibold text-gray-700">
-                    Filtros
+                <SlidersHorizontal size={16} color={colors.onSurface} />
+                <Text className="text-sm font-body-semibold text-gray-700 dark:text-[#AAB0BD]">
+                    {t("filters.title")}
                 </Text>
                 {activeCount > 0 && (
                     <View className="ml-0.5 h-5 w-5 items-center justify-center rounded-full bg-[#0969D7]">
@@ -167,18 +172,18 @@ export function MapFilters({
 
     return (
         <View
-            className="absolute bottom-0 left-0 right-0 z-20 rounded-t-3xl bg-white pb-8 pt-4 shadow-2xl"
+            className="absolute bottom-0 left-0 right-0 z-20 rounded-t-3xl bg-white dark:bg-[#1A1D24] pb-8 pt-4 shadow-2xl"
             onTouchStart={onInteraction}
         >
             <View className="mb-4 flex-row items-center justify-between px-5">
-                <Text className="text-lg font-body-bold text-gray-900">
-                    Filtros
+                <Text className="text-lg font-body-bold text-gray-900 dark:text-[#ECEEF4]">
+                    {t("filters.title")}
                 </Text>
                 <Pressable
                     onPress={() => setIsOpen(false)}
-                    className="rounded-full bg-gray-100 p-2"
+                    className="rounded-full bg-gray-100 dark:bg-[#242833] p-2"
                 >
-                    <X size={18} color="#374151" />
+                    <X size={18} color={colors.onSurface} />
                 </Pressable>
             </View>
 
@@ -186,11 +191,11 @@ export function MapFilters({
                 className="max-h-96 px-5"
                 showsVerticalScrollIndicator={false}
             >
-                <FilterSection title="Severidade">
+                <FilterSection title={t("filters.severity")}>
                     {SEVERITY_OPTIONS.map((opt) => (
                         <FilterChip
                             key={opt.value}
-                            label={opt.label}
+                            label={t(opt.label)}
                             active={draft.severity === opt.value}
                             activeColor={opt.color}
                             dot={opt.color}
@@ -199,22 +204,22 @@ export function MapFilters({
                     ))}
                 </FilterSection>
 
-                <FilterSection title="Período">
+                <FilterSection title={t("filters.period")}>
                     {TEMPORAL_PERIOD_OPTIONS.map((opt) => (
                         <FilterChip
                             key={opt.value}
-                            label={opt.label}
+                            label={t(opt.label)}
                             active={draftPeriod === opt.value}
                             onPress={() => togglePeriod(opt.value, opt.months)}
                         />
                     ))}
                 </FilterSection>
 
-                <FilterSection title="Classificação">
+                <FilterSection title={t("filters.classification")}>
                     {CLASSIFICATION_OPTIONS.map((opt) => (
                         <FilterChip
                             key={opt.value}
-                            label={opt.label}
+                            label={t(opt.label)}
                             active={draft.classificacao === opt.value}
                             onPress={() =>
                                 toggleFilter("classificacao", opt.value)
@@ -223,11 +228,11 @@ export function MapFilters({
                     ))}
                 </FilterSection>
 
-                <FilterSection title="Condição meteorológica">
+                <FilterSection title={t("filters.weather")}>
                     {WEATHER_OPTIONS.map((opt) => (
                         <FilterChip
                             key={opt.value}
-                            label={`${opt.icon} ${opt.label}`}
+                            label={`${opt.icon} ${t(opt.label)}`}
                             active={
                                 draft.condicao_meteorologica === opt.value
                             }
@@ -241,11 +246,11 @@ export function MapFilters({
                     ))}
                 </FilterSection>
 
-                <FilterSection title="Fonte dos dados">
+                <FilterSection title={t("filters.source")}>
                     {SOURCE_OPTIONS.map((opt) => (
                         <FilterChip
                             key={opt.value}
-                            label={opt.label}
+                            label={t(opt.label)}
                             active={draft.source === opt.value}
                             onPress={() =>
                                 toggleFilter("source", opt.value)
@@ -258,10 +263,10 @@ export function MapFilters({
             <View className="mt-4 flex-row gap-3 px-5">
                 <Pressable
                     onPress={handleClear}
-                    className="flex-1 items-center rounded-full border border-gray-200 bg-gray-50 py-3"
+                    className="flex-1 items-center rounded-full border border-gray-200 dark:border-[#3A3F4B] bg-gray-50 dark:bg-[#242833] py-3"
                 >
-                    <Text className="text-sm font-body-semibold text-gray-700">
-                        Limpar
+                    <Text className="text-sm font-body-semibold text-gray-700 dark:text-[#AAB0BD]">
+                        {t("filters.clear")}
                     </Text>
                 </Pressable>
                 <Pressable
@@ -269,7 +274,7 @@ export function MapFilters({
                     className="flex-1 items-center rounded-full bg-[#0969D7] py-3"
                 >
                     <Text className="text-sm font-body-semibold text-white">
-                        Aplicar
+                        {t("filters.apply")}
                     </Text>
                 </Pressable>
             </View>
@@ -287,7 +292,7 @@ function FilterSection({
 }) {
     return (
         <View className="mb-4">
-            <Text className="mb-2 text-xs font-body-bold uppercase tracking-wide text-gray-500">
+            <Text className="mb-2 text-xs font-body-bold uppercase tracking-wide text-gray-500 dark:text-[#8B92A1]">
                 {title}
             </Text>
             <View className="flex-row flex-wrap gap-2">{children}</View>
@@ -298,7 +303,7 @@ function FilterSection({
 function FilterChip({
     label,
     active,
-    activeColor = "#0969D7",
+    activeColor: activeColorProp,
     dot,
     onPress,
 }: {
@@ -308,13 +313,16 @@ function FilterChip({
     dot?: string;
     onPress: () => void;
 }) {
+    const { colors } = useAppTheme();
+    const activeColor = activeColorProp ?? colors.accent;
+
     return (
         <Pressable
             onPress={onPress}
             className="flex-row items-center gap-1.5 rounded-full border px-3 py-2"
             style={{
-                backgroundColor: active ? activeColor : "#F9FAFB",
-                borderColor: active ? activeColor : "#E5E7EB",
+                backgroundColor: active ? activeColor : colors.background,
+                borderColor: active ? activeColor : colors.outlineVariant,
             }}
         >
             {dot && (
@@ -328,7 +336,7 @@ function FilterChip({
             {!dot && active && <Check size={14} color="#FFFFFF" />}
             <Text
                 className="text-sm font-body-medium"
-                style={{ color: active ? "#FFFFFF" : "#374151" }}
+                style={{ color: active ? "#FFFFFF" : colors.onSurface }}
             >
                 {label}
             </Text>

@@ -20,7 +20,17 @@ import {
     PlusJakartaSans_800ExtraBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
+import { StatusBar } from 'expo-status-bar';
+import {
+    DarkTheme,
+    DefaultTheme,
+    ThemeProvider,
+    type Theme,
+} from '@react-navigation/native';
 import { useAuthStore } from '@/src/store/authStore';
+import { useThemeStore } from '@/src/theme/themeStore';
+import { useAppTheme } from '@/src/theme/useAppTheme';
+import { useLanguageStore } from '@/src/i18n';
 import { usePushNotifications } from '@/src/features/notifications/usePushNotifications';
 import "react-native-reanimated";
 import "../global.css"
@@ -53,10 +63,31 @@ export default function RootLayout() {
     // Em caso de erro no carregamento, segue com a fonte do sistema.
     const fontsReady = fontsLoaded || Boolean(fontError);
 
+    const themePreference = useThemeStore((state) => state.preference);
+    const isThemeHydrated = useThemeStore((state) => state.isHydrated);
+    const hydrateTheme = useThemeStore((state) => state.hydrate);
+    const isLanguageHydrated = useLanguageStore((state) => state.isHydrated);
+    const hydrateLanguage = useLanguageStore((state) => state.hydrate);
+    const { colors, isDark } = useAppTheme();
+    const baseNavigationTheme = isDark ? DarkTheme : DefaultTheme;
+    const navigationTheme: Theme = {
+        ...baseNavigationTheme,
+        colors: {
+            ...baseNavigationTheme.colors,
+            primary: colors.primary,
+            background: colors.background,
+            card: colors.surface,
+            text: colors.onSurface,
+            border: colors.outlineVariant,
+        },
+    };
+
     usePushNotifications(Boolean(token));
 
     useEffect(() => {
         restoreSession();
+        hydrateTheme();
+        hydrateLanguage();
     }, []);
 
     useEffect(() => {
@@ -107,19 +138,25 @@ export default function RootLayout() {
     ]);
 
     return (
-        <GluestackUIProvider mode="dark">
-            <View className="flex-1">
-                <Stack>
-                    <Stack.Screen name="index" options={{ headerShown: false }} />
-                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                </Stack>
-                {(isLoading || !fontsReady) && (
-                    <View className="absolute inset-0 items-center justify-center bg-background">
-                        <ActivityIndicator size="large" color="#0058BC" />
-                    </View>
-                )}
-            </View>
+        <GluestackUIProvider mode={themePreference}>
+            <ThemeProvider value={navigationTheme}>
+                <StatusBar style="auto" />
+                <View className="flex-1" style={{ backgroundColor: colors.background }}>
+                    <Stack>
+                        <Stack.Screen name="index" options={{ headerShown: false }} />
+                        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    </Stack>
+                    {(isLoading || !fontsReady || !isThemeHydrated || !isLanguageHydrated) && (
+                        <View
+                            className="absolute inset-0 items-center justify-center"
+                            style={{ backgroundColor: colors.background }}
+                        >
+                            <ActivityIndicator size="large" color={colors.primary} />
+                        </View>
+                    )}
+                </View>
+            </ThemeProvider>
         </GluestackUIProvider>
     );
 }

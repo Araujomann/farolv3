@@ -23,16 +23,18 @@ import { Box } from "@/components/ui/box";
 import { loginService } from "@/src/api/auth";
 import { useAuthStore } from "@/src/store/authStore";
 
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import { useTranslation, type TranslationKey } from "@/src/i18n";
 // ==========================================
 // VALIDAÇÃO
 // ==========================================
 
 const loginSchema = z.object({
     email: z.email({
-        message: "E-mail inválido",
+        message: "auth.validation.invalidEmail",
     }),
     password: z.string().min(8, {
-        message: "A senha deve ter ao menos 8 caracteres",
+        message: "auth.validation.passwordMin",
     }),
 });
 
@@ -43,6 +45,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 // ==========================================
 
 export default function LoginScreen() {
+    const { colors } = useAppTheme();
+    const { t } = useTranslation();
     const router = useRouter();
 
     const signIn = useAuthStore((state) => state.signIn);
@@ -74,13 +78,8 @@ export default function LoginScreen() {
             const { tokens, user } = await loginService(data);
 
             await signIn(user, tokens.accessToken, tokens.refreshToken);
-        } catch (error: any) {
-            const message =
-                error?.response?.data?.message ??
-                error?.response?.data?.errors?.[0]?.message ??
-                "E-mail ou senha incorretos.";
-
-            setServerError(message);
+        } catch {
+            setServerError(t("auth.login.invalidCredentials"));
         }
     };
 
@@ -93,11 +92,11 @@ export default function LoginScreen() {
             edges={["top", "bottom"]}
             style={{
                 flex: 1,
-                backgroundColor: "#FFFFFF",
+                backgroundColor: colors.surface,
             }}
         >
             <View style={{ flex: 1 }}>
-                <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+                <View style={{ flex: 1, backgroundColor: colors.surface }}>
                     <KeyboardAvoidingView
                         style={{ flex: 1 }}
                         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -111,7 +110,7 @@ export default function LoginScreen() {
                             showsVerticalScrollIndicator={false}
                             bounces={false}
                         >
-                            <Box className="flex-1 w-full bg-white px-7">
+                            <Box className="flex-1 w-full bg-white dark:bg-[#1A1D24] px-7">
                         {/* ==================================
                 LOGOTIPO
             ================================== */}
@@ -124,10 +123,10 @@ export default function LoginScreen() {
                                     width: 36,
                                     height: 36,
                                 }}
-                                accessibilityLabel="Ícone do Farol"
+                                accessibilityLabel={t("auth.logoLabel")}
                             />
 
-                            <Text className="text-xl font-display tracking-tight text-slate-900">
+                            <Text className="text-xl font-display tracking-tight text-slate-900 dark:text-[#ECEEF4]">
                                 Farol
                             </Text>
                         </Box>
@@ -140,12 +139,12 @@ export default function LoginScreen() {
                             {/* TÍTULO */}
 
                             <VStack space="xs" className="mb-9 items-center">
-                                <Text className="text-center text-2xl font-display tracking-tight text-slate-900">
-                                    Bem-vindo!
+                                <Text className="text-center text-2xl font-display tracking-tight text-slate-900 dark:text-[#ECEEF4]">
+                                    {t("auth.login.welcome")}
                                 </Text>
 
-                                <Text className="text-center text-lg font-body-bold tracking-tight text-slate-800">
-                                    Entre para continuar
+                                <Text className="text-center text-lg font-body-bold tracking-tight text-slate-800 dark:text-[#ECEEF4]">
+                                    {t("auth.login.subtitle")}
                                 </Text>
                             </VStack>
 
@@ -158,8 +157,8 @@ export default function LoginScreen() {
 
                                 <VStack space="xs">
                                     <Box className="relative">
-                                        <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-body-medium text-slate-500">
-                                            E-mail
+                                        <Text className="absolute -top-2 left-3.5 z-10 bg-white dark:bg-[#1A1D24] px-1.5 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
+                                            {t("auth.email")}
                                         </Text>
 
                                         <Controller
@@ -174,18 +173,18 @@ export default function LoginScreen() {
                                             }) => (
                                                 <Input
                                                     isInvalid={!!errors.email}
-                                                    className="h-12 rounded-xl border-slate-300 bg-white px-3 dark:bg-white"
+                                                    className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
                                                 >
                                                     <InputSlot className="pl-0">
                                                         <InputIcon
                                                             as={Mail}
-                                                            className="text-slate-400"
+                                                            className="text-slate-400 dark:text-[#8B92A1]"
                                                         />
                                                     </InputSlot>
 
                                                     <InputField
-                                                        placeholder="Digite seu e-mail"
-                                                        placeholderTextColor="#94a3b8"
+                                                        placeholder={t("auth.emailPlaceholder")}
+                                                        placeholderTextColor={colors.outline}
                                                         keyboardType="email-address"
                                                         autoCapitalize="none"
                                                         autoCorrect={false}
@@ -193,8 +192,8 @@ export default function LoginScreen() {
                                                         onBlur={onBlur}
                                                         onChangeText={onChange}
                                                         value={value}
-                                                        className="text-sm font-body-medium text-slate-800"
-                                                        accessibilityLabel="E-mail"
+                                                        className="text-sm font-body-medium text-slate-800 dark:text-[#ECEEF4]"
+                                                        accessibilityLabel={t("auth.email")}
                                                     />
                                                 </Input>
                                             )}
@@ -202,8 +201,8 @@ export default function LoginScreen() {
                                     </Box>
 
                                     {errors.email && (
-                                        <Text className="font-body text-xs text-red-600">
-                                            {errors.email.message}
+                                        <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
+                                            {t(errors.email.message as TranslationKey)}
                                         </Text>
                                     )}
                                 </VStack>
@@ -214,8 +213,8 @@ export default function LoginScreen() {
 
                                 <VStack space="xs">
                                     <Box className="relative">
-                                        <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-body-medium text-slate-500">
-                                            Senha
+                                        <Text className="absolute -top-2 left-3.5 z-10 bg-white dark:bg-[#1A1D24] px-1.5 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
+                                            {t("auth.password")}
                                         </Text>
 
                                         <Controller
@@ -232,26 +231,26 @@ export default function LoginScreen() {
                                                     isInvalid={
                                                         !!errors.password
                                                     }
-                                                    className="h-12 rounded-xl border-slate-300 bg-white px-3 dark:bg-white"
+                                                    className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
                                                 >
                                                     <InputSlot className="pl-0">
                                                         <InputIcon
                                                             as={Lock}
-                                                            className="text-slate-400"
+                                                            className="text-slate-400 dark:text-[#8B92A1]"
                                                         />
                                                     </InputSlot>
 
                                                     <InputField
                                                         placeholder="••••••••"
-                                                        placeholderTextColor="#94a3b8"
+                                                        placeholderTextColor={colors.outline}
                                                         secureTextEntry={
                                                             !showPassword
                                                         }
                                                         onBlur={onBlur}
                                                         onChangeText={onChange}
                                                         value={value}
-                                                        className="text-sm font-body-medium text-slate-800"
-                                                        accessibilityLabel="Senha"
+                                                        className="text-sm font-body-medium text-slate-800 dark:text-[#ECEEF4]"
+                                                        accessibilityLabel={t("auth.password")}
                                                     />
 
                                                     {/* MOSTRAR / OCULTAR SENHA */}
@@ -265,8 +264,8 @@ export default function LoginScreen() {
                                                         }
                                                         accessibilityLabel={
                                                             showPassword
-                                                                ? "Ocultar senha"
-                                                                : "Mostrar senha"
+                                                                ? t("auth.hidePassword")
+                                                                : t("auth.showPassword")
                                                         }
                                                     >
                                                         <InputIcon
@@ -275,7 +274,7 @@ export default function LoginScreen() {
                                                                     ? Eye
                                                                     : EyeOff
                                                             }
-                                                            className="text-slate-400"
+                                                            className="text-slate-400 dark:text-[#8B92A1]"
                                                         />
                                                     </InputSlot>
                                                 </Input>
@@ -284,8 +283,8 @@ export default function LoginScreen() {
                                     </Box>
 
                                     {errors.password && (
-                                        <Text className="font-body text-xs text-red-600">
-                                            {errors.password.message}
+                                        <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
+                                            {t(errors.password.message as TranslationKey)}
                                         </Text>
                                     )}
                                 </VStack>
@@ -314,10 +313,10 @@ export default function LoginScreen() {
                                                 borderWidth: 1,
                                                 borderColor: rememberMe
                                                     ? "#007AFF"
-                                                    : "#CBD5E1",
+                                                    : colors.outlineVariant,
                                                 backgroundColor: rememberMe
                                                     ? "#007AFF"
-                                                    : "#FFFFFF",
+                                                    : colors.surface,
                                             }}
                                         >
                                             {rememberMe && (
@@ -329,8 +328,8 @@ export default function LoginScreen() {
                                             )}
                                         </Box>
 
-                                        <Text className="text-xs font-body-medium text-slate-500">
-                                            Lembrar de mim
+                                        <Text className="text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
+                                            {t("auth.login.rememberMe")}
                                         </Text>
                                     </TouchableOpacity>
 
@@ -345,8 +344,8 @@ export default function LoginScreen() {
                                         activeOpacity={0.7}
                                         accessibilityRole="button"
                                     >
-                                        <Text className="text-xs font-body-medium text-[#0058BC]">
-                                        Esqueceu a senha?
+                                        <Text className="text-xs font-body-medium text-[#0058BC] dark:text-[#3B87F5]">
+                                        {t("auth.login.forgotPassword")}
                                         </Text>
                                     </TouchableOpacity>
                                 </Box>
@@ -356,8 +355,8 @@ export default function LoginScreen() {
                 ============================== */}
 
                                 {serverError && (
-                                    <Box className="rounded-xl bg-red-50 px-4 py-3">
-                                        <Text className="font-body text-sm text-red-700">
+                                    <Box className="rounded-xl bg-red-50 dark:bg-[#2C1715] px-4 py-3">
+                                        <Text className="font-body text-sm text-red-700 dark:text-[#FF7B70]">
                                             {serverError}
                                         </Text>
                                     </Box>
@@ -380,7 +379,7 @@ export default function LoginScreen() {
                                         <ButtonSpinner className="text-white" />
                                     ) : (
                                         <ButtonText className="text-sm font-body-medium text-white">
-                                            Entrar
+                                            {t("auth.login.submit")}
                                         </ButtonText>
                                     )}
                                 </Button>
@@ -391,9 +390,9 @@ export default function LoginScreen() {
                         </ScrollView>
                     </KeyboardAvoidingView>
 
-                    <Box className="w-full flex-row items-center justify-center gap-1 bg-white px-7 pb-5 pt-6">
-                        <Text className="font-body text-center text-sm text-slate-600">
-                            Não tem uma conta?
+                    <Box className="w-full flex-row items-center justify-center gap-1 bg-white dark:bg-[#1A1D24] px-7 pb-5 pt-6">
+                        <Text className="font-body text-center text-sm text-slate-600 dark:text-[#AAB0BD]">
+                            {t("auth.login.noAccount")}
                         </Text>
 
                         <TouchableOpacity
@@ -401,8 +400,8 @@ export default function LoginScreen() {
                             activeOpacity={0.7}
                             accessibilityRole="button"
                         >
-                            <Text className="text-sm font-body-bold text-slate-900">
-                                Cadastre-se
+                            <Text className="text-sm font-body-bold text-slate-900 dark:text-[#ECEEF4]">
+                                {t("auth.login.signUp")}
                             </Text>
                         </TouchableOpacity>
                     </Box>

@@ -39,9 +39,9 @@ import {
   Plus,
   type LucideIcon,
 } from "lucide-react-native";
+import { useTranslation } from "@/src/i18n";
 
-const ACTIVE_COLOR = "#0969D7";
-const INACTIVE_COLOR = "#6B7280";
+import { useAppTheme } from "@/src/theme/useAppTheme";
 const LEAVE_PROFILE_TRANSITION_MS = 700;
 
 /**
@@ -75,7 +75,8 @@ function TabButton({
   profileMix,
   ...props
 }: TabButtonProps) {
-  const baseColor = isFocused ? ACTIVE_COLOR : INACTIVE_COLOR;
+  const { colors } = useAppTheme();
+  const baseColor = isFocused ? colors.accent : colors.onSurfaceVariant;
   const baseIconStyle = useUnderLayerStyle(profileMix);
   const titleIconStyle = useOverLayerStyle(profileMix);
   const labelStyle = useTabLabelStyle(baseColor, profileMix);
@@ -120,8 +121,10 @@ function ReportTab({
   profileMix,
   ...props
 }: ReportTabProps) {
+  const { colors } = useAppTheme();
+  const { t } = useTranslation();
   const labelStyle = useTabLabelStyle(
-    isFocused ? ACTIVE_COLOR : INACTIVE_COLOR,
+    isFocused ? colors.accent : colors.onSurfaceVariant,
     profileMix,
   );
 
@@ -136,7 +139,7 @@ function ReportTab({
 
         {/* Rótulo alinhado com os demais */}
         <Animated.Text style={[styles.label, labelStyle]}>
-          Relatar
+          {t("tabs.report")}
         </Animated.Text>
 
         {/* Botão flutuante */}
@@ -149,7 +152,7 @@ function ReportTab({
             // Sobe mais o botão sem mexer no rótulo
             top: -48,
 
-            backgroundColor: ACTIVE_COLOR,
+            backgroundColor: colors.accent,
 
             elevation: 10,
 
@@ -175,6 +178,7 @@ function ReportTab({
 
 export default function Layout() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const pathname = usePathname();
   const isTitleColorResolved = useProfileTitleColorStore(
     (state) => state.isTitleColorResolved,
@@ -208,7 +212,7 @@ export default function Layout() {
       <TabSlot />
 
       <TabList
-        className="flex-row items-center justify-between rounded-t-3xl bg-white"
+        className="flex-row items-center justify-between rounded-t-3xl bg-white dark:bg-[#1A1D24]"
         style={{
           display: isReportRoute || isAccidentDetailRoute ? "none" : "flex",
           height: 72 + insets.bottom,
@@ -234,7 +238,7 @@ export default function Layout() {
         >
           <TabButton
             icon={House}
-            label="Home"
+            label={t("tabs.home")}
             profileMix={profileMix}
           />
         </TabTrigger>
@@ -247,7 +251,7 @@ export default function Layout() {
         >
           <TabButton
             icon={Map}
-            label="Mapa"
+            label={t("tabs.map")}
             profileMix={profileMix}
           />
         </TabTrigger>
@@ -271,7 +275,7 @@ export default function Layout() {
         >
           <TabButton
             icon={User}
-            label="Perfil"
+            label={t("tabs.profile")}
             profileMix={profileMix}
           />
         </TabTrigger>

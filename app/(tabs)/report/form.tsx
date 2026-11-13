@@ -46,38 +46,41 @@ import type {
     AccidentWeatherCondition,
 } from "@/src/features/map/types/accident.types";
 
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import { tr, useTranslation, type TranslationKey } from "@/src/i18n";
+import { SEVERITY_COLORS } from "@/src/theme/colors";
 const MAX_DESCRIPTION_LENGTH = 1000;
 const MAX_CUSTOM_TYPE_LENGTH = 60;
 
 const SEVERITY_OPTIONS: {
     value: Exclude<AccidentSeverity, "unknown">;
-    label: string;
+    label: TranslationKey;
     color: string;
 }[] = [
-    { value: "low", label: "Baixa", color: "#0969D7" },
-    { value: "medium", label: "Média", color: "#D99A24" },
-    { value: "high", label: "Alta", color: "#D9534F" },
-    { value: "critical", label: "Crítica", color: "#B42318" },
+    { value: "low", label: "enums.severity.low", color: SEVERITY_COLORS.low },
+    { value: "medium", label: "enums.severity.medium", color: SEVERITY_COLORS.medium },
+    { value: "high", label: "enums.severity.high", color: SEVERITY_COLORS.high },
+    { value: "critical", label: "enums.severity.critical", color: SEVERITY_COLORS.critical },
 ];
 
 const ACCIDENT_TYPES = ["COLISÃO", "ATROPELAMENTO", "OUTRO"] as const;
 
 const CLASSIFICATION_OPTIONS: {
     value: AccidentClassification;
-    label: string;
+    label: TranslationKey;
 }[] = [
-    { value: "sem_vitima", label: "Sem vítima" },
-    { value: "com_vitima", label: "Com vítima" },
+    { value: "sem_vitima", label: "enums.classification.sem_vitima" },
+    { value: "com_vitima", label: "enums.classification.com_vitima" },
 ];
 
 const WEATHER_OPTIONS: {
     value: AccidentWeatherCondition;
-    label: string;
+    label: TranslationKey;
 }[] = [
-    { value: "ceu_claro", label: "Céu claro" },
-    { value: "nublado", label: "Nublado" },
-    { value: "garoa", label: "Garoa" },
-    { value: "chuva", label: "Chuva" },
+    { value: "ceu_claro", label: "enums.weather.ceu_claro" },
+    { value: "nublado", label: "enums.weather.nublado" },
+    { value: "garoa", label: "enums.weather.garoa" },
+    { value: "chuva", label: "enums.weather.chuva" },
 ];
 
 const ACCIDENT_TYPE_ICONS = {
@@ -87,6 +90,8 @@ const ACCIDENT_TYPE_ICONS = {
 } as const;
 
 export default function ReportFormScreen() {
+    const { t, language } = useTranslation();
+    const { colors } = useAppTheme();
     const router = useRouter();
     const navigation = useNavigation();
     const tabsNavigation = useNavigation("/(tabs)");
@@ -225,18 +230,18 @@ export default function ReportFormScreen() {
         // Verificação de e-mail não verificado
         if (!user?.is_email_verified) {
             setSubmitError(
-                "Para enviar um relato, é necessário verificar seu e-mail com o código de 6 dígitos que enviamos. Acesse a tela inicial ou o perfil e toque em \"Verificar\".",
+                tr("report.form.verifyRequired"),
             );
             return;
         }
 
         if (!hasLocation) {
-            setSubmitError("A localização do acidente não está disponível.");
+            setSubmitError(tr("report.form.locationUnavailable"));
             return;
         }
 
         if (!accidentType || !classification || !weather || !severity) {
-            setSubmitError("Preencha todos os campos obrigatórios.");
+            setSubmitError(tr("report.form.requiredFields"));
             return;
         }
 
@@ -246,7 +251,7 @@ export default function ReportFormScreen() {
             .toLocaleUpperCase("pt-BR");
 
         if (accidentType === "OUTRO" && !normalizedCustomType) {
-            setSubmitError("Informe qual foi o tipo de acidente.");
+            setSubmitError(tr("report.form.customTypeRequired"));
             customTypeInputRef.current?.focus();
             return;
         }
@@ -271,27 +276,10 @@ export default function ReportFormScreen() {
             allowExitRef.current = true;
             router.replace("/report/success");
         } catch (error) {
-            const responseMessage =
-                typeof error === "object" &&
-                error !== null &&
-                "response" in error &&
-                typeof error.response === "object" &&
-                error.response !== null &&
-                "data" in error.response &&
-                typeof error.response.data === "object" &&
-                error.response.data !== null &&
-                "error" in error.response.data &&
-                typeof error.response.data.error === "object" &&
-                error.response.data.error !== null &&
-                "message" in error.response.data.error &&
-                typeof error.response.data.error.message === "string"
-                    ? error.response.data.error.message
-                    : null;
-
-            setSubmitError(
-                responseMessage ??
-                    "Não foi possível enviar o relato. Verifique sua conexão e tente novamente.",
-            );
+            if (__DEV__) {
+                console.warn("Falha ao enviar relato", error);
+            }
+            setSubmitError(tr("report.form.submitError"));
         } finally {
             setIsSubmitting(false);
         }
@@ -322,7 +310,7 @@ export default function ReportFormScreen() {
         let isMounted = true;
 
         if (!hasLocation) {
-            setAddressError("A localização confirmada não está disponível.");
+            setAddressError(tr("report.form.confirmedLocationUnavailable"));
             setIsLoadingAddress(false);
             return () => {
                 isMounted = false;
@@ -339,7 +327,7 @@ export default function ReportFormScreen() {
                 console.warn("Falha ao obter endereço da localização", error);
                 if (isMounted) {
                     setAddressError(
-                        "Não foi possível carregar o endereço. Verifique sua conexão.",
+                        tr("report.form.addressError"),
                     );
                 }
             })
@@ -356,7 +344,7 @@ export default function ReportFormScreen() {
 
     return (
         <KeyboardAvoidingView
-            className="flex-1 bg-[#F1F3FE]"
+            className="flex-1 bg-[#F1F3FE] dark:bg-[#242833]"
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
         >
@@ -375,28 +363,28 @@ export default function ReportFormScreen() {
                 <View className="px-4">
                     <View className="mb-6 flex-row items-center">
                         <Pressable
-                            accessibilityLabel="Voltar para seleção de localização"
+                            accessibilityLabel={t("report.form.backToLocation")}
                             onPress={handleBackPress}
-                            className="h-11 w-11 items-center justify-center rounded-full bg-white shadow-md"
+                            className="h-11 w-11 items-center justify-center rounded-full bg-white dark:bg-[#1A1D24] shadow-md"
                         >
-                            <ArrowLeft size={22} color="#181C23" />
+                            <ArrowLeft size={22} color={colors.onSurface} />
                         </Pressable>
                         <View className="ml-3 flex-1">
-                            <Text className="text-[13px] font-body-semibold uppercase tracking-wide text-[#0058BC]">
-                                Novo relato
+                            <Text className="text-[13px] font-body-semibold uppercase tracking-wide text-[#0058BC] dark:text-[#3B87F5]">
+                                {t("report.form.newReport")}
                             </Text>
-                            <Text className="mt-0.5 text-[25px] font-display tracking-tight text-[#181C23]">
-                                Relatar acidente
+                            <Text className="mt-0.5 text-[25px] font-display tracking-tight text-[#181C23] dark:text-[#ECEEF4]">
+                                {t("report.form.title")}
                             </Text>
                         </View>
                     </View>
 
-                    <View className="mb-5 rounded-3xl bg-white p-4 shadow-lg">
-                        <FieldLabel label="Localização" />
-                        <View className="mt-2 flex-row items-start rounded-2xl border border-[#C1C6D7]/50 bg-[#F8F9FF] px-3 py-3">
+                    <View className="mb-5 rounded-3xl bg-white dark:bg-[#1A1D24] p-4 shadow-lg">
+                        <FieldLabel label={t("report.form.location")} />
+                        <View className="mt-2 flex-row items-start rounded-2xl border border-[#C1C6D7]/50 dark:border-[#3A3F4B]/50 bg-[#F8F9FF] dark:bg-[#0E1015] px-3 py-3">
                             <MapPin
                                 size={19}
-                                color="#0058BC"
+                                color={colors.primary}
                                 strokeWidth={2.25}
                             />
                             <View className="ml-2 flex-1">
@@ -404,40 +392,40 @@ export default function ReportFormScreen() {
                                     <View className="flex-row items-center">
                                         <ActivityIndicator
                                             size="small"
-                                            color="#0058BC"
+                                            color={colors.primary}
                                         />
-                                        <Text className="font-body ml-2 text-sm text-[#717786]">
-                                            Buscando endereço...
+                                        <Text className="font-body ml-2 text-sm text-[#717786] dark:text-[#8B92A1]">
+                                            {t("report.form.searchingAddress")}
                                         </Text>
                                     </View>
                                 ) : (
-                                    <Text className="font-body text-[15px] leading-5 text-[#181C23]">
+                                    <Text className="font-body text-[15px] leading-5 text-[#181C23] dark:text-[#ECEEF4]">
                                         {addressError ?? address}
                                     </Text>
                                 )}
-                                <Text className="font-body mt-1 text-xs text-[#717786]">
+                                <Text className="font-body mt-1 text-xs text-[#717786] dark:text-[#8B92A1]">
                                     {hasLocation
                                         ? `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
-                                        : "Coordenadas indisponíveis"}
+                                        : t("report.form.coordinatesUnavailable")}
                                 </Text>
                             </View>
                         </View>
                     </View>
 
-                    <View className="mb-5 rounded-3xl bg-white p-4 shadow-lg">
-                        <FieldLabel label="Data e horário" />
-                        <Text className="font-body mt-2 rounded-2xl border border-[#C1C6D7]/50 bg-[#F8F9FF] px-3 py-3 text-[15px] text-[#181C23]">
-                            {new Intl.DateTimeFormat("pt-BR", {
+                    <View className="mb-5 rounded-3xl bg-white dark:bg-[#1A1D24] p-4 shadow-lg">
+                        <FieldLabel label={t("report.form.dateTime")} />
+                        <Text className="font-body mt-2 rounded-2xl border border-[#C1C6D7]/50 dark:border-[#3A3F4B]/50 bg-[#F8F9FF] dark:bg-[#0E1015] px-3 py-3 text-[15px] text-[#181C23] dark:text-[#ECEEF4]">
+                            {new Intl.DateTimeFormat(language, {
                                 dateStyle: "short",
                                 timeStyle: "short",
                             }).format(createdAt)}
                         </Text>
                     </View>
 
-                    <View className="mb-5 rounded-3xl bg-white p-4 shadow-lg">
-                        <FieldLabel label="Tipo de acidente" required />
-                        <Text className="font-body mt-1 text-sm text-[#717786]">
-                            Selecione uma opção
+                    <View className="mb-5 rounded-3xl bg-white dark:bg-[#1A1D24] p-4 shadow-lg">
+                        <FieldLabel label={t("report.form.accidentType")} required />
+                        <Text className="font-body mt-1 text-sm text-[#717786] dark:text-[#8B92A1]">
+                            {t("report.form.selectOption")}
                         </Text>
                         <View className="mt-3 flex-row gap-2.5">
                             {ACCIDENT_TYPES.map((type) => {
@@ -453,16 +441,16 @@ export default function ReportFormScreen() {
                                         }
                                         className={`aspect-square flex-1 items-center justify-center rounded-2xl border px-1 ${
                                             selected
-                                                ? "border-[#0058BC] bg-[#E8F0FF]"
-                                                : "border-[#C1C6D7]/60 bg-white"
+                                                ? "border-[#0058BC] bg-[#E8F0FF] dark:bg-[#16253F]"
+                                                : "border-[#C1C6D7]/60 dark:border-[#3A3F4B]/60 bg-white dark:bg-[#1A1D24]"
                                         }`}
                                     >
                                         <TypeIcon
                                             size={26}
                                             color={
                                                 selected
-                                                    ? "#0058BC"
-                                                    : "#414755"
+                                                    ? colors.primary
+                                                    : colors.onSurfaceVariant
                                             }
                                             strokeWidth={2}
                                         />
@@ -472,17 +460,17 @@ export default function ReportFormScreen() {
                                             minimumFontScale={0.72}
                                             className={`mt-2 w-full text-center text-[10px] font-body-bold tracking-normal ${
                                                 selected
-                                                    ? "text-[#0058BC]"
-                                                    : "text-[#414755]"
+                                                    ? "text-[#0058BC] dark:text-[#3B87F5]"
+                                                    : "text-[#414755] dark:text-[#AAB0BD]"
                                             }`}
                                         >
-                                            {type}
+                                            {t(`enums.accidentType.${type}`).toLocaleUpperCase(language)}
                                         </Text>
                                         {selected && (
                                             <View className="absolute right-2 top-2">
                                                 <Check
                                                     size={16}
-                                                    color="#0058BC"
+                                                    color={colors.primary}
                                                     strokeWidth={2.5}
                                                 />
                                             </View>
@@ -497,28 +485,28 @@ export default function ReportFormScreen() {
                                 exiting={FadeOutUp.duration(160)}
                             >
                                 <View className="mt-4">
-                                    <Text className="font-body-semibold text-[13px] text-[#414755]">
-                                        Qual foi o tipo de acidente?
+                                    <Text className="font-body-semibold text-[13px] text-[#414755] dark:text-[#AAB0BD]">
+                                        {t("report.form.customTypeQuestion")}
                                     </Text>
                                     <View
                                         className={`mt-2 flex-row items-center rounded-2xl border px-3 ${
                                             isCustomTypeFocused
-                                                ? "border-[#0058BC] bg-white"
-                                                : "border-[#C1C6D7]/60 bg-[#F8F9FF]"
+                                                ? "border-[#0058BC] bg-white dark:bg-[#1A1D24]"
+                                                : "border-[#C1C6D7]/60 dark:border-[#3A3F4B]/60 bg-[#F8F9FF] dark:bg-[#0E1015]"
                                         }`}
                                     >
                                         <PenLine
                                             size={18}
                                             color={
                                                 isCustomTypeFocused
-                                                    ? "#0058BC"
-                                                    : "#717786"
+                                                    ? colors.primary
+                                                    : colors.outline
                                             }
                                             strokeWidth={2.25}
                                         />
                                         <TextInput
                                             ref={customTypeInputRef}
-                                            accessibilityLabel="Tipo de acidente"
+                                            accessibilityLabel={t("report.form.accidentType")}
                                             value={customType}
                                             onChangeText={setCustomType}
                                             onFocus={() =>
@@ -532,9 +520,9 @@ export default function ReportFormScreen() {
                                             autoCorrect={false}
                                             returnKeyType="done"
                                             onSubmitEditing={Keyboard.dismiss}
-                                            placeholder="Ex.: CAPOTAMENTO, QUEDA DE MOTO"
-                                            placeholderTextColor="#8A90A0"
-                                            className="font-body-medium ml-2 h-12 flex-1 text-[15px] text-[#181C23]"
+                                            placeholder={t("report.form.customTypePlaceholder")}
+                                            placeholderTextColor={colors.outline}
+                                            className="font-body-medium ml-2 h-12 flex-1 text-[15px] text-[#181C23] dark:text-[#ECEEF4]"
                                         />
                                     </View>
                                 </View>
@@ -543,10 +531,10 @@ export default function ReportFormScreen() {
                     </View>
 
                     <Animated.View layout={LinearTransition.duration(240)}>
-                    <View className="mb-5 rounded-3xl bg-white p-4 shadow-lg">
-                        <FieldLabel label="Classificação" required />
-                        <Text className="font-body mt-1 text-sm text-[#717786]">
-                            Houve vítimas no acidente?
+                    <View className="mb-5 rounded-3xl bg-white dark:bg-[#1A1D24] p-4 shadow-lg">
+                        <FieldLabel label={t("report.form.classification")} required />
+                        <Text className="font-body mt-1 text-sm text-[#717786] dark:text-[#8B92A1]">
+                            {t("report.form.victimsQuestion")}
                         </Text>
                         <View className="mt-3 flex-row gap-2.5">
                             {CLASSIFICATION_OPTIONS.map((option) => {
@@ -561,18 +549,18 @@ export default function ReportFormScreen() {
                                         }
                                         className={`min-h-12 flex-1 items-center justify-center rounded-2xl border px-3 py-3 ${
                                             selected
-                                                ? "border-[#0058BC] bg-[#E8F0FF]"
-                                                : "border-[#C1C6D7]/60 bg-white"
+                                                ? "border-[#0058BC] bg-[#E8F0FF] dark:bg-[#16253F]"
+                                                : "border-[#C1C6D7]/60 dark:border-[#3A3F4B]/60 bg-white dark:bg-[#1A1D24]"
                                         }`}
                                     >
                                         <Text
                                             className={`text-sm font-body-semibold ${
                                                 selected
-                                                    ? "text-[#0058BC]"
-                                                    : "text-[#414755]"
+                                                    ? "text-[#0058BC] dark:text-[#3B87F5]"
+                                                    : "text-[#414755] dark:text-[#AAB0BD]"
                                             }`}
                                         >
-                                            {option.label}
+                                            {t(option.label)}
                                         </Text>
                                     </Pressable>
                                 );
@@ -580,10 +568,10 @@ export default function ReportFormScreen() {
                         </View>
                     </View>
 
-                    <View className="mb-5 rounded-3xl bg-white p-4 shadow-lg">
-                        <FieldLabel label="Condição meteorológica" required />
-                        <Text className="font-body mt-1 text-sm text-[#717786]">
-                            Como estava o tempo no local?
+                    <View className="mb-5 rounded-3xl bg-white dark:bg-[#1A1D24] p-4 shadow-lg">
+                        <FieldLabel label={t("report.form.weather")} required />
+                        <Text className="font-body mt-1 text-sm text-[#717786] dark:text-[#8B92A1]">
+                            {t("report.form.weatherQuestion")}
                         </Text>
                         <View className="mt-3 gap-2.5">
                             {[
@@ -609,8 +597,8 @@ export default function ReportFormScreen() {
                                                 }
                                                 className={`min-h-12 flex-1 items-center justify-center rounded-2xl border px-2 py-3 ${
                                                     selected
-                                                        ? "border-[#0058BC] bg-[#E8F0FF]"
-                                                        : "border-[#C1C6D7]/60 bg-white"
+                                                        ? "border-[#0058BC] bg-[#E8F0FF] dark:bg-[#16253F]"
+                                                        : "border-[#C1C6D7]/60 dark:border-[#3A3F4B]/60 bg-white dark:bg-[#1A1D24]"
                                                 }`}
                                             >
                                                 <Text
@@ -619,11 +607,11 @@ export default function ReportFormScreen() {
                                                     minimumFontScale={0.8}
                                                     className={`w-full text-center text-sm font-body-semibold ${
                                                         selected
-                                                            ? "text-[#0058BC]"
-                                                            : "text-[#414755]"
+                                                            ? "text-[#0058BC] dark:text-[#3B87F5]"
+                                                            : "text-[#414755] dark:text-[#AAB0BD]"
                                                     }`}
                                                 >
-                                                    {option.label}
+                                                    {t(option.label)}
                                                 </Text>
                                             </Pressable>
                                         );
@@ -633,10 +621,10 @@ export default function ReportFormScreen() {
                         </View>
                     </View>
 
-                    <View className="mb-5 rounded-3xl bg-white p-4 shadow-lg">
-                        <FieldLabel label="Severidade" required />
-                        <Text className="font-body mt-1 text-sm text-[#717786]">
-                            Como você avalia o ocorrido?
+                    <View className="mb-5 rounded-3xl bg-white dark:bg-[#1A1D24] p-4 shadow-lg">
+                        <FieldLabel label={t("report.form.severity")} required />
+                        <Text className="font-body mt-1 text-sm text-[#717786] dark:text-[#8B92A1]">
+                            {t("report.form.severityQuestion")}
                         </Text>
                         <View className="mt-3 flex-row flex-wrap gap-2">
                             {SEVERITY_OPTIONS.map((option) => {
@@ -651,13 +639,13 @@ export default function ReportFormScreen() {
                                         }
                                         className={`min-w-[45%] flex-1 flex-row items-center justify-center rounded-2xl border px-3 py-3 ${
                                             selected
-                                                ? "border-[#181C23]"
-                                                : "border-[#C1C6D7]/60"
+                                                ? "border-[#181C23] dark:border-[#ECEEF4]"
+                                                : "border-[#C1C6D7]/60 dark:border-[#3A3F4B]/60"
                                         }`}
                                         style={{
                                             backgroundColor: selected
                                                 ? `${option.color}20`
-                                                : "#FFFFFF",
+                                                : colors.surface,
                                         }}
                                     >
                                         <View
@@ -666,8 +654,8 @@ export default function ReportFormScreen() {
                                                 backgroundColor: option.color,
                                             }}
                                         />
-                                        <Text className="text-sm font-body-semibold text-[#414755]">
-                                            {option.label}
+                                        <Text className="text-sm font-body-semibold text-[#414755] dark:text-[#AAB0BD]">
+                                            {t(option.label)}
                                         </Text>
                                     </Pressable>
                                 );
@@ -675,10 +663,10 @@ export default function ReportFormScreen() {
                         </View>
                     </View>
 
-                    <View className="rounded-3xl bg-white p-4 shadow-lg">
-                        <FieldLabel label="Descrição do ocorrido" />
+                    <View className="rounded-3xl bg-white dark:bg-[#1A1D24] p-4 shadow-lg">
+                        <FieldLabel label={t("report.form.description")} />
                         <TextInput
-                            accessibilityLabel="Descrição do ocorrido"
+                            accessibilityLabel={t("report.form.description")}
                             multiline
                             maxLength={MAX_DESCRIPTION_LENGTH}
                             value={description}
@@ -693,12 +681,12 @@ export default function ReportFormScreen() {
                                 setDescription(text);
                                 scrollToDescription();
                             }}
-                            placeholder="Conte brevemente o que aconteceu, incluindo informações importantes."
-                            placeholderTextColor="#8A90A0"
+                            placeholder={t("report.form.descriptionPlaceholder")}
+                            placeholderTextColor={colors.outline}
                             textAlignVertical="top"
-                            className="font-body mt-3 min-h-[150px] rounded-2xl border border-[#C1C6D7]/60 bg-[#F8F9FF] px-3 py-3 text-[15px] leading-5 text-[#181C23]"
+                            className="font-body mt-3 min-h-[150px] rounded-2xl border border-[#C1C6D7]/60 dark:border-[#3A3F4B]/60 bg-[#F8F9FF] dark:bg-[#0E1015] px-3 py-3 text-[15px] leading-5 text-[#181C23] dark:text-[#ECEEF4]"
                         />
-                        <Text className="mt-2 text-right text-xs font-body-medium text-[#717786]">
+                        <Text className="mt-2 text-right text-xs font-body-medium text-[#717786] dark:text-[#8B92A1]">
                             {description.length}/{MAX_DESCRIPTION_LENGTH}
                         </Text>
                     </View>
@@ -706,16 +694,16 @@ export default function ReportFormScreen() {
                     {submitError && (
                         <View
                             accessibilityRole="alert"
-                            className="mt-4 rounded-2xl border border-[#F2B8B5] bg-[#FFF1F0] px-4 py-3"
+                            className="mt-4 rounded-2xl border border-[#F2B8B5] dark:border-[#5C2C26] bg-[#FFF1F0] dark:bg-[#2C1715] px-4 py-3"
                         >
-                            <Text className="text-sm font-body-medium text-[#B42318]">
+                            <Text className="text-sm font-body-medium text-[#B42318] dark:text-[#FF7B70]">
                                 {submitError}
                             </Text>
                         </View>
                     )}
 
                     <Pressable
-                        accessibilityLabel="Enviar relato"
+                        accessibilityLabel={t("report.form.submitLabel")}
                         accessibilityRole="button"
                         disabled={isSubmitting}
                         onPress={handleSubmit}
@@ -737,7 +725,7 @@ export default function ReportFormScreen() {
                                     strokeWidth={2.25}
                                 />
                                 <Text className="text-[16px] font-display tracking-wide text-white">
-                                    ENVIAR RELATO
+                                    {t("report.form.submit").toLocaleUpperCase(language)}
                                 </Text>
                             </>
                         )}
@@ -754,50 +742,50 @@ export default function ReportFormScreen() {
                 onRequestClose={() => setIsExitDialogVisible(false)}
             >
                 <View className="flex-1 items-center justify-center bg-black/45 px-5">
-                    <View className="w-full max-w-[390px] rounded-[28px] bg-white p-5 shadow-2xl">
+                    <View className="w-full max-w-[390px] rounded-[28px] bg-white dark:bg-[#1A1D24] p-5 shadow-2xl">
                         <View className="mb-5 flex-row items-start justify-between">
                             <View className="flex-1 flex-row items-center gap-3 pr-4">
-                                <View className="h-11 w-11 items-center justify-center rounded-full bg-[#FFF1E8]">
+                                <View className="h-11 w-11 items-center justify-center rounded-full bg-[#FFF1E8] dark:bg-[#2B2313]">
                                     <CircleAlert
                                         size={24}
                                         color="#C64F00"
                                         strokeWidth={2.25}
                                     />
                                 </View>
-                                <Text className="flex-1 text-[20px] font-display text-[#181C23]">
-                                    Sair do relatório?
+                                <Text className="flex-1 text-[20px] font-display text-[#181C23] dark:text-[#ECEEF4]">
+                                    {t("report.form.leaveTitle")}
                                 </Text>
                             </View>
                             <Pressable
-                                accessibilityLabel="Fechar confirmação"
+                                accessibilityLabel={t("profile.closeConfirmation")}
                                 onPress={() => setIsExitDialogVisible(false)}
-                                className="h-9 w-9 items-center justify-center rounded-full bg-[#F1F3FE]"
+                                className="h-9 w-9 items-center justify-center rounded-full bg-[#F1F3FE] dark:bg-[#242833]"
                             >
-                                <X size={18} color="#414755" />
+                                <X size={18} color={colors.onSurfaceVariant} />
                             </Pressable>
                         </View>
 
-                        <Text className="font-body mb-6 text-[15px] leading-[21px] text-[#414755]">
-                            Se você sair agora, perderá o progresso deste relatório. Deseja sair mesmo assim?
+                        <Text className="font-body mb-6 text-[15px] leading-[21px] text-[#414755] dark:text-[#AAB0BD]">
+                            {t("report.form.leaveMessage")}
                         </Text>
 
                         <View className="gap-2.5">
                             <Pressable
-                                accessibilityLabel="Continuar no relato"
+                                accessibilityLabel={t("report.form.keepFillingLabel")}
                                 onPress={() => setIsExitDialogVisible(false)}
                                 className="h-12 items-center justify-center rounded-xl bg-[#0058BC]"
                             >
                                 <Text className="text-[15px] font-body-bold text-white">
-                                    Continuar preenchendo
+                                    {t("report.form.keepFilling")}
                                 </Text>
                             </Pressable>
                             <Pressable
-                                accessibilityLabel="Sair mesmo assim"
+                                accessibilityLabel={t("report.form.leave")}
                                 onPress={handleExitReport}
-                                className="h-12 items-center justify-center rounded-xl border border-[#F0B7A8] bg-[#FFF8F5]"
+                                className="h-12 items-center justify-center rounded-xl border border-[#F0B7A8] dark:border-[#5C2C26] bg-[#FFF8F5] dark:bg-[#2C1715]"
                             >
-                                <Text className="text-[15px] font-body-bold text-[#B42318]">
-                                    Sair mesmo assim
+                                <Text className="text-[15px] font-body-bold text-[#B42318] dark:text-[#FF7B70]">
+                                    {t("report.form.leave")}
                                 </Text>
                             </Pressable>
                         </View>
@@ -816,9 +804,9 @@ function FieldLabel({
     required?: boolean;
 }) {
     return (
-        <Text className="text-[16px] font-display text-[#181C23]">
+        <Text className="text-[16px] font-display text-[#181C23] dark:text-[#ECEEF4]">
             {label}
-            {required && <Text className="text-[#B42318]"> *</Text>}
+            {required && <Text className="text-[#B42318] dark:text-[#FF7B70]"> *</Text>}
         </Text>
     );
 }

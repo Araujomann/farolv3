@@ -25,28 +25,25 @@ import {
     verifyPasswordResetCodeService,
 } from "@/src/api/auth";
 
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import { useTranslation, type TranslationKey } from "@/src/i18n";
 const requestSchema = z.object({
-    email: z.email({ message: "E-mail inválido" }),
+    email: z.email({ message: "auth.validation.invalidEmail" }),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
 
 const codeSchema = z.object({
-    code: z.string().regex(/^\d{6}$/, "Digite o código de 6 dígitos"),
+    code: z.string().regex(/^\d{6}$/, "auth.codeLength"),
 });
 
 type CodeFormData = z.infer<typeof codeSchema>;
 
-function getErrorMessage(error: unknown) {
-    if (isAxiosError<{ error?: { message?: string } }>(error)) {
-        return error.response?.data?.error?.message ??
-            "Não foi possível enviar o e-mail. Tente novamente.";
-    }
-
-    return "Não foi possível enviar o e-mail. Tente novamente.";
-}
+const SEND_ERROR: TranslationKey = "auth.forgot.sendError";
 
 export default function ForgotPasswordScreen() {
+    const { colors } = useAppTheme();
+    const { t } = useTranslation();
     const router = useRouter();
     const [serverError, setServerError] = useState<string | null>(null);
     const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
@@ -91,8 +88,8 @@ export default function ForgotPasswordScreen() {
             setSubmittedEmail(email.trim());
             setStage("code");
             setResendCooldown(60);
-        } catch (error) {
-            setServerError(getErrorMessage(error));
+        } catch {
+            setServerError(t(SEND_ERROR));
         }
     };
 
@@ -112,8 +109,8 @@ export default function ForgotPasswordScreen() {
         } catch (error) {
             setServerError(
                 isAxiosError(error) && error.response?.status === 400
-                    ? "O código é inválido ou expirou. Confira os dígitos e tente novamente."
-                    : getErrorMessage(error),
+                    ? t("auth.forgot.invalidCode")
+                    : t(SEND_ERROR),
             );
         }
     };
@@ -127,15 +124,15 @@ export default function ForgotPasswordScreen() {
             await requestPasswordResetService(submittedEmail);
             resetCodeForm({ code: "" });
             setResendCooldown(60);
-        } catch (error) {
-            setServerError(getErrorMessage(error));
+        } catch {
+            setServerError(t(SEND_ERROR));
         } finally {
             setIsResending(false);
         }
     };
 
     return (
-        <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+        <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: colors.surface }}>
             <View style={{ flex: 1 }}>
                 <KeyboardAvoidingView
                     style={{ flex: 1 }}
@@ -147,42 +144,42 @@ export default function ForgotPasswordScreen() {
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
                     >
-                        <Box className="flex-1 w-full bg-white px-7">
+                        <Box className="flex-1 w-full bg-white dark:bg-[#1A1D24] px-7">
                             <Box className="w-full flex-row items-center justify-center gap-1.5 pt-4 pb-2">
                                 <Image
                                     source={require("../../assets/images/app-icon.png")}
                                     resizeMode="contain"
                                     style={{ width: 36, height: 36 }}
-                                    accessibilityLabel="Ícone do Farol"
+                                    accessibilityLabel={t("auth.logoLabel")}
                                 />
-                                <Text className="text-xl font-display tracking-tight text-slate-900">
+                                <Text className="text-xl font-display tracking-tight text-slate-900 dark:text-[#ECEEF4]">
                                     Farol
                                 </Text>
                             </Box>
 
                             <Box className="flex-1 justify-center py-6">
                                 <VStack space="xs" className="mb-9 items-center">
-                                    <Text className="text-center text-2xl font-display tracking-tight text-slate-900">
-                                        {stage === "code" ? "Digite o código" : "Recuperar senha"}
+                                    <Text className="text-center text-2xl font-display tracking-tight text-slate-900 dark:text-[#ECEEF4]">
+                                        {stage === "code" ? t("auth.forgot.codeTitle") : t("auth.forgot.title")}
                                     </Text>
-                                    <Text className="font-body text-center text-sm text-slate-500">
+                                    <Text className="font-body text-center text-sm text-slate-500 dark:text-[#8B92A1]">
                                         {stage === "code"
-                                            ? `Se houver uma conta associada a ${submittedEmail}, enviaremos um código para esse endereço.`
-                                            : "Informe o e-mail da sua conta para receber um código de recuperação."}
+                                            ? t("auth.forgot.codeSubtitle", { email: submittedEmail ?? "" })
+                                            : t("auth.forgot.subtitle")}
                                     </Text>
                                 </VStack>
 
                                 {stage === "code" ? (
                                     <VStack space="lg">
-                                        <Box className="rounded-xl bg-blue-50 px-4 py-3">
-                                            <Text className="font-body text-sm text-slate-700">
-                                                O código tem 6 dígitos e expira em 5 minutos. Confira também sua caixa de spam.
+                                        <Box className="rounded-xl bg-blue-50 dark:bg-[#16253F] px-4 py-3">
+                                            <Text className="font-body text-sm text-slate-700 dark:text-[#AAB0BD]">
+                                                {t("auth.forgot.codeHint")}
                                             </Text>
                                         </Box>
                                         <VStack space="xs">
                                             <Box className="relative">
-                                                <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-body-medium text-slate-500">
-                                                    Código de recuperação
+                                                <Text className="absolute -top-2 left-3.5 z-10 bg-white dark:bg-[#1A1D24] px-1.5 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
+                                                    {t("auth.forgot.codeLabel")}
                                                 </Text>
                                                 <Controller
                                                     control={codeControl}
@@ -190,37 +187,37 @@ export default function ForgotPasswordScreen() {
                                                     render={({ field: { onChange, onBlur, value } }) => (
                                                         <Input
                                                             isInvalid={!!codeErrors.code}
-                                                            className="h-12 rounded-xl border-slate-300 bg-white px-3 dark:bg-white"
+                                                            className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
                                                         >
                                                             <InputSlot className="pl-0">
-                                                                <InputIcon as={KeyRound} className="text-slate-400" />
+                                                                <InputIcon as={KeyRound} className="text-slate-400 dark:text-[#8B92A1]" />
                                                             </InputSlot>
                                                             <InputField
                                                                 placeholder="000000"
-                                                                placeholderTextColor="#94a3b8"
+                                                                placeholderTextColor={colors.outline}
                                                                 keyboardType="number-pad"
                                                                 maxLength={6}
                                                                 autoComplete="one-time-code"
                                                                 onBlur={onBlur}
                                                                 onChangeText={(text) => onChange(text.replace(/\D/g, ""))}
                                                                 value={value}
-                                                                className="text-sm font-body-medium tracking-[4px] text-slate-800"
-                                                                accessibilityLabel="Código de recuperação de seis dígitos"
+                                                                className="text-sm font-body-medium tracking-[4px] text-slate-800 dark:text-[#ECEEF4]"
+                                                                accessibilityLabel={t("auth.forgot.codeAccessibility")}
                                                             />
                                                         </Input>
                                                     )}
                                                 />
                                             </Box>
                                             {codeErrors.code && (
-                                                <Text className="font-body text-xs text-red-600">
-                                                    {codeErrors.code.message}
+                                                <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
+                                                    {t(codeErrors.code.message as TranslationKey)}
                                                 </Text>
                                             )}
                                         </VStack>
 
                                         {serverError && (
-                                            <Box className="rounded-xl bg-red-50 px-4 py-3">
-                                                <Text className="font-body text-sm text-red-700">{serverError}</Text>
+                                            <Box className="rounded-xl bg-red-50 dark:bg-[#2C1715] px-4 py-3">
+                                                <Text className="font-body text-sm text-red-700 dark:text-[#FF7B70]">{serverError}</Text>
                                             </Box>
                                         )}
 
@@ -233,7 +230,7 @@ export default function ForgotPasswordScreen() {
                                                 <ButtonSpinner className="text-white" />
                                             ) : (
                                                 <ButtonText className="text-sm font-body-medium text-white">
-                                                    Confirmar código
+                                                    {t("auth.confirmCode")}
                                                 </ButtonText>
                                             )}
                                         </Button>
@@ -244,12 +241,12 @@ export default function ForgotPasswordScreen() {
                                             accessibilityRole="button"
                                             className="items-center py-2"
                                         >
-                                            <Text className={`text-sm font-body-medium ${resendCooldown > 0 ? "text-slate-400" : "text-[#0058BC]"}`}>
+                                            <Text className={`text-sm font-body-medium ${resendCooldown > 0 ? "text-slate-400 dark:text-[#8B92A1]" : "text-[#0058BC] dark:text-[#3B87F5]"}`}>
                                                 {isResending
-                                                    ? "Enviando código..."
+                                                    ? t("auth.sendingCode")
                                                     : resendCooldown > 0
-                                                    ? `Enviar outro código em ${resendCooldown}s`
-                                                    : "Enviar outro código"}
+                                                    ? t("auth.forgot.resendIn", { seconds: resendCooldown })
+                                                    : t("auth.forgot.resend")}
                                             </Text>
                                         </TouchableOpacity>
                                     </VStack>
@@ -257,8 +254,8 @@ export default function ForgotPasswordScreen() {
                                     <VStack space="lg">
                                         <VStack space="xs">
                                             <Box className="relative">
-                                                <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-body-medium text-slate-500">
-                                                    E-mail
+                                                <Text className="absolute -top-2 left-3.5 z-10 bg-white dark:bg-[#1A1D24] px-1.5 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
+                                                    {t("auth.email")}
                                                 </Text>
                                                 <Controller
                                                     control={control}
@@ -266,14 +263,14 @@ export default function ForgotPasswordScreen() {
                                                     render={({ field: { onChange, onBlur, value } }) => (
                                                         <Input
                                                             isInvalid={!!errors.email}
-                                                            className="h-12 rounded-xl border-slate-300 bg-white px-3 dark:bg-white"
+                                                            className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
                                                         >
                                                             <InputSlot className="pl-0">
-                                                                <InputIcon as={Mail} className="text-slate-400" />
+                                                                <InputIcon as={Mail} className="text-slate-400 dark:text-[#8B92A1]" />
                                                             </InputSlot>
                                                             <InputField
-                                                                placeholder="Digite seu e-mail"
-                                                                placeholderTextColor="#94a3b8"
+                                                                placeholder={t("auth.emailPlaceholder")}
+                                                                placeholderTextColor={colors.outline}
                                                                 keyboardType="email-address"
                                                                 autoCapitalize="none"
                                                                 autoCorrect={false}
@@ -281,23 +278,23 @@ export default function ForgotPasswordScreen() {
                                                                 onBlur={onBlur}
                                                                 onChangeText={onChange}
                                                                 value={value}
-                                                                className="text-sm font-body-medium text-slate-800"
-                                                                accessibilityLabel="E-mail"
+                                                                className="text-sm font-body-medium text-slate-800 dark:text-[#ECEEF4]"
+                                                                accessibilityLabel={t("auth.email")}
                                                             />
                                                         </Input>
                                                     )}
                                                 />
                                             </Box>
                                             {errors.email && (
-                                                <Text className="font-body text-xs text-red-600">
-                                                    {errors.email.message}
+                                                <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
+                                                    {t(errors.email.message as TranslationKey)}
                                                 </Text>
                                             )}
                                         </VStack>
 
                                         {serverError && (
-                                            <Box className="rounded-xl bg-red-50 px-4 py-3">
-                                                <Text className="font-body text-sm text-red-700">{serverError}</Text>
+                                            <Box className="rounded-xl bg-red-50 dark:bg-[#2C1715] px-4 py-3">
+                                                <Text className="font-body text-sm text-red-700 dark:text-[#FF7B70]">{serverError}</Text>
                                             </Box>
                                         )}
 
@@ -310,7 +307,7 @@ export default function ForgotPasswordScreen() {
                                                 <ButtonSpinner className="text-white" />
                                             ) : (
                                                 <ButtonText className="text-sm font-body-medium text-white">
-                                                    Enviar código de recuperação
+                                                    {t("auth.forgot.submit")}
                                                 </ButtonText>
                                             )}
                                         </Button>
@@ -321,15 +318,15 @@ export default function ForgotPasswordScreen() {
                     </ScrollView>
                 </KeyboardAvoidingView>
 
-                <Box className="w-full flex-row items-center justify-center gap-1 bg-white px-7 pb-5 pt-4">
+                <Box className="w-full flex-row items-center justify-center gap-1 bg-white dark:bg-[#1A1D24] px-7 pb-5 pt-4">
                     <TouchableOpacity
                         onPress={() => router.replace("/(auth)/login")}
                         activeOpacity={0.7}
                         accessibilityRole="button"
                         className="flex-row items-center gap-1"
                     >
-                        <ChevronLeft size={16} color="#475569" />
-                        <Text className="text-sm font-body-bold text-slate-700">Voltar para entrar</Text>
+                        <ChevronLeft size={16} color={colors.onSurfaceVariant} />
+                        <Text className="text-sm font-body-bold text-slate-700 dark:text-[#AAB0BD]">{t("auth.backToLogin")}</Text>
                     </TouchableOpacity>
                 </Box>
             </View>

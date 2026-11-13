@@ -11,7 +11,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { isAxiosError } from "axios";
 import { z } from "zod";
 import { ChevronLeft, Eye, EyeOff, Lock } from "lucide-react-native";
 
@@ -23,28 +22,24 @@ import { Box } from "@/components/ui/box";
 import { resetPasswordService } from "@/src/api/auth";
 import { useAuthStore } from "@/src/store/authStore";
 
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import { useTranslation, type TranslationKey } from "@/src/i18n";
 const resetSchema = z
     .object({
-        password: z.string().min(8, { message: "A senha deve ter ao menos 8 caracteres" }).max(128),
-        confirmPassword: z.string().min(1, { message: "Confirme sua senha" }),
+        password: z.string().min(8, { message: "auth.validation.passwordMin" }).max(128),
+        confirmPassword: z.string().min(1, { message: "auth.validation.confirmPassword" }),
     })
     .refine((data) => data.password === data.confirmPassword, {
-        message: "As senhas não coincidem",
+        message: "auth.validation.passwordsMismatch",
         path: ["confirmPassword"],
     });
 
 type ResetFormData = z.infer<typeof resetSchema>;
 
-function getErrorMessage(error: unknown) {
-    if (isAxiosError<{ error?: { message?: string } }>(error)) {
-        return error.response?.data?.error?.message ??
-            "Não foi possível redefinir a senha. Solicite um novo código e tente novamente.";
-    }
-
-    return "Não foi possível redefinir a senha. Solicite um novo código e tente novamente.";
-}
 
 export default function ResetPasswordScreen() {
+    const { colors } = useAppTheme();
+    const { t } = useTranslation();
     const router = useRouter();
     const { authorizationToken } = useLocalSearchParams<{
         authorizationToken?: string;
@@ -75,13 +70,13 @@ export default function ResetPasswordScreen() {
             await resetPasswordService({ authorizationToken, newPassword: password });
             await signOut();
             setIsReset(true);
-        } catch (error) {
-            setServerError(getErrorMessage(error));
+        } catch {
+            setServerError(t("auth.reset.error"));
         }
     };
 
     return (
-        <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+        <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: colors.surface }}>
             <View style={{ flex: 1 }}>
                 <KeyboardAvoidingView
                     style={{ flex: 1 }}
@@ -93,28 +88,28 @@ export default function ResetPasswordScreen() {
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
                     >
-                        <Box className="flex-1 w-full bg-white px-7">
+                        <Box className="flex-1 w-full bg-white dark:bg-[#1A1D24] px-7">
                             <Box className="w-full flex-row items-center justify-center gap-1.5 pt-4 pb-2">
                                 <Image
                                     source={require("../../assets/images/app-icon.png")}
                                     resizeMode="contain"
                                     style={{ width: 36, height: 36 }}
-                                    accessibilityLabel="Ícone do Farol"
+                                    accessibilityLabel={t("auth.logoLabel")}
                                 />
-                                <Text className="text-xl font-display tracking-tight text-slate-900">
+                                <Text className="text-xl font-display tracking-tight text-slate-900 dark:text-[#ECEEF4]">
                                     Farol
                                 </Text>
                             </Box>
 
                             <Box className="flex-1 justify-center py-6">
                                 <VStack space="xs" className="mb-9 items-center">
-                                    <Text className="text-center text-2xl font-display tracking-tight text-slate-900">
-                                        {isReset ? "Senha redefinida" : "Crie uma nova senha"}
+                                    <Text className="text-center text-2xl font-display tracking-tight text-slate-900 dark:text-[#ECEEF4]">
+                                        {isReset ? t("auth.reset.doneTitle") : t("auth.reset.title")}
                                     </Text>
-                                    <Text className="font-body text-center text-sm text-slate-500">
+                                    <Text className="font-body text-center text-sm text-slate-500 dark:text-[#8B92A1]">
                                         {isReset
-                                            ? "Sua senha foi atualizada. Entre novamente com a nova senha."
-                                            : "Escolha uma senha com pelo menos 8 caracteres."}
+                                            ? t("auth.reset.doneSubtitle")
+                                            : t("auth.reset.subtitle")}
                                     </Text>
                                 </VStack>
 
@@ -124,14 +119,14 @@ export default function ResetPasswordScreen() {
                                         onPress={() => router.replace("/(auth)/login")}
                                     >
                                         <ButtonText className="text-sm font-body-medium text-white">
-                                            Ir para entrar
+                                            {t("auth.reset.goToLogin")}
                                         </ButtonText>
                                     </Button>
                                 ) : !validToken ? (
                                     <VStack space="lg">
-                                        <Box className="rounded-xl bg-red-50 px-4 py-3">
-                                            <Text className="font-body text-sm text-red-700">
-                                                A autorização de redefinição é inválida ou expirou. Solicite outro código.
+                                        <Box className="rounded-xl bg-red-50 dark:bg-[#2C1715] px-4 py-3">
+                                            <Text className="font-body text-sm text-red-700 dark:text-[#FF7B70]">
+                                                {t("auth.reset.invalidAuthorization")}
                                             </Text>
                                         </Box>
                                         <Button
@@ -139,7 +134,7 @@ export default function ResetPasswordScreen() {
                                             onPress={() => router.replace("/(auth)/forgot-password")}
                                         >
                                             <ButtonText className="text-sm font-body-medium text-white">
-                                                Solicitar outro link
+                                                {t("auth.reset.requestAgain")}
                                             </ButtonText>
                                         </Button>
                                     </VStack>
@@ -149,14 +144,14 @@ export default function ResetPasswordScreen() {
                                             [
                                                 {
                                                     name: "password",
-                                                    label: "Nova senha",
+                                                    label: t("auth.reset.newPassword"),
                                                     visible: showPassword,
                                                     toggle: () => setShowPassword((value) => !value),
                                                     error: errors.password,
                                                 },
                                                 {
                                                     name: "confirmPassword",
-                                                    label: "Confirme a nova senha",
+                                                    label: t("auth.reset.confirmNewPassword"),
                                                     visible: showConfirmPassword,
                                                     toggle: () => setShowConfirmPassword((value) => !value),
                                                     error: errors.confirmPassword,
@@ -165,7 +160,7 @@ export default function ResetPasswordScreen() {
                                         ).map((field) => (
                                             <VStack space="xs" key={field.name}>
                                                 <Box className="relative">
-                                                    <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-body-medium text-slate-500">
+                                                    <Text className="absolute -top-2 left-3.5 z-10 bg-white dark:bg-[#1A1D24] px-1.5 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
                                                         {field.label}
                                                     </Text>
                                                     <Controller
@@ -174,32 +169,32 @@ export default function ResetPasswordScreen() {
                                                         render={({ field: { onChange, onBlur, value } }) => (
                                                             <Input
                                                                 isInvalid={!!field.error}
-                                                                className="h-12 rounded-xl border-slate-300 bg-white px-3 dark:bg-white"
+                                                                className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
                                                             >
                                                                 <InputSlot className="pl-0">
-                                                                    <InputIcon as={Lock} className="text-slate-400" />
+                                                                    <InputIcon as={Lock} className="text-slate-400 dark:text-[#8B92A1]" />
                                                                 </InputSlot>
                                                                 <InputField
                                                                     placeholder="••••••••"
-                                                                    placeholderTextColor="#94a3b8"
+                                                                    placeholderTextColor={colors.outline}
                                                                     secureTextEntry={!field.visible}
                                                                     autoComplete="new-password"
                                                                     onBlur={onBlur}
                                                                     onChangeText={onChange}
                                                                     value={value}
-                                                                    className="text-sm font-body-medium text-slate-800"
+                                                                    className="text-sm font-body-medium text-slate-800 dark:text-[#ECEEF4]"
                                                                     accessibilityLabel={field.label}
                                                                 />
                                                                 <InputSlot
                                                                     className="pr-0"
                                                                     onPress={field.toggle}
                                                                     accessibilityLabel={
-                                                                        field.visible ? "Ocultar senha" : "Mostrar senha"
+                                                                        field.visible ? t("auth.hidePassword") : t("auth.showPassword")
                                                                     }
                                                                 >
                                                                     <InputIcon
                                                                         as={field.visible ? Eye : EyeOff}
-                                                                        className="text-slate-400"
+                                                                        className="text-slate-400 dark:text-[#8B92A1]"
                                                                     />
                                                                 </InputSlot>
                                                             </Input>
@@ -207,16 +202,16 @@ export default function ResetPasswordScreen() {
                                                     />
                                                 </Box>
                                                 {field.error && (
-                                                    <Text className="font-body text-xs text-red-600">
-                                                        {field.error.message}
+                                                    <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
+                                                        {t(field.error.message as TranslationKey)}
                                                     </Text>
                                                 )}
                                             </VStack>
                                         ))}
 
                                         {serverError && (
-                                            <Box className="rounded-xl bg-red-50 px-4 py-3">
-                                                <Text className="font-body text-sm text-red-700">{serverError}</Text>
+                                            <Box className="rounded-xl bg-red-50 dark:bg-[#2C1715] px-4 py-3">
+                                                <Text className="font-body text-sm text-red-700 dark:text-[#FF7B70]">{serverError}</Text>
                                             </Box>
                                         )}
 
@@ -229,7 +224,7 @@ export default function ResetPasswordScreen() {
                                                 <ButtonSpinner className="text-white" />
                                             ) : (
                                                 <ButtonText className="text-sm font-body-medium text-white">
-                                                    Salvar nova senha
+                                                    {t("auth.reset.submit")}
                                                 </ButtonText>
                                             )}
                                         </Button>
@@ -241,15 +236,15 @@ export default function ResetPasswordScreen() {
                 </KeyboardAvoidingView>
 
                 {!isReset && (
-                    <Box className="w-full flex-row items-center justify-center bg-white px-7 pb-5 pt-4">
+                    <Box className="w-full flex-row items-center justify-center bg-white dark:bg-[#1A1D24] px-7 pb-5 pt-4">
                         <TouchableOpacity
                             onPress={() => router.replace("/(auth)/login")}
                             activeOpacity={0.7}
                             accessibilityRole="button"
                             className="flex-row items-center gap-1"
                         >
-                            <ChevronLeft size={16} color="#475569" />
-                            <Text className="text-sm font-body-bold text-slate-700">Voltar para entrar</Text>
+                            <ChevronLeft size={16} color={colors.onSurfaceVariant} />
+                            <Text className="text-sm font-body-bold text-slate-700 dark:text-[#AAB0BD]">{t("auth.backToLogin")}</Text>
                         </TouchableOpacity>
                     </Box>
                 )}

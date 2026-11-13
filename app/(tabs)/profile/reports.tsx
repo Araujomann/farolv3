@@ -21,43 +21,51 @@ import { Text } from "@/components/ui/text";
 import { getMyReports, type MyReport, type ReportStatus } from "@/src/api/reports";
 import { reverseGeocode } from "@/src/features/map/services/reverseGeocode";
 
-const PRIMARY_COLOR = "#0058BC";
-const PAGE_COLOR = "#F2F2F7";
-const MUTED_COLOR = "#626B7A";
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import { useTranslation, type Language, type TranslationKey } from "@/src/i18n";
+import { type AppColors } from "@/src/theme/colors";
 
-const STATUS_FILTERS: {
+type StatusFilter = {
     status: ReportStatus;
     label: string;
     icon: LucideIcon;
     color: string;
     background: string;
-}[] = [
+};
+
+const getStatusFilters = (
+    colors: AppColors,
+    t: (key: TranslationKey) => string,
+): StatusFilter[] => [
     {
         status: "APPROVED",
-        label: "Aprovado",
+        label: t("reports.approved"),
         icon: Check,
-        color: "#168047",
-        background: "#E8F5EC",
+        color: colors.success,
+        background: colors.successContainer,
     },
     {
         status: "PENDING",
-        label: "Pendente",
+        label: t("reports.pending"),
         icon: Clock3,
-        color: "#9B6500",
-        background: "#FFF4D8",
+        color: colors.warning,
+        background: colors.warningContainer,
     },
     {
         status: "REJECTED",
-        label: "Rejeitado",
+        label: t("reports.rejected"),
         icon: X,
-        color: "#BA1A1A",
-        background: "#FCE9E7",
+        color: colors.error,
+        background: colors.errorContainer,
     },
 ];
 
 const PAGE_SIZE = 20;
 
 export default function MyReportsScreen() {
+    const { t } = useTranslation();
+    const STATUS_FILTERS = getStatusFilters(useAppTheme().colors, t);
+    const { colors } = useAppTheme();
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const requestId = useRef(0);
@@ -95,16 +103,14 @@ export default function MyReportsScreen() {
                 console.warn("Falha ao carregar meus relatos", cause);
             }
             if (requestId.current === currentRequestId) {
-                setError(
-                    "Não foi possível carregar seus relatos. Verifique a conexão e tente novamente.",
-                );
+                setError(t("reports.loadError"));
             }
         } finally {
             if (requestId.current === currentRequestId) {
                 setIsLoading(false);
             }
         }
-    }, [status]);
+    }, [status, t]);
 
     useFocusEffect(
         useCallback(() => {
@@ -148,9 +154,9 @@ export default function MyReportsScreen() {
     };
 
     return (
-        <View className="flex-1" style={{ backgroundColor: PAGE_COLOR }}>
+        <View className="flex-1" style={{ backgroundColor: colors.background }}>
             <View
-                className="flex-row items-center justify-between bg-white px-4"
+                className="flex-row items-center justify-between bg-white dark:bg-[#1A1D24] px-4"
                 style={{
                     height: 56 + insets.top,
                     paddingTop: insets.top,
@@ -158,14 +164,14 @@ export default function MyReportsScreen() {
             >
                 <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Voltar ao perfil"
+                    accessibilityLabel={t("settings.backToProfile")}
                     onPress={() => router.back()}
                     className="h-11 w-11 items-center justify-center"
                 >
-                    <ArrowLeft size={24} color={PRIMARY_COLOR} />
+                    <ArrowLeft size={24} color={colors.primary} />
                 </Pressable>
-                <Text className="text-lg font-body-semibold text-[#181C23]">
-                    Meus relatos
+                <Text className="text-lg font-body-semibold text-[#181C23] dark:text-[#ECEEF4]">
+                    {t("reports.title")}
                 </Text>
                 <View className="h-11 w-11" />
             </View>
@@ -178,7 +184,7 @@ export default function MyReportsScreen() {
                 }}
                 showsVerticalScrollIndicator={false}
             >
-                <View className="mb-5 flex-row rounded-2xl bg-[#E3E5EF] p-1">
+                <View className="mb-5 flex-row rounded-2xl bg-[#E3E5EF] dark:bg-[#242833] p-1">
                     {STATUS_FILTERS.map((filter) => {
                         const Icon = filter.icon;
                         const isSelected = status === filter.status;
@@ -193,13 +199,13 @@ export default function MyReportsScreen() {
                                 className="h-11 flex-1 items-center justify-center rounded-xl"
                                 style={{
                                     backgroundColor: isSelected
-                                        ? "#FFFFFF"
+                                        ? colors.surface
                                         : "transparent",
                                 }}
                             >
                                 <Icon
                                     size={21}
-                                    color={isSelected ? filter.color : MUTED_COLOR}
+                                    color={isSelected ? filter.color : colors.onSurfaceVariant}
                                     strokeWidth={2.5}
                                 />
                             </Pressable>
@@ -209,14 +215,14 @@ export default function MyReportsScreen() {
 
                 {isLoading ? (
                     <View className="items-center py-16">
-                        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-                        <Text className="font-body mt-3 text-sm text-[#626B7A]">
-                            Carregando relatos...
+                        <ActivityIndicator size="large" color={colors.primary} />
+                        <Text className="font-body mt-3 text-sm text-[#626B7A] dark:text-[#AAB0BD]">
+                            {t("reports.loading")}
                         </Text>
                     </View>
                 ) : error ? (
-                    <View className="items-center rounded-2xl bg-white px-5 py-8">
-                        <Text className="font-body text-center text-[15px] leading-6 text-[#414755]">
+                    <View className="items-center rounded-2xl bg-white dark:bg-[#1A1D24] px-5 py-8">
+                        <Text className="font-body text-center text-[15px] leading-6 text-[#414755] dark:text-[#AAB0BD]">
                             {error}
                         </Text>
                         <Pressable
@@ -225,7 +231,7 @@ export default function MyReportsScreen() {
                             className="mt-4 rounded-xl bg-[#0058BC] px-5 py-3"
                         >
                             <Text className="font-body-semibold text-white">
-                                Tentar novamente
+                                {t("common.retry")}
                             </Text>
                         </Pressable>
                     </View>
@@ -242,18 +248,18 @@ export default function MyReportsScreen() {
                                 accessibilityRole="button"
                                 onPress={() => void loadMore()}
                                 disabled={isLoadingMore}
-                                className="h-12 items-center justify-center rounded-xl bg-white"
+                                className="h-12 items-center justify-center rounded-xl bg-white dark:bg-[#1A1D24]"
                             >
                                 {isLoadingMore ? (
                                     <ActivityIndicator
                                         size="small"
-                                        color={PRIMARY_COLOR}
+                                        color={colors.primary}
                                     />
                                 ) : (
-                                    <Text className="font-body-semibold text-[#0058BC]">
+                                    <Text className="font-body-semibold text-[#0058BC] dark:text-[#3B87F5]">
                                         {loadMoreError
-                                            ? "Tentar carregar mais"
-                                            : "Carregar mais"}
+                                            ? t("reports.loadMoreRetry")
+                                            : t("reports.loadMore")}
                                     </Text>
                                 )}
                             </Pressable>
@@ -266,36 +272,43 @@ export default function MyReportsScreen() {
 }
 
 function EmptyReports({ status }: { status: ReportStatus }) {
+    const { t } = useTranslation();
+    const STATUS_FILTERS = getStatusFilters(useAppTheme().colors, t);
     const selectedFilter = STATUS_FILTERS.find(
         (filter) => filter.status === status,
     )!;
     const Icon = selectedFilter.icon;
 
     return (
-        <View className="items-center rounded-2xl bg-white px-6 py-10">
+        <View className="items-center rounded-2xl bg-white dark:bg-[#1A1D24] px-6 py-10">
             <View
                 className="mb-4 h-14 w-14 items-center justify-center rounded-full"
                 style={{ backgroundColor: selectedFilter.background }}
             >
                 <Icon size={26} color={selectedFilter.color} />
             </View>
-            <Text className="text-center text-base font-body-semibold text-[#181C23]">
-                Nenhum relato {selectedFilter.label.toLowerCase()}
+            <Text className="text-center text-base font-body-semibold text-[#181C23] dark:text-[#ECEEF4]">
+                {t("reports.emptyTitle", {
+                    status: selectedFilter.label.toLowerCase(),
+                })}
             </Text>
-            <Text className="font-body mt-2 text-center text-sm leading-5 text-[#626B7A]">
-                Seus relatos nesta categoria aparecerão aqui.
+            <Text className="font-body mt-2 text-center text-sm leading-5 text-[#626B7A] dark:text-[#AAB0BD]">
+                {t("reports.emptyMessage")}
             </Text>
         </View>
     );
 }
 
 function ReportCard({ report }: { report: MyReport }) {
+    const { t, language } = useTranslation();
+    const STATUS_FILTERS = getStatusFilters(useAppTheme().colors, t);
+    const { colors } = useAppTheme();
     const filter = STATUS_FILTERS.find(
         (item) => item.status === report.moderation_status,
     )!;
     const StatusIcon = filter.icon;
     const image = report.images[0];
-    const [address, setAddress] = useState("Buscando endereço...");
+    const [address, setAddress] = useState(() => t("reports.searchingAddress"));
 
     useEffect(() => {
         let isMounted = true;
@@ -311,19 +324,19 @@ function ReportCard({ report }: { report: MyReport }) {
                         cause,
                     );
                 }
-                if (isMounted) setAddress("Endereço indisponível");
+                if (isMounted) setAddress(t("reports.addressUnavailable"));
             });
 
         return () => {
             isMounted = false;
         };
-    }, [report.id, report.latitude, report.longitude]);
+    }, [report.id, report.latitude, report.longitude, t]);
 
     return (
-        <View className="overflow-hidden rounded-2xl bg-white p-4">
+        <View className="overflow-hidden rounded-2xl bg-white dark:bg-[#1A1D24] p-4">
             <View className="mb-3 flex-row items-start justify-between gap-3">
                 <Text
-                    className="flex-1 text-[18px] font-display-semibold leading-6 text-[#181C23]"
+                    className="flex-1 text-[18px] font-display-semibold leading-6 text-[#181C23] dark:text-[#ECEEF4]"
                     numberOfLines={2}
                 >
                     {report.tipo_acidente}
@@ -341,17 +354,18 @@ function ReportCard({ report }: { report: MyReport }) {
                 </View>
             </View>
 
-            <Text className="font-body mb-3 text-[13px] text-[#414755]">
-                {formatOccurrenceDate(report.occurred_at)}{" "}
-                <Text className="text-[#7B8290]">•</Text>{" "}
+            <Text className="font-body mb-3 text-[13px] text-[#414755] dark:text-[#AAB0BD]">
+                {formatOccurrenceDate(report.occurred_at, language) ??
+                    t("reports.dateUnavailable")}{" "}
+                <Text className="text-[#7B8290] dark:text-[#8B92A1]">•</Text>{" "}
                 {report.latitude.toFixed(4)}, {report.longitude.toFixed(4)}
             </Text>
 
             <View className="mb-3 flex-row items-start gap-2">
-                <MapPin size={17} color={PRIMARY_COLOR} />
+                <MapPin size={17} color={colors.primary} />
                 <Text
-                    className="font-body flex-1 text-[13px] leading-5 text-[#414755]"
-                    accessibilityLabel={`Endereço do relato: ${address}`}
+                    className="font-body flex-1 text-[13px] leading-5 text-[#414755] dark:text-[#AAB0BD]"
+                    accessibilityLabel={t("reports.addressLabel", { address })}
                 >
                     {address}
                 </Text>
@@ -359,21 +373,21 @@ function ReportCard({ report }: { report: MyReport }) {
 
             {image ? (
                 <Image
-                    accessibilityLabel={image.caption ?? "Imagem do relato"}
+                    accessibilityLabel={image.caption ?? t("reports.imageFallback")}
                     source={{ uri: image.image_url }}
                     resizeMode="cover"
-                    className="h-40 w-full rounded-xl bg-[#E8ECF2]"
+                    className="h-40 w-full rounded-xl bg-[#E8ECF2] dark:bg-[#242833]"
                 />
             ) : null}
 
             {report.moderation_status === "REJECTED" && (
-                <View className="mt-3 rounded-xl bg-[#FFF2F0] p-3">
-                    <Text className="mb-1 text-[13px] font-body-semibold text-[#9F2018]">
-                        Motivo da rejeição
+                <View className="mt-3 rounded-xl bg-[#FFF2F0] dark:bg-[#2C1715] p-3">
+                    <Text className="mb-1 text-[13px] font-body-semibold text-[#9F2018] dark:text-[#FF7B70]">
+                        {t("reports.rejectionReason")}
                     </Text>
-                    <Text className="font-body text-[13px] leading-5 text-[#6F2924]">
+                    <Text className="font-body text-[13px] leading-5 text-[#6F2924] dark:text-[#F2B8B5]">
                         {report.moderation_message?.trim() ||
-                            "A equipe não informou um motivo para a rejeição."}
+                            t("reports.noRejectionReason")}
                     </Text>
                 </View>
             )}
@@ -381,11 +395,11 @@ function ReportCard({ report }: { report: MyReport }) {
     );
 }
 
-function formatOccurrenceDate(value: string) {
+function formatOccurrenceDate(value: string, language: Language) {
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "Data indisponível";
+    if (Number.isNaN(date.getTime())) return null;
 
-    return new Intl.DateTimeFormat("pt-BR", {
+    return new Intl.DateTimeFormat(language, {
         day: "2-digit",
         month: "short",
         hour: "2-digit",

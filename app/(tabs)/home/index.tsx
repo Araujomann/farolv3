@@ -34,32 +34,32 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const COLORS = {
-    primary: "#0058BC",
-    background: "#F2F2F7",
-    surface: "#FFFFFF",
-    surfaceIcon: "#ECECF8",
-    text: "#181C23",
-    secondaryText: "#626A78",
-    border: "#E5E7EF",
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import {
+    formatRelativeTime,
+    getCurrentLanguage,
+    translateAccidentType,
+    useTranslation,
+} from "@/src/i18n";
+import { SEVERITY_COLORS } from "@/src/theme/colors";
+function useHomeColors() {
+    const { colors } = useAppTheme();
+    return {
+    primary: colors.primary,
+    background: colors.background,
+    surface: colors.surface,
+    surfaceIcon: colors.surfaceMuted,
+    text: colors.onSurface,
+    secondaryText: colors.onSurfaceVariant,
+    border: colors.outlineVariant,
     positive: "#238636",
-    positiveBackground: "#EAF6EC",
-    negative: "#B42318",
-    negativeBackground: "#FCEDEA",
-    severity: {
-        low: "#0969D7",
-        medium: "#D99A24",
-        high: "#D9534F",
-        critical: "#B42318",
-    },
-} as const;
+    positiveBackground: colors.successContainer,
+    negative: colors.error,
+    negativeBackground: colors.errorContainer,
+    severity: SEVERITY_COLORS,
+    };
+}
 
-const SEVERITY_LABELS: Record<AccidentSeverity, string> = {
-    low: "Baixa",
-    medium: "Média",
-    high: "Alta",
-    critical: "Crítica",
-};
 
 const CARD_SHADOW = {
     elevation: 2,
@@ -70,30 +70,9 @@ const CARD_SHADOW = {
 };
 
 function formatNumber(value: number) {
-    return new Intl.NumberFormat("pt-BR").format(value);
+    return new Intl.NumberFormat(getCurrentLanguage()).format(value);
 }
 
-function formatRelativeTime(value: string) {
-    const timestamp = new Date(value).getTime();
-    if (!Number.isFinite(timestamp)) return "Data indisponível";
-
-    const elapsedMinutes = Math.max(
-        0,
-        Math.floor((Date.now() - timestamp) / 60_000),
-    );
-
-    if (elapsedMinutes < 60) {
-        return elapsedMinutes <= 1 ? "Agora" : `Há ${elapsedMinutes} min`;
-    }
-
-    const elapsedHours = Math.floor(elapsedMinutes / 60);
-    if (elapsedHours < 24) {
-        return `Há ${elapsedHours} h`;
-    }
-
-    const elapsedDays = Math.floor(elapsedHours / 24);
-    return `Há ${elapsedDays} ${elapsedDays === 1 ? "dia" : "dias"}`;
-}
 
 function validateOverview(overview: AccidentOverview) {
     const counts = [
@@ -138,9 +117,10 @@ function MetricCard({
     value: number;
     detail: string;
 }) {
+    const COLORS = useHomeColors();
     return (
         <View
-            className="min-h-[150px] flex-1 rounded-3xl bg-white p-4"
+            className="min-h-[150px] flex-1 rounded-3xl bg-white dark:bg-[#1A1D24] p-4"
             style={CARD_SHADOW}
         >
             <View
@@ -178,6 +158,8 @@ function TrendCard({
     currentCount: number;
     previousCount: number;
 }) {
+    const { t } = useTranslation();
+    const COLORS = useHomeColors();
     const change =
         previousCount === 0
             ? null
@@ -204,8 +186,8 @@ function TrendCard({
     const changeLabel =
         change === null
             ? currentCount > 0
-                ? "Novos registros"
-                : "Sem registros"
+                ? t("home.newRecords")
+                : t("home.noRecords")
             : `${change > 0 ? "+" : ""}${change}%`;
 
 }
@@ -215,11 +197,13 @@ function TimeOfDayCard({
 }: {
     periods: AccidentOverview["time_of_day"];
 }) {
+    const { t } = useTranslation();
+    const COLORS = useHomeColors();
     const maxCount = Math.max(1, ...periods.map((period) => period.count));
 
     return (
         <View
-            className="rounded-3xl bg-white p-4"
+            className="rounded-3xl bg-white dark:bg-[#1A1D24] p-4"
             style={CARD_SHADOW}
         >
             <View className="flex-row items-center">
@@ -228,13 +212,13 @@ function TimeOfDayCard({
                     className="ml-2 flex-1 text-base font-body-bold"
                     style={{ color: COLORS.text }}
                 >
-                    Acidentes por horário
+                    {t("home.byTimeOfDay")}
                 </Text>
                 <Text
                     className="font-body text-xs"
                     style={{ color: COLORS.secondaryText }}
                 >
-                    Últimos 30 dias
+                    {t("home.last30Days")}
                 </Text>
             </View>
             <View className="mt-5 h-[134px] flex-row items-end justify-between">
@@ -288,6 +272,8 @@ function SeverityCard({
 }: {
     overview: AccidentOverview;
 }) {
+    const { t } = useTranslation();
+    const COLORS = useHomeColors();
     const total = overview.approved_accidents_count;
     const severities: AccidentSeverity[] = [
         "low",
@@ -298,7 +284,7 @@ function SeverityCard({
 
     return (
         <View
-            className="rounded-3xl bg-white p-4"
+            className="rounded-3xl bg-white dark:bg-[#1A1D24] p-4"
             style={CARD_SHADOW}
         >
             <View className="mb-4 flex-row items-center">
@@ -312,13 +298,13 @@ function SeverityCard({
                         className="text-base font-body-bold"
                         style={{ color: COLORS.text }}
                     >
-                        Gravidade dos acidentes
+                        {t("home.severityTitle")}
                     </Text>
                     <Text
                         className="font-body mt-0.5 text-xs"
                         style={{ color: COLORS.secondaryText }}
                     >
-                        Entre os registros aprovados
+                        {t("home.severitySubtitle")}
                     </Text>
                 </View>
             </View>
@@ -335,7 +321,7 @@ function SeverityCard({
                                     className="font-body text-sm"
                                     style={{ color: COLORS.text }}
                                 >
-                                    {SEVERITY_LABELS[severity]}
+                                    {t(`enums.severity.${severity}`)}
                                 </Text>
                                 <Text
                                     className="text-xs font-body-semibold"
@@ -344,7 +330,7 @@ function SeverityCard({
                                     {formatNumber(count)} · {percentage}%
                                 </Text>
                             </View>
-                            <View className="h-2 overflow-hidden rounded-full bg-[#EEF0F5]">
+                            <View className="h-2 overflow-hidden rounded-full bg-[#EEF0F5] dark:bg-[#242833]">
                                 <View
                                     className="h-full rounded-full"
                                     style={{
@@ -368,9 +354,11 @@ function CommunityError({
     message: string;
     onRetry: () => void;
 }) {
+    const { t } = useTranslation();
+    const COLORS = useHomeColors();
     return (
         <View
-            className="items-center rounded-3xl bg-white px-5 py-7"
+            className="items-center rounded-3xl bg-white dark:bg-[#1A1D24] px-5 py-7"
             style={CARD_SHADOW}
         >
             <Activity size={25} color={COLORS.primary} />
@@ -378,7 +366,7 @@ function CommunityError({
                 className="mt-3 text-center text-base font-body-semibold"
                 style={{ color: COLORS.text }}
             >
-                Não foi possível carregar o panorama
+                {t("home.overviewError")}
             </Text>
             <Text
                 className="font-body mt-1 text-center text-sm leading-5"
@@ -397,7 +385,7 @@ function CommunityError({
                     className="ml-2 text-sm font-body-semibold"
                     style={{ color: COLORS.primary }}
                 >
-                    Tentar novamente
+                    {t("common.retry")}
                 </Text>
             </Pressable>
         </View>
@@ -413,9 +401,11 @@ function RecentAccidentsCard({
     onAccidentPress: (accidentId: string) => void;
     onOpenMap: () => void;
 }) {
+    const { t } = useTranslation();
+    const COLORS = useHomeColors();
     return (
         <View
-            className="rounded-3xl bg-white p-4"
+            className="rounded-3xl bg-white dark:bg-[#1A1D24] p-4"
             style={CARD_SHADOW}
         >
             <View className="mb-2 flex-row items-center">
@@ -423,11 +413,11 @@ function RecentAccidentsCard({
                     className="flex-1 text-base font-body-bold"
                     style={{ color: COLORS.text }}
                 >
-                    Acidentes recentes
+                    {t("home.recentAccidents")}
                 </Text>
                 <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Abrir mapa de acidentes"
+                    accessibilityLabel={t("home.openMap")}
                     onPress={onOpenMap}
                     className="h-9 w-9 items-center justify-center rounded-full"
                     style={{ backgroundColor: COLORS.surfaceIcon }}
@@ -440,7 +430,7 @@ function RecentAccidentsCard({
                     className="font-body py-4 text-sm"
                     style={{ color: COLORS.secondaryText }}
                 >
-                    Ainda não há acidentes aprovados para exibir.
+                    {t("home.noRecentAccidents")}
                 </Text>
             ) : (
                 overview.recent_accidents.map((accident, index) => (
@@ -470,16 +460,16 @@ function RecentAccidentsCard({
                                 className="text-sm font-body-bold"
                                 style={{ color: COLORS.text }}
                             >
-                                {accident.tipo_acidente}
+                                {translateAccidentType(accident.tipo_acidente)}
                             </Text>
                             <Text
                                 numberOfLines={1}
                                 className="font-body mt-0.5 text-xs"
                                 style={{ color: COLORS.secondaryText }}
                             >
-                                {accident.classificacao_acidente === "com_vitima"
-                                    ? "Com vítima"
-                                    : "Sem vítima"}
+                                {t(
+                                    `enums.classification.${accident.classificacao_acidente}`,
+                                )}
                                 {" · "}
                                 {formatRelativeTime(accident.occurred_at)}
                             </Text>
@@ -509,9 +499,11 @@ function PersonalContribution({
     onRetry: () => void;
     onReportsPress: () => void;
 }) {
+    const { t } = useTranslation();
+    const COLORS = useHomeColors();
     return (
         <View
-            className="rounded-3xl bg-white p-4"
+            className="rounded-3xl bg-white dark:bg-[#1A1D24] p-4"
             style={CARD_SHADOW}
         >
             <View className="mb-4 flex-row items-center">
@@ -526,18 +518,18 @@ function PersonalContribution({
                         className="text-base font-body-bold"
                         style={{ color: COLORS.text }}
                     >
-                        Sua contribuição
+                        {t("home.yourContribution")}
                     </Text>
                     <Text
                         className="font-body mt-0.5 text-xs"
                         style={{ color: COLORS.secondaryText }}
                     >
-                        Sua participação na comunidade
+                        {t("home.yourParticipation")}
                     </Text>
                 </View>
                 <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Ver meus relatos"
+                    accessibilityLabel={t("home.viewMyReports")}
                     onPress={onReportsPress}
                     className="h-9 w-9 items-center justify-center rounded-full"
                     style={{ backgroundColor: COLORS.surfaceIcon  }}
@@ -565,7 +557,7 @@ function PersonalContribution({
                             className="text-sm font-body-semibold"
                             style={{ color: COLORS.primary }}
                         >
-                            Tentar
+                            {t("home.retryShort")}
                         </Text>
                     </Pressable>
                 </View>
@@ -582,7 +574,7 @@ function PersonalContribution({
                             className="font-body mt-0.5 text-xs"
                             style={{ color: COLORS.secondaryText }}
                         >
-                            Relatos aprovados
+                            {t("home.approvedReports")}
                         </Text>
                     </View>
                     <View className="flex-1">
@@ -596,7 +588,7 @@ function PersonalContribution({
                             className="font-body mt-0.5 text-xs"
                             style={{ color: COLORS.secondaryText }}
                         >
-                            Votos de confiança
+                            {t("home.trustVotes")}
                         </Text>
                     </View>
                 </View>
@@ -611,7 +603,7 @@ function PersonalContribution({
                         className="text-sm font-body-semibold ml-2"
                         style={{ color: COLORS.primary }}
                     >
-                        Ver meus relatos
+                        {t("home.viewMyReports")}
                     </Text>
                     <ChevronRight size={16} color={COLORS.primary} />
                 </Pressable>
@@ -621,6 +613,8 @@ function PersonalContribution({
 }
 
 export default function HomeScreen() {
+    const { t } = useTranslation();
+    const COLORS = useHomeColors();
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const user = useAuthStore((state) => state.user);
@@ -660,7 +654,7 @@ export default function HomeScreen() {
                     console.warn("Estatísticas de acidentes inválidas", error);
                 }
                 setCommunityError(
-                    "A resposta recebida não contém estatísticas válidas. Tente novamente.",
+                    t("home.invalidStats"),
                 );
             }
         } else {
@@ -671,7 +665,7 @@ export default function HomeScreen() {
                 );
             }
             setCommunityError(
-                "Verifique sua conexão e tente carregar os dados novamente.",
+                t("home.connectionError"),
             );
         }
 
@@ -684,7 +678,7 @@ export default function HomeScreen() {
                     console.warn("Estatísticas pessoais inválidas", error);
                 }
                 setPersonalError(
-                    "Não foi possível validar suas estatísticas. Tente novamente.",
+                    t("home.invalidPersonalStats"),
                 );
             }
         } else {
@@ -695,14 +689,14 @@ export default function HomeScreen() {
                 );
             }
             setPersonalError(
-                "Verifique sua conexão e tente carregar novamente.",
+                t("home.personalConnectionError"),
             );
         }
 
         hasLoaded.current = true;
         setIsLoading(false);
         setIsRefreshing(false);
-    }, []);
+    }, [t]);
 
     useFocusEffect(
         useCallback(() => {
@@ -728,7 +722,7 @@ export default function HomeScreen() {
         }, [loadDashboard]),
     );
 
-    const firstName = user?.name.trim().split(/\s+/)[0] || "por aqui";
+    const firstName = user?.name.trim().split(/\s+/)[0] || t("home.greetingFallback");
     const openAccident = (accidentId: string) => {
         router.push({
             pathname: "/map/[accidentId]",
@@ -763,16 +757,16 @@ export default function HomeScreen() {
                     {!user?.is_email_verified && (
                         <Pressable
                             accessibilityRole="button"
-                            accessibilityLabel="Verificar e-mail"
+                            accessibilityLabel={t("home.verifyEmailLabel")}
                             onPress={() => router.push(verifyEmailFromAppRoute)}
-                            className="mb-3 flex-row items-center gap-2 rounded-xl bg-amber-100 px-3 py-2"
+                            className="mb-3 flex-row items-center gap-2 rounded-xl bg-amber-100 dark:bg-[#2B2313] px-3 py-2"
                         >
                             <Mail size={16} color="#F59E0B" strokeWidth={2} />
-                            <Text className="flex-1 text-xs font-body-medium text-amber-700">
-                                Verifique seu e-mail para relatar acidentes e comentar
+                            <Text className="flex-1 text-xs font-body-medium text-amber-700 dark:text-[#F5D58A]">
+                                {t("home.verifyEmailBanner")}
                             </Text>
-                            <Text className="text-xs font-body-bold text-amber-800">
-                                Verificar
+                            <Text className="text-xs font-body-bold text-amber-800 dark:text-[#F5D58A]">
+                                {t("home.verify")}
                             </Text>
                         </Pressable>
                     )}
@@ -794,15 +788,15 @@ export default function HomeScreen() {
                         className="text-[25px] font-display leading-8"
                         style={{ color: COLORS.text }}
                     >
-                        Olá, {firstName}! 👋
+                        {t("home.greeting", { name: firstName })}
                     </Text>
                     <Text
                         className="font-body mt-1 text-sm leading-5"
                         style={{ color: COLORS.secondaryText }}
                     >
-                        Acompanhe a segurança viária em Imperatriz.
+                        {t("home.tagline")}
                     </Text>
-                    <View className="mt-3 flex-row items-center self-start rounded-full bg-white px-3 py-1.5">
+                    <View className="mt-3 flex-row items-center self-start rounded-full bg-white dark:bg-[#1A1D24] px-3 py-1.5">
                         <MapPin size={13} color={COLORS.primary} />
                         <Text
                             className="ml-1.5 text-xs font-body-semibold"
@@ -819,13 +813,13 @@ export default function HomeScreen() {
                         className="ml-2 text-lg font-body-bold"
                         style={{ color: COLORS.text }}
                     >
-                        Panorama da comunidade
+                        {t("home.communityOverview")}
                     </Text>
                 </View>
 
                 {isLoading && !overview ? (
                     <View
-                        className="mb-4 items-center rounded-3xl bg-white py-10"
+                        className="mb-4 items-center rounded-3xl bg-white dark:bg-[#1A1D24] py-10"
                         style={CARD_SHADOW}
                     >
                         <ActivityIndicator size="large" color={COLORS.primary} />
@@ -833,7 +827,7 @@ export default function HomeScreen() {
                             className="font-body mt-3 text-sm"
                             style={{ color: COLORS.secondaryText }}
                         >
-                            Carregando estatísticas...
+                            {t("home.loadingStats")}
                         </Text>
                     </View>
                 ) : communityError && !overview ? (
@@ -849,7 +843,7 @@ export default function HomeScreen() {
                             <Pressable
                                 accessibilityRole="button"
                                 onPress={() => void loadDashboard(true)}
-                                className="mb-3 flex-row items-center rounded-2xl bg-white px-4 py-3"
+                                className="mb-3 flex-row items-center rounded-2xl bg-white dark:bg-[#1A1D24] px-4 py-3"
                                 style={CARD_SHADOW}
                             >
                                 <RefreshCw
@@ -860,30 +854,30 @@ export default function HomeScreen() {
                                     className="font-body ml-2 flex-1 text-xs"
                                     style={{ color: COLORS.secondaryText }}
                                 >
-                                    Não foi possível atualizar os dados. Toque para tentar novamente.
+                                    {t("home.refreshError")}
                                 </Text>
                             </Pressable>
                         ) : null}
                         <View className="mb-3 flex-row gap-3">
                             <MetricCard
                                 icon={Car}
-                                label="Acidentes ocorridos"
+                                label={t("home.accidentsOccurred")}
                                 value={overview.approved_accidents_count}
-                                detail="Registros disponíveis"
+                                detail={t("home.availableRecords")}
                             />
                             <MetricCard
                                 icon={Users}
-                                label="Com vítima"
+                                label={t("home.withVictims")}
                                 value={overview.accidents_with_victims_count}
-                                detail="Classificados na ocorrência"
+                                detail={t("home.classifiedAtOccurrence")}
                             />
                         </View>
                         <View className="mb-4 flex-row gap-3">
                             <MetricCard
                                 icon={ShieldAlert}
-                                label="Alta gravidade"
+                                label={t("home.highSeverity")}
                                 value={overview.high_severity_accidents_count}
-                                detail="Alta ou crítica"
+                                detail={t("home.highOrCritical")}
                             />
                             
                         </View>
@@ -910,7 +904,7 @@ export default function HomeScreen() {
                         className="ml-2 text-lg font-body-bold"
                         style={{ color: COLORS.text }}
                     >
-                        Você faz parte dessa mudança
+                        {t("home.partOfChange")}
                     </Text>
                 </View>
                 <View className="mb-5">
@@ -928,21 +922,21 @@ export default function HomeScreen() {
                     style={{ backgroundColor: COLORS.primary }}
                 >
                     <Text className="text-lg font-body-bold text-white">
-                        Ajude a cuidar do caminho
+                        {t("home.helpTitle")}
                     </Text>
                     <Text className="font-body mt-1 text-sm leading-5 text-white/85">
-                        Um relato pode ajudar outras pessoas a dirigir com mais atenção.
+                        {t("home.helpBody")}
                     </Text>
                     <Pressable
                         accessibilityRole="button"
                         onPress={() => router.push("/report")}
-                        className="mt-4 flex-row items-center self-start rounded-xl bg-white px-4 py-2.5"
+                        className="mt-4 flex-row items-center self-start rounded-xl bg-white dark:bg-[#1A1D24] px-4 py-2.5"
                     >
                         <Text
                             className="text-sm font-body-bold"
                             style={{ color: COLORS.primary }}
                         >
-                            Relatar acidente
+                            {t("home.reportAccident")}
                         </Text>
                         <ChevronRight
                             size={17}

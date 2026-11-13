@@ -18,6 +18,13 @@ import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { ACCIDENT_APPROVED_EVENT } from "@/src/features/notifications/pushNotifications";
 import prfLogo from "../../../policia-rodoviaria-federal-logo-png_seeklogo-351022.png";
 
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import {
+    formatDateTime,
+    translateAccidentType,
+    useTranslation,
+} from "@/src/i18n";
+import { SEVERITY_COLORS } from "@/src/theme/colors";
 const mapStyle = {
     version: 8,
     imports: [
@@ -40,14 +47,13 @@ const CAMERA_PADDING = {
     paddingLeft: 48,
 };
 const MARKER_COLORS = {
-    low: "#0969D7",
-    medium: "#D99A24",
-    high: "#D9534F",
-    critical: "#B42318",
-    unknown: "#0969D7",
+    ...SEVERITY_COLORS,
+    unknown: SEVERITY_COLORS.low,
 } as const;
 
 export default function MapScreen() {
+    const { t } = useTranslation();
+    const { colors, isDark } = useAppTheme();
     const router = useRouter();
     const {
         accidents,
@@ -55,12 +61,12 @@ export default function MapScreen() {
         isLoading,
         retry,
         refreshSilently,
+        checkForUpdates,
         filters,
         applyFilters,
         clearFilters,
     } = useAccidents();
     const cameraRef = useRef<Mapbox.Camera>(null);
-    const hasFocusedMap = useRef(false);
     const previousLoading = useRef(isLoading);
     const [cameraAccidents, setCameraAccidents] = useState(accidents);
     const [selectedAccidentId, setSelectedAccidentId] = useState<string | null>(
@@ -89,14 +95,12 @@ export default function MapScreen() {
         });
     }, []);
 
+    // Keep the cached map and only download it again when the API reports
+    // that the accidents changed since the last load.
     useFocusEffect(
         useCallback(() => {
-            if (hasFocusedMap.current) {
-                retry();
-            } else {
-                hasFocusedMap.current = true;
-            }
-        }, [retry]),
+            void checkForUpdates();
+        }, [checkForUpdates]),
     );
 
     useFocusEffect(
@@ -204,7 +208,7 @@ export default function MapScreen() {
                     id="basemap"
                     existing
                     config={{
-                        lightPreset: "day",
+                        lightPreset: isDark ? "night" : "day",
                         theme: "default",
                         font: "DIN Pro",
                         showTransitLabels: true,
@@ -269,7 +273,7 @@ export default function MapScreen() {
                                     0.7,
                                     "#FF8A80",
                                     1,
-                                    "#B42318",
+                                    colors.error,
                                 ],
                                 heatmapOpacity: 0.88,
                             }}
@@ -294,9 +298,9 @@ export default function MapScreen() {
                 className="absolute bottom-7 left-4 items-start gap-2"
                 onTouchStart={Keyboard.dismiss}
             >
-                <View className="flex-row rounded-full bg-white p-1 shadow-lg">
+                <View className="flex-row rounded-full bg-white dark:bg-[#1A1D24] p-1 shadow-lg">
                     <Pressable
-                        accessibilityLabel="Exibir marcadores de acidentes"
+                        accessibilityLabel={t("map.showMarkers")}
                         accessibilityState={{ selected: viewMode === "markers" }}
                         onPress={() => setViewMode("markers")}
                         className={`rounded-full px-3 py-2 ${
@@ -309,14 +313,14 @@ export default function MapScreen() {
                             className={`text-xs font-body-semibold ${
                                 viewMode === "markers"
                                     ? "text-white"
-                                    : "text-gray-600"
+                                    : "text-gray-600 dark:text-[#AAB0BD]"
                             }`}
                         >
-                            Pins
+                            {t("map.pins")}
                         </Text>
                     </Pressable>
                     <Pressable
-                        accessibilityLabel="Exibir mapa de calor dos acidentes"
+                        accessibilityLabel={t("map.showHeatmap")}
                         accessibilityState={{ selected: viewMode === "heatmap" }}
                         onPress={() => {
                             setViewMode("heatmap");
@@ -332,10 +336,10 @@ export default function MapScreen() {
                             className={`text-xs font-body-semibold ${
                                 viewMode === "heatmap"
                                     ? "text-white"
-                                    : "text-gray-600"
+                                    : "text-gray-600 dark:text-[#AAB0BD]"
                             }`}
                         >
-                            Calor
+                            {t("map.heat")}
                         </Text>
                     </Pressable>
                 </View>
@@ -344,26 +348,26 @@ export default function MapScreen() {
                     !isLoading &&
                     !error &&
                     accidents.length > 0 && (
-                        <View className="rounded-2xl bg-white/95 px-3 py-2 shadow-lg">
-                            <Text className="mb-1 text-xs font-body-bold uppercase tracking-wide text-gray-500">
-                                Severidade
+                        <View className="rounded-2xl bg-white/95 dark:bg-[#1A1D24]/95 px-3 py-2 shadow-lg">
+                            <Text className="mb-1 text-xs font-body-bold uppercase tracking-wide text-gray-500 dark:text-[#8B92A1]">
+                                {t("map.severity")}
                             </Text>
                             <View className="flex-row items-center gap-3">
                                 <LegendItem
                                     color={MARKER_COLORS.low}
-                                    label="Baixa"
+                                    label={t("enums.severity.low")}
                                 />
                                 <LegendItem
                                     color={MARKER_COLORS.medium}
-                                    label="Média"
+                                    label={t("enums.severity.medium")}
                                 />
                                 <LegendItem
                                     color={MARKER_COLORS.high}
-                                    label="Alta"
+                                    label={t("enums.severity.high")}
                                 />
                                 <LegendItem
                                     color={MARKER_COLORS.critical}
-                                    label="Crítica"
+                                    label={t("enums.severity.critical")}
                                 />
                             </View>
                         </View>
@@ -372,7 +376,7 @@ export default function MapScreen() {
 
             {selectedAccident && (
                 <View
-                    className="absolute bottom-24 left-4 right-4 overflow-hidden rounded-3xl bg-white px-4 py-4 shadow-xl"
+                    className="absolute bottom-24 left-4 right-4 overflow-hidden rounded-3xl bg-white dark:bg-[#1A1D24] px-4 py-4 shadow-xl"
                     onTouchStart={Keyboard.dismiss}
                 >
                     {selectedAccident.source === "PRF" && (
@@ -393,54 +397,114 @@ export default function MapScreen() {
                     )}
                     <View className="relative z-10 flex-row items-start justify-between">
                         <View className="flex-1 pr-3">
-                            <Text className="text-xs font-body-bold uppercase tracking-wide text-gray-500">
-                                Acidente selecionado
+                            <Text className="text-xs font-body-bold uppercase tracking-wide text-gray-500 dark:text-[#8B92A1]">
+                                {t("map.selectedAccident")}
                             </Text>
                             <View className="mt-1 flex-row items-center justify-between gap-3">
-                                <Text className="flex-1 text-lg font-body-bold text-gray-900">
-                                    {selectedAccident.tipo_acidente ||
-                                        "Ocorrência registrada"}
+                                <Text className="flex-1 text-lg font-body-bold text-gray-900 dark:text-[#ECEEF4]">
+                                    {selectedAccident.tipo_acidente
+                                        ? translateAccidentType(selectedAccident.tipo_acidente)
+                                        : t("map.occurrence")}
                                 </Text>
                             </View>
-                            <Text className="font-body mt-1 text-sm text-gray-600">
-                                Severidade:{" "}
-                                {getSeverityLabel(selectedAccident.severity)}
+                            <Text className="font-body mt-1 text-sm text-gray-600 dark:text-[#AAB0BD]">
+                                {t("map.severity")}:{" "}
+                                {t(`enums.severity.${selectedAccident.severity}`)}
                             </Text>
                             <View className="mt-2 flex-row items-center">
-                                <CalendarDays size={14} color="#6B7280" />
-                                <Text className="ml-1.5 text-xs font-body-medium text-gray-500">
-                                    {formatAccidentDate(selectedAccident.occurred_at)}
+                                <CalendarDays size={14} color={colors.onSurfaceVariant} />
+                                <Text className="ml-1.5 text-xs font-body-medium text-gray-500 dark:text-[#8B92A1]">
+                                    {formatDateTime(selectedAccident.occurred_at)}
                                 </Text>
                             </View>
                         </View>
                         <Pressable
-                            accessibilityLabel="Fechar detalhes do acidente"
+                            accessibilityLabel={t("map.closeDetails")}
                             onPress={() => setSelectedAccidentId(null)}
-                            className="rounded-full bg-gray-100 p-2"
+                            className="rounded-full bg-gray-100 dark:bg-[#242833] p-2"
                         >
-                            <X size={18} color="#374151" />
+                            <X size={18} color={colors.onSurface} />
                         </Pressable>
                     </View>
                     <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel="Ver detalhes e comentários do acidente"
+                        accessibilityLabel={t("map.moreDetailsLabel")}
                         onPress={() =>
                             router.push({
                                 pathname: "/map/[accidentId]",
                                 params: { accidentId: selectedAccident.id },
                             })
                         }
-                        className="mt-3 items-center border-t border-gray-100 pt-2"
+                        className="mt-3 items-center border-t border-gray-100 dark:border-[#3A3F4B] pt-2"
                     >
-                        <ChevronDown size={20} color="#6B7280" />
-                        <Text className="text-[11px] font-body-medium text-gray-500">
-                            Mais detalhes
+                        <ChevronDown size={20} color={colors.onSurfaceVariant} />
+                        <Text className="text-[11px] font-body-medium text-gray-500 dark:text-[#8B92A1]">
+                            {t("map.moreDetails")}
                         </Text>
                     </Pressable>
                 </View>
             )}
 
             {isLoading && (
+                <Animated.View
+                    entering={FadeIn.duration(200)}
+                    exiting={FadeOut.duration(300)}
+                    style={{
+                        position: "absolute",
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0,
+                    }}
+                >
+                    <View
+                        className="flex-1 items-center justify-center bg-slate-900/25"
+                        onTouchStart={Keyboard.dismiss}
+                    >
+                        <View
+                            className="flex-row items-center gap-2.5 rounded-full bg-white/95 dark:bg-[#1A1D24]/95 px-4 py-2.5 shadow-lg"
+                            accessibilityRole="progressbar"
+                            accessibilityLabel={t("map.loadingAccidents")}
+                        >
+                            <ActivityIndicator size="small" color={colors.accent} />
+                            <Text className="text-sm font-body-medium text-gray-700 dark:text-[#AAB0BD]">
+                                {t("map.loadingAccidentsEllipsis")}
+                            </Text>
+                        </View>
+                    </View>
+                </Animated.View>
+            )}
+
+            {error && !isLoading && (
+                <View
+                    className="absolute inset-0 items-center justify-center px-8"
+                    pointerEvents="box-none"
+                >
+                    <Animated.View
+                        entering={FadeIn.duration(200)}
+                        exiting={FadeOut.duration(250)}
+                    >
+                        <View
+                            className="items-center rounded-2xl bg-white/95 dark:bg-[#1A1D24]/95 px-5 py-4 shadow-lg"
+                            onTouchStart={Keyboard.dismiss}
+                        >
+                            <Text className="text-center text-sm font-body-medium text-gray-700 dark:text-[#AAB0BD]">
+                                {error}
+                            </Text>
+                            <Pressable
+                                onPress={retry}
+                                className="mt-3 rounded-full bg-[#0969D7] px-4 py-2"
+                            >
+                                <Text className="text-sm font-body-semibold text-white">
+                                    {t("common.retry")}
+                                </Text>
+                            </Pressable>
+                        </View>
+                    </Animated.View>
+                </View>
+            )}
+
+            {!isLoading && !error && accidents.length === 0 && (
                 <View
                     className="absolute inset-0 items-center justify-center"
                     pointerEvents="none"
@@ -449,85 +513,29 @@ export default function MapScreen() {
                         entering={FadeIn.duration(200)}
                         exiting={FadeOut.duration(250)}
                     >
-                        <View
-                            className="flex-row items-center gap-2.5 rounded-full bg-white/95 px-4 py-2.5 shadow-lg"
-                            accessibilityRole="progressbar"
-                            accessibilityLabel="Carregando acidentes"
-                        >
-                            <ActivityIndicator size="small" color="#0969D7" />
-                            <Text className="text-sm font-body-medium text-gray-700">
-                                Carregando acidentes...
+                        <View className="rounded-full bg-white/95 dark:bg-[#1A1D24]/95 px-4 py-2.5 shadow-lg">
+                            <Text className="text-center text-sm font-body-medium text-gray-700 dark:text-[#AAB0BD]">
+                                {t("map.noAccidents")}
                             </Text>
                         </View>
                     </Animated.View>
                 </View>
             )}
-
-            {error && !isLoading && (
-                <View
-                    className="absolute left-4 right-4 top-28 items-center rounded-2xl bg-white px-4 py-3 shadow-lg"
-                    onTouchStart={Keyboard.dismiss}
-                >
-                    <Text className="text-center text-sm font-body-medium text-gray-700">
-                        {error}
-                    </Text>
-                    <Pressable
-                        onPress={retry}
-                        className="mt-2 rounded-full bg-[#0969D7] px-4 py-2"
-                    >
-                        <Text className="text-sm font-body-semibold text-white">
-                            Tentar novamente
-                        </Text>
-                    </Pressable>
-                </View>
-            )}
-
-            {!isLoading && !error && accidents.length === 0 && (
-                <View className="absolute left-4 right-4 top-28 items-center rounded-2xl bg-white px-4 py-3 shadow-lg">
-                    <Text className="text-center text-sm font-body-medium text-gray-700">
-                        Nenhum acidente registrado.
-                    </Text>
-                </View>
-            )}
         </View>
     );
-}
-
-function formatAccidentDate(value: string) {
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return "Data não informada";
-    }
-
-    return new Intl.DateTimeFormat("pt-BR", {
-        dateStyle: "short",
-        timeStyle: "short",
-    }).format(date);
 }
 
 function LegendItem({ color, label }: { color: string; label: string }) {
     return (
         <View className="flex-row items-center gap-1">
             <View
-                className="h-2.5 w-2.5 rounded-full border border-white"
+                className="h-2.5 w-2.5 rounded-full border border-white dark:border-[#1A1D24]"
                 style={{ backgroundColor: color }}
             />
-            <Text className="text-[11px] font-body-medium text-gray-700">
+            <Text className="text-[11px] font-body-medium text-gray-700 dark:text-[#AAB0BD]">
                 {label}
             </Text>
         </View>
     );
 }
 
-function getSeverityLabel(severity: keyof typeof MARKER_COLORS) {
-    const labels = {
-        low: "Baixa",
-        medium: "Média",
-        high: "Alta",
-        critical: "Crítica",
-        unknown: "Não informada",
-    };
-
-    return labels[severity];
-}

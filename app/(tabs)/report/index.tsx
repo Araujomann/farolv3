@@ -29,6 +29,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/src/store/authStore";
 import { verifyEmailFromAppRoute } from "@/src/features/auth/verifyEmailRoute";
 
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import { tr, useTranslation } from "@/src/i18n";
 const DEFAULT_CENTER: [number, number] = [-47.47812, -5.52693];
 const INITIAL_ZOOM = 15;
 const EXPANSION_DURATION = 600;
@@ -43,6 +45,8 @@ const mapStyle = {
 } as const;
 
 export default function ReportScreen() {
+    const { t } = useTranslation();
+    const { colors, isDark } = useAppTheme();
     const router = useRouter();
     const isEmailVerified = useAuthStore((state) =>
         Boolean(state.user?.is_email_verified),
@@ -105,12 +109,12 @@ export default function ReportScreen() {
         // Contas sem e-mail verificado só podem visualizar o mapa
         if (!isEmailVerified) {
             Alert.alert(
-                "Verifique seu e-mail",
-                "Para relatar acidentes, confirme seu e-mail com o código de 6 dígitos que enviamos.",
+                tr("report.verifyTitle"),
+                tr("report.verifyMessage"),
                 [
-                    { text: "Agora não", style: "cancel" },
+                    { text: tr("report.notNow"), style: "cancel" },
                     {
-                        text: "Verificar agora",
+                        text: tr("report.verifyNow"),
                         onPress: () => router.push(verifyEmailFromAppRoute),
                     },
                 ],
@@ -234,22 +238,22 @@ export default function ReportScreen() {
     }));
 
     return (
-        <View className="flex-1 overflow-hidden bg-[#F1F3FE]">
+        <View className="flex-1 overflow-hidden bg-[#F1F3FE] dark:bg-[#242833]">
             <View
                 className="absolute left-4 z-50"
                 style={{ top: Math.max(insets.top, 16) }}
             >
                 <Pressable
-                    accessibilityLabel="Voltar"
+                    accessibilityLabel={t("report.back")}
                     onPress={handleBackPress}
-                    className="h-11 w-11 items-center justify-center rounded-full bg-white shadow-md"
+                    className="h-11 w-11 items-center justify-center rounded-full bg-white dark:bg-[#1A1D24] shadow-md"
                 >
-                    <ArrowLeft size={22} color="#181C23" />
+                    <ArrowLeft size={22} color={colors.onSurface} />
                 </Pressable>
             </View>
 
             <Animated.View
-                className="absolute z-10 overflow-hidden border-white"
+                className="absolute z-10 overflow-hidden border-white dark:border-[#1A1D24]"
                 style={mapWrapperStyle}
             >
                     <Mapbox.MapView
@@ -264,7 +268,7 @@ export default function ReportScreen() {
                             id="basemap"
                             existing
                             config={{
-                                lightPreset: "day",
+                                lightPreset: isDark ? "night" : "day",
                                 theme: "default",
                                 font: "DIN Pro",
                                 showTransitLabels: true,
@@ -305,7 +309,7 @@ export default function ReportScreen() {
                                         justifyContent: "center",
                                         backgroundColor: "#FF3B30",
                                         borderWidth: 3,
-                                        borderColor: "#FFFFFF",
+                                        borderColor: colors.surface,
                                         borderRadius: 18,
                                         borderBottomRightRadius: 6,
                                         transform: [{ rotate: "45deg" }],
@@ -321,7 +325,7 @@ export default function ReportScreen() {
                                             width: 8,
                                             height: 8,
                                             borderRadius: 4,
-                                            backgroundColor: "#FFFFFF",
+                                            backgroundColor: colors.surface,
                                             transform: [{ rotate: "-45deg" }],
                                         }}
                                     />
@@ -336,21 +340,21 @@ export default function ReportScreen() {
                         style={expandedControlsStyle}
                         pointerEvents={isMapExpanded ? "auto" : "none"}
                     >
-                        <View className="overflow-hidden rounded-xl border border-[#C1C6D7]/30 bg-white/90 shadow-lg">
+                        <View className="overflow-hidden rounded-xl border border-[#C1C6D7]/30 dark:border-[#3A3F4B]/30 bg-white/90 dark:bg-[#1A1D24]/90 shadow-lg">
                             <Pressable
-                                accessibilityLabel="Aumentar zoom"
+                                accessibilityLabel={t("report.zoomIn")}
                                 onPress={() =>
                                     cameraRef.current?.zoomTo(
                                         Math.min(20, zoomLevel + 1),
                                         250,
                                     )
                                 }
-                                className="border-b border-[#C1C6D7]/20 p-2.5"
+                                className="border-b border-[#C1C6D7]/20 dark:border-[#3A3F4B]/20 p-2.5"
                             >
-                                <Plus size={20} color="#181C23" />
+                                <Plus size={20} color={colors.onSurface} />
                             </Pressable>
                             <Pressable
-                                accessibilityLabel="Reduzir zoom"
+                                accessibilityLabel={t("report.zoomOut")}
                                 onPress={() =>
                                     cameraRef.current?.zoomTo(
                                         Math.max(3, zoomLevel - 1),
@@ -359,54 +363,53 @@ export default function ReportScreen() {
                                 }
                                 className="p-2.5"
                             >
-                                <Minus size={20} color="#181C23" />
+                                <Minus size={20} color={colors.onSurface} />
                             </Pressable>
                         </View>
                         <Pressable
-                            accessibilityLabel="Recentrar mapa"
+                            accessibilityLabel={t("report.recenter")}
                             onPress={handleResetLocation}
-                            className="h-10 w-10 items-center justify-center rounded-xl border border-[#C1C6D7]/30 bg-white/90 shadow-lg"
+                            className="h-10 w-10 items-center justify-center rounded-xl border border-[#C1C6D7]/30 dark:border-[#3A3F4B]/30 bg-white/90 dark:bg-[#1A1D24]/90 shadow-lg"
                         >
-                            <Crosshair size={20} color="#181C23" />
+                            <Crosshair size={20} color={colors.onSurface} />
                         </Pressable>
                     </Animated.View>
             </Animated.View>
 
             <Animated.View
-                className="absolute bottom-0 left-0 right-0 z-20 h-[40%] rounded-t-[32px] bg-white px-4 pt-6 shadow-lg"
+                className="absolute bottom-0 left-0 right-0 z-20 h-[40%] rounded-t-[32px] bg-white dark:bg-[#1A1D24] px-4 pt-6 shadow-lg"
                 style={bottomSheetStyle}
                 pointerEvents={isMapExpanded ? "none" : "auto"}
             >
                     <View className="mx-auto mb-6 h-1.5 w-12 rounded-full bg-[#717786]/40" />
                     <View className="flex-1 justify-between">
                         <View className="gap-4">
-                            <Text className="text-center text-[22px] font-display text-[#181C23]">
-                                Local do Acidente
+                            <Text className="text-center text-[22px] font-display text-[#181C23] dark:text-[#ECEEF4]">
+                                {t("report.locationTitle")}
                             </Text>
                             <View className="flex-row items-center gap-2.5 rounded-2xl border border-[#ADC6FF]/30 bg-[#ADC6FF]/20 px-3 py-2.5">
                                 <CircleAlert
                                     size={19}
-                                    color="#0058BC"
+                                    color={colors.primary}
                                     strokeWidth={2.25}
                                 />
-                                <Text className="font-body flex-1 text-[15px] leading-[20px] text-[#414755]">
-                                    Arraste o mapa até que o pino esteja sobre o
-                                    local exato do acidente.
+                                <Text className="font-body flex-1 text-[15px] leading-[20px] text-[#414755] dark:text-[#AAB0BD]">
+                                    {t("report.locationHint")}
                                 </Text>
                             </View>
                             <View className="flex-row items-center gap-2.5 rounded-2xl border border-[#ADC6FF]/30 bg-[#ADC6FF]/20 px-3 py-2.5">
                                 <Expand
                                     size={19}
-                                    color="#0058BC"
+                                    color={colors.primary}
                                     strokeWidth={2.25}
                                 />
-                                <Text className="font-body flex-1 text-[15px] leading-[20px] text-[#414755]">
-                                    Use pinça para ajustar o zoom.
+                                <Text className="font-body flex-1 text-[15px] leading-[20px] text-[#414755] dark:text-[#AAB0BD]">
+                                    {t("report.pinchHint")}
                                 </Text>
                             </View>
                         </View>
                         <Pressable
-                            accessibilityLabel="Entendi"
+                            accessibilityLabel={t("report.gotIt")}
                             onPress={() => setIsMapExpanded(true)}
                             className="h-14 items-center justify-center rounded-xl bg-[#0058BC] shadow-lg"
                             style={{
@@ -414,7 +417,7 @@ export default function ReportScreen() {
                             }}
                         >
                             <Text className="text-[17px] font-body-bold text-white">
-                                Entendi
+                                {t("report.gotIt")}
                             </Text>
                         </Pressable>
                     </View>
@@ -425,16 +428,16 @@ export default function ReportScreen() {
                 style={[confirmationStyle, { paddingBottom: Math.max(insets.bottom, 4) }]}
                 pointerEvents={isMapExpanded ? "auto" : "none"}
             >
-                    <View className="mx-auto flex-row items-center gap-6 rounded-full border border-[#717786]/30 bg-white/85 px-5 py-2.5 shadow-md">
-                        <Coordinate label="Latitude" value={selectedLocation[1]} />
+                    <View className="mx-auto flex-row items-center gap-6 rounded-full border border-[#717786]/30 bg-white/85 dark:bg-[#1A1D24]/85 px-5 py-2.5 shadow-md">
+                        <Coordinate label={t("report.latitude")} value={selectedLocation[1]} />
                         <View className="h-6 w-px bg-[#717786]/40" />
                         <Coordinate
-                            label="Longitude"
+                            label={t("report.longitude")}
                             value={selectedLocation[0]}
                         />
                     </View>
                     <Pressable
-                        accessibilityLabel="Confirmar localização"
+                        accessibilityLabel={t("report.confirmLocationLabel")}
                         accessibilityState={{ disabled: isConfirmed }}
                         disabled={isConfirmed}
                         onPress={handleConfirmLocation}
@@ -445,8 +448,8 @@ export default function ReportScreen() {
                         {isConfirmed && <Check size={21} color="#FFFFFF" />}
                         <Text className="text-[17px] font-body-bold text-white">
                             {isConfirmed
-                                ? "Localização confirmada"
-                                : "Confirmar Localização"}
+                                ? t("report.locationConfirmed")
+                                : t("report.confirmLocation")}
                         </Text>
                     </Pressable>
             </Animated.View>
@@ -458,10 +461,10 @@ export default function ReportScreen() {
 function Coordinate({ label, value }: { label: string; value: number }) {
     return (
         <View className="items-center">
-            <Text className="mb-0.5 text-[10px] font-body-semibold uppercase tracking-wider text-[#717786]">
+            <Text className="mb-0.5 text-[10px] font-body-semibold uppercase tracking-wider text-[#717786] dark:text-[#8B92A1]">
                 {label}
             </Text>
-            <Text className="text-xs font-body-medium tabular-nums text-[#181C23]">
+            <Text className="text-xs font-body-medium tabular-nums text-[#181C23] dark:text-[#ECEEF4]">
                 {value.toFixed(6)}
             </Text>
         </View>

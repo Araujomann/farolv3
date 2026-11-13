@@ -15,13 +15,18 @@ import {
   createMapboxSessionToken,
   retrieveMapPlace,
   searchMapPlaces,
+  type MapPlaceCategory,
   type MapPlaceSearchResult,
   type MapPlaceSearchSuggestion,
 } from "@/src/features/map/services/placeSearch";
 
-const ACTIVE_COLOR = "#0969D7";
-const INACTIVE_COLOR = "#6B7280";
-const PLACEHOLDER_COLOR = "#9CA3AF";
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import { tr, useTranslation } from "@/src/i18n";
+
+const CATEGORY_LABEL_KEYS = {
+  Estabelecimento: "search.categoryPlace",
+  Rua: "search.categoryStreet",
+} as const satisfies Record<MapPlaceCategory, string>;
 const CATEGORY_ICONS = {
   Estabelecimento: Building2,
   Rua: MapPin,
@@ -36,6 +41,8 @@ export const SearchBar = ({
   onSelectPlace,
   onSuggestionsHeightChange,
 }: SearchBarProps) => {
+  const { t } = useTranslation();
+  const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -116,9 +123,7 @@ export const SearchBar = ({
 
         if (requestId.current === currentRequestId) {
           setResults([]);
-          setSearchError(
-            "Não foi possível buscar lugares. Verifique sua conexão e tente novamente.",
-          );
+          setSearchError(tr("search.searchError"));
           setHasSearched(true);
         }
       } finally {
@@ -135,8 +140,8 @@ export const SearchBar = ({
   }, [isFocused, query, searchImmediately]);
 
   const iconColor =
-    isFocused || query.length > 0 ? ACTIVE_COLOR : INACTIVE_COLOR;
-  const borderClass = isFocused ? "border-[#0969D7]" : "border-[#E5E7EB]";
+    isFocused || query.length > 0 ? colors.accent : colors.onSurfaceVariant;
+  const borderClass = isFocused ? "border-[#0969D7]" : "border-[#E5E7EB] dark:border-[#3A3F4B]";
 
   const handleClear = () => {
     setQuery("");
@@ -169,9 +174,7 @@ export const SearchBar = ({
         console.warn("Falha ao localizar resultado no mapa", error);
       }
 
-      setSearchError(
-        "Não foi possível abrir esse lugar no mapa. Tente outra sugestão.",
-      );
+      setSearchError(tr("search.openError"));
       setIsFocused(true);
     } finally {
       setSelectingPlaceId(null);
@@ -185,7 +188,7 @@ export const SearchBar = ({
       pointerEvents="box-none"
     >
       <Input
-        className={`flex-row items-center bg-white border-[1.5px] px-1 py-1 h-16 shadow-lg rounded-full ${borderClass}`}
+        className={`flex-row items-center bg-white dark:bg-[#1A1D24] border-[1.5px] px-1 py-1 h-16 shadow-lg rounded-full ${borderClass}`}
       >
         <InputSlot className="pl-3 pr-2">
           <InputIcon as={Search} size={20} color={iconColor} />
@@ -218,20 +221,20 @@ export const SearchBar = ({
             submitSearch.current = true;
             setSearchImmediately((current) => current + 1);
           }}
-          placeholder="Buscar lugar, rua ou bairro..."
-          placeholderTextColor={PLACEHOLDER_COLOR}
+          placeholder={t("search.placeholder")}
+          placeholderTextColor={colors.outline}
           returnKeyType="search"
-          className="flex-1 text-[15px] font-body text-gray-900"
+          className="flex-1 text-[15px] font-body text-gray-900 dark:text-[#ECEEF4]"
         />
 
         {query.length > 0 && (
           <InputSlot
             accessibilityRole="button"
-            accessibilityLabel="Limpar busca"
-            className="mr-2 h-9 w-9 rounded-full border border-gray-200 bg-gray-50"
+            accessibilityLabel={t("search.clear")}
+            className="mr-2 h-9 w-9 rounded-full border border-gray-200 dark:border-[#3A3F4B] bg-gray-50 dark:bg-[#242833]"
             onPress={handleClear}
           >
-            <InputIcon as={Eraser} size={16} color={INACTIVE_COLOR} />
+            <InputIcon as={Eraser} size={16} color={colors.onSurfaceVariant} />
           </InputSlot>
         )}
       </Input>
@@ -241,35 +244,34 @@ export const SearchBar = ({
           onLayout={(event) =>
             reportSuggestionsHeight(event.nativeEvent.layout.height)
           }
-          className="mt-2 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl"
+          className="mt-2 overflow-hidden rounded-3xl border border-gray-100 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] shadow-xl"
         >
-          <View className="flex-row items-center justify-between border-b border-gray-100 px-4 py-3">
+          <View className="flex-row items-center justify-between border-b border-gray-100 dark:border-[#3A3F4B] px-4 py-3">
             <View className="flex-row items-center">
-              <MapPin size={15} color={ACTIVE_COLOR} />
-              <Text className="ml-2 text-xs font-body-bold uppercase tracking-wider text-gray-600">
-                Lugares em Imperatriz
+              <MapPin size={15} color={colors.accent} />
+              <Text className="ml-2 text-xs font-body-bold uppercase tracking-wider text-gray-600 dark:text-[#AAB0BD]">
+                {t("search.placesIn")}
               </Text>
             </View>
             {isSearching || selectingPlaceId ? (
-              <ActivityIndicator size="small" color={ACTIVE_COLOR} />
+              <ActivityIndicator size="small" color={colors.accent} />
             ) : results.length > 0 ? (
-              <Text className="text-xs font-body-medium text-gray-400">
-                {results.length}{" "}
-                {results.length === 1 ? "resultado" : "resultados"}
+              <Text className="text-xs font-body-medium text-gray-400 dark:text-[#8B92A1]">
+                {t("search.results", { count: results.length })}
               </Text>
             ) : null}
           </View>
 
           {selectingPlaceId && (
             <View className="px-4 py-4">
-              <Text className="font-body text-sm text-gray-600">
-                Abrindo lugar no mapa...
+              <Text className="font-body text-sm text-gray-600 dark:text-[#AAB0BD]">
+                {t("search.opening")}
               </Text>
             </View>
           )}
 
           {searchError && (
-            <Text className="font-body px-4 py-4 text-sm text-red-600">
+            <Text className="font-body px-4 py-4 text-sm text-red-600 dark:text-[#FF7B70]">
               {searchError}
             </Text>
           )}
@@ -279,8 +281,8 @@ export const SearchBar = ({
             !searchError &&
             hasSearched &&
             results.length === 0 && (
-              <Text className="font-body px-4 py-4 text-sm leading-5 text-gray-500">
-                Nenhum bairro ou local conhecido encontrado. Tente outro nome.
+              <Text className="font-body px-4 py-4 text-sm leading-5 text-gray-500 dark:text-[#8B92A1]">
+                {t("search.empty")}
               </Text>
             )}
 
@@ -297,31 +299,35 @@ export const SearchBar = ({
                   <Pressable
                     key={place.id}
                     accessibilityRole="button"
-                    accessibilityLabel={`Buscar ${place.name}, ${place.category}, em ${place.placeName}`}
+                    accessibilityLabel={t("search.placeLabel", {
+                      name: place.name,
+                      category: t(CATEGORY_LABEL_KEYS[place.category]),
+                      place: place.placeName,
+                    })}
                     onPress={() => void handleSelectPlace(place)}
                     disabled={selectingPlaceId !== null}
-                    className="flex-row items-center border-b border-gray-50 px-4 py-3.5"
+                    className="flex-row items-center border-b border-gray-50 dark:border-[#3A3F4B] px-4 py-3.5"
                   >
-                    <View className="h-10 w-10 items-center justify-center rounded-2xl bg-blue-50">
-                      <CategoryIcon size={18} color={ACTIVE_COLOR} />
+                    <View className="h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 dark:bg-[#16253F]">
+                      <CategoryIcon size={18} color={colors.accent} />
                     </View>
                     <View className="ml-3 flex-1">
                       <Text
                         numberOfLines={1}
-                        className="text-sm font-body-semibold text-gray-900"
+                        className="text-sm font-body-semibold text-gray-900 dark:text-[#ECEEF4]"
                       >
                         {place.name}
                       </Text>
                       <Text
                         numberOfLines={1}
-                        className="font-body mt-1 text-xs text-gray-500"
+                        className="font-body mt-1 text-xs text-gray-500 dark:text-[#8B92A1]"
                       >
                         {place.placeName}
                       </Text>
                     </View>
-                    <View className="ml-2 rounded-full bg-gray-100 px-2.5 py-1">
-                      <Text className="text-[10px] font-body-semibold text-gray-600">
-                        {place.category}
+                    <View className="ml-2 rounded-full bg-gray-100 dark:bg-[#242833] px-2.5 py-1">
+                      <Text className="text-[10px] font-body-semibold text-gray-600 dark:text-[#AAB0BD]">
+                        {t(CATEGORY_LABEL_KEYS[place.category])}
                       </Text>
                     </View>
                   </Pressable>

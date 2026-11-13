@@ -27,22 +27,22 @@ import {
     verifyEmailCodeService,
 } from "@/src/api/auth";
 
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import { useTranslation, type TranslationKey } from "@/src/i18n";
 const RESEND_COOLDOWN_SECONDS = 60;
 
 const codeSchema = z.object({
-    code: z.string().regex(/^\d{6}$/, "Digite o código de 6 dígitos"),
+    code: z.string().regex(/^\d{6}$/, "auth.codeLength"),
 });
 
 type CodeFormData = z.infer<typeof codeSchema>;
 
 type ApiError = { error?: { message?: string; code?: string } };
 
-function getErrorMessage(error: unknown, fallback: string) {
-    if (isAxiosError<ApiError>(error)) {
-        return error.response?.data?.error?.message ?? fallback;
-    }
-
-    return fallback;
+function getErrorMessage(error: unknown) {
+    return isAxiosError<ApiError>(error)
+        ? (error.response?.data?.error?.message ?? "")
+        : "";
 }
 
 function getErrorCode(error: unknown) {
@@ -53,7 +53,7 @@ function getErrorCode(error: unknown) {
 
 // A API responde "Aguarde 42s para solicitar um novo código." no cooldown.
 function getCooldownFromError(error: unknown) {
-    const match = /(\d+)s/.exec(getErrorMessage(error, ""));
+    const match = /(\d+)s/.exec(getErrorMessage(error));
     return match ? Number(match[1]) : RESEND_COOLDOWN_SECONDS;
 }
 
@@ -66,6 +66,8 @@ function getCooldownFromError(error: unknown) {
  * - from=app → aberta de dentro do app; "Verificar depois" volta para a tela anterior.
  */
 export default function VerifyEmailScreen() {
+    const { colors } = useAppTheme();
+    const { t } = useTranslation();
     const router = useRouter();
     const params = useLocalSearchParams<{ send?: string; from?: string }>();
     const user = useAuthStore((state) => state.user);
@@ -124,14 +126,15 @@ export default function VerifyEmailScreen() {
             const { retryAfterSeconds } = await resendVerificationCodeService();
             reset({ code: "" });
             setResendCooldown(retryAfterSeconds);
-            setInfoMessage("Enviamos um novo código para o seu e-mail.");
+            setInfoMessage(t("auth.verify.newCodeSent"));
         } catch (error) {
             const code = getErrorCode(error);
 
             if (code === "AUTH_VERIFICATION_CODE_COOLDOWN") {
-                setResendCooldown(getCooldownFromError(error));
+                const seconds = getCooldownFromError(error);
+                setResendCooldown(seconds);
                 if (!silentCooldown) {
-                    setServerError(getErrorMessage(error, ""));
+                    setServerError(t("auth.verify.cooldown", { seconds }));
                 }
             } else if (code === "AUTH_EMAIL_ALREADY_VERIFIED") {
                 const updatedUser = await getMeService().catch(() => null);
@@ -140,12 +143,7 @@ export default function VerifyEmailScreen() {
                     setIsVerified(true);
                 }
             } else {
-                setServerError(
-                    getErrorMessage(
-                        error,
-                        "Não foi possível enviar o código. Tente novamente.",
-                    ),
-                );
+                setServerError(t("auth.verify.sendError"));
             }
         } finally {
             setIsResending(false);
@@ -187,11 +185,8 @@ export default function VerifyEmailScreen() {
             const errorCode = getErrorCode(error);
             setServerError(
                 errorCode === "AUTH_INVALID_VERIFICATION_CODE"
-                    ? "O código é inválido ou expirou. Confira os dígitos ou peça um novo código."
-                    : getErrorMessage(
-                          error,
-                          "Não foi possível verificar o código. Tente novamente.",
-                      ),
+                    ? t("auth.verify.invalidCode")
+                    : t("auth.verify.verifyError"),
             );
         }
     };
@@ -214,17 +209,17 @@ export default function VerifyEmailScreen() {
         return (
             <SafeAreaView
                 edges={["top", "bottom"]}
-                style={{ flex: 1, backgroundColor: "#FFFFFF" }}
+                style={{ flex: 1, backgroundColor: colors.surface }}
             >
                 <View className="flex-1 items-center justify-center px-8">
-                    <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-green-50">
-                        <CircleCheck size={56} color="#168047" strokeWidth={2} />
+                    <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-green-50 dark:bg-[#12271B]">
+                        <CircleCheck size={56} color={colors.success} strokeWidth={2} />
                     </View>
-                    <Text className="mb-2 text-center text-2xl font-display tracking-tight text-slate-900">
-                        E-mail verificado!
+                    <Text className="mb-2 text-center text-2xl font-display tracking-tight text-slate-900 dark:text-[#ECEEF4]">
+                        {t("auth.verify.verifiedTitle")}
                     </Text>
-                    <Text className="font-body text-center text-sm leading-5 text-slate-500">
-                        Agora você pode relatar acidentes e comentar nos relatos do mapa.
+                    <Text className="font-body text-center text-sm leading-5 text-slate-500 dark:text-[#8B92A1]">
+                        {t("auth.verify.verifiedMessage")}
                     </Text>
                     {!isVerified && (
                         <Button
@@ -232,7 +227,7 @@ export default function VerifyEmailScreen() {
                             onPress={onVerifyLater}
                         >
                             <ButtonText className="text-sm font-body-medium text-white">
-                                Continuar
+                                {t("auth.verify.continue")}
                             </ButtonText>
                         </Button>
                     )}
@@ -242,7 +237,7 @@ export default function VerifyEmailScreen() {
     }
 
     return (
-        <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+        <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: colors.surface }}>
             <View style={{ flex: 1 }}>
                 <KeyboardAvoidingView
                     style={{ flex: 1 }}
@@ -254,44 +249,44 @@ export default function VerifyEmailScreen() {
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
                     >
-                        <Box className="flex-1 w-full bg-white px-7">
+                        <Box className="flex-1 w-full bg-white dark:bg-[#1A1D24] px-7">
                             <Box className="w-full flex-row items-center justify-center gap-1.5 pt-4 pb-2">
                                 <Image
                                     source={require("../../assets/images/app-icon.png")}
                                     resizeMode="contain"
                                     style={{ width: 36, height: 36 }}
-                                    accessibilityLabel="Ícone do Farol"
+                                    accessibilityLabel={t("auth.logoLabel")}
                                 />
-                                <Text className="text-xl font-display tracking-tight text-slate-900">
+                                <Text className="text-xl font-display tracking-tight text-slate-900 dark:text-[#ECEEF4]">
                                     Farol
                                 </Text>
                             </Box>
 
                             <Box className="flex-1 justify-center py-6">
                                 <VStack space="xs" className="mb-9 items-center">
-                                    <Text className="text-center text-2xl font-display tracking-tight text-slate-900">
-                                        Verifique seu e-mail
+                                    <Text className="text-center text-2xl font-display tracking-tight text-slate-900 dark:text-[#ECEEF4]">
+                                        {t("auth.verify.title")}
                                     </Text>
-                                    <Text className="font-body text-center text-sm text-slate-500">
-                                        Enviamos um código de 6 dígitos para{" "}
-                                        <Text className="text-sm font-body-semibold text-slate-700">
+                                    <Text className="font-body text-center text-sm text-slate-500 dark:text-[#8B92A1]">
+                                        {t("auth.verify.sentTo")}{" "}
+                                        <Text className="text-sm font-body-semibold text-slate-700 dark:text-[#AAB0BD]">
                                             {user.email}
                                         </Text>
-                                        . Digite-o abaixo para confirmar sua conta.
+                                        {t("auth.verify.sentToSuffix")}
                                     </Text>
                                 </VStack>
 
                                 <VStack space="lg">
-                                    <Box className="rounded-xl bg-blue-50 px-4 py-3">
-                                        <Text className="font-body text-sm text-slate-700">
-                                            O código expira em 1 hora. Confira também sua caixa de spam.
+                                    <Box className="rounded-xl bg-blue-50 dark:bg-[#16253F] px-4 py-3">
+                                        <Text className="font-body text-sm text-slate-700 dark:text-[#AAB0BD]">
+                                            {t("auth.verify.hint")}
                                         </Text>
                                     </Box>
 
                                     <VStack space="xs">
                                         <Box className="relative">
-                                            <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-body-medium text-slate-500">
-                                                Código de verificação
+                                            <Text className="absolute -top-2 left-3.5 z-10 bg-white dark:bg-[#1A1D24] px-1.5 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
+                                                {t("auth.verify.codeLabel")}
                                             </Text>
                                             <Controller
                                                 control={control}
@@ -299,14 +294,14 @@ export default function VerifyEmailScreen() {
                                                 render={({ field: { onChange, onBlur, value } }) => (
                                                     <Input
                                                         isInvalid={!!errors.code}
-                                                        className="h-12 rounded-xl border-slate-300 bg-white px-3 dark:bg-white"
+                                                        className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
                                                     >
                                                         <InputSlot className="pl-0">
-                                                            <InputIcon as={KeyRound} className="text-slate-400" />
+                                                            <InputIcon as={KeyRound} className="text-slate-400 dark:text-[#8B92A1]" />
                                                         </InputSlot>
                                                         <InputField
                                                             placeholder="000000"
-                                                            placeholderTextColor="#94a3b8"
+                                                            placeholderTextColor={colors.outline}
                                                             keyboardType="number-pad"
                                                             maxLength={6}
                                                             autoComplete="one-time-code"
@@ -315,29 +310,29 @@ export default function VerifyEmailScreen() {
                                                             onChangeText={(text) => onChange(text.replace(/\D/g, ""))}
                                                             onSubmitEditing={handleSubmit(onVerifyCode)}
                                                             value={value}
-                                                            className="text-sm font-body-medium tracking-[4px] text-slate-800"
-                                                            accessibilityLabel="Código de verificação de seis dígitos"
+                                                            className="text-sm font-body-medium tracking-[4px] text-slate-800 dark:text-[#ECEEF4]"
+                                                            accessibilityLabel={t("auth.verify.codeAccessibility")}
                                                         />
                                                     </Input>
                                                 )}
                                             />
                                         </Box>
                                         {errors.code && (
-                                            <Text className="font-body text-xs text-red-600">
-                                                {errors.code.message}
+                                            <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
+                                                {t(errors.code.message as TranslationKey)}
                                             </Text>
                                         )}
                                     </VStack>
 
                                     {infoMessage && !serverError && (
-                                        <Box className="rounded-xl bg-green-50 px-4 py-3">
-                                            <Text className="font-body text-sm text-green-700">{infoMessage}</Text>
+                                        <Box className="rounded-xl bg-green-50 dark:bg-[#12271B] px-4 py-3">
+                                            <Text className="font-body text-sm text-green-700 dark:text-[#5BD48A]">{infoMessage}</Text>
                                         </Box>
                                     )}
 
                                     {serverError && (
-                                        <Box className="rounded-xl bg-red-50 px-4 py-3">
-                                            <Text className="font-body text-sm text-red-700">{serverError}</Text>
+                                        <Box className="rounded-xl bg-red-50 dark:bg-[#2C1715] px-4 py-3">
+                                            <Text className="font-body text-sm text-red-700 dark:text-[#FF7B70]">{serverError}</Text>
                                         </Box>
                                     )}
 
@@ -350,7 +345,7 @@ export default function VerifyEmailScreen() {
                                             <ButtonSpinner className="text-white" />
                                         ) : (
                                             <ButtonText className="text-sm font-body-medium text-white">
-                                                Confirmar código
+                                                {t("auth.confirmCode")}
                                             </ButtonText>
                                         )}
                                     </Button>
@@ -362,12 +357,12 @@ export default function VerifyEmailScreen() {
                                         accessibilityRole="button"
                                         className="items-center py-2"
                                     >
-                                        <Text className={`text-sm font-body-medium ${resendCooldown > 0 || isResending ? "text-slate-400" : "text-[#0058BC]"}`}>
+                                        <Text className={`text-sm font-body-medium ${resendCooldown > 0 || isResending ? "text-slate-400 dark:text-[#8B92A1]" : "text-[#0058BC] dark:text-[#3B87F5]"}`}>
                                             {isResending
-                                                ? "Enviando código..."
+                                                ? t("auth.sendingCode")
                                                 : resendCooldown > 0
-                                                ? `Reenviar código em ${resendCooldown}s`
-                                                : "Reenviar código"}
+                                                ? t("auth.verify.resendIn", { seconds: resendCooldown })
+                                                : t("auth.verify.resend")}
                                         </Text>
                                     </TouchableOpacity>
                                 </VStack>
@@ -376,16 +371,16 @@ export default function VerifyEmailScreen() {
                     </ScrollView>
                 </KeyboardAvoidingView>
 
-                <Box className="w-full items-center gap-3 bg-white px-7 pb-5 pt-4">
+                <Box className="w-full items-center gap-3 bg-white dark:bg-[#1A1D24] px-7 pb-5 pt-4">
                     <TouchableOpacity
                         onPress={onVerifyLater}
                         activeOpacity={0.7}
                         accessibilityRole="button"
                         className="items-center"
                     >
-                        <Text className="text-sm font-body-bold text-slate-700">Verificar depois</Text>
-                        <Text className="mt-0.5 text-center text-xs text-slate-500">
-                            Você poderá ver o mapa, mas não relatar acidentes nem comentar.
+                        <Text className="text-sm font-body-bold text-slate-700 dark:text-[#AAB0BD]">{t("auth.verify.later")}</Text>
+                        <Text className="mt-0.5 text-center text-xs text-slate-500 dark:text-[#8B92A1]">
+                            {t("auth.verify.laterHint")}
                         </Text>
                     </TouchableOpacity>
                     {!openedFromApp && (
@@ -395,8 +390,8 @@ export default function VerifyEmailScreen() {
                             accessibilityRole="button"
                             className="flex-row items-center gap-1"
                         >
-                            <LogOut size={14} color="#94a3b8" />
-                            <Text className="text-xs text-slate-400">Usar outra conta</Text>
+                            <LogOut size={14} color={colors.outline} />
+                            <Text className="text-xs text-slate-400 dark:text-[#8B92A1]">{t("auth.verify.otherAccount")}</Text>
                         </TouchableOpacity>
                     )}
                 </Box>

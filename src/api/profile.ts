@@ -9,6 +9,14 @@ type GamificationStatsResponse = {
     data: GamificationStats;
 };
 
+/**
+ * Exclui permanentemente a conta do usuário corrente.
+ * `password` é obrigatório para contas com senha (reautenticação).
+ */
+export const deleteMyAccount = async (password?: string): Promise<void> => {
+    await api.delete("/users/me", { data: password ? { password } : {} });
+};
+
 export const getMyGamificationStats = async (): Promise<GamificationStats> => {
     const response = await api.get<GamificationStatsResponse>(
         "/users/me/gamification",

@@ -44,51 +44,38 @@ import {
 } from "@/src/features/profile/components/TitleColor";
 import { AdministrativeNoticesPanel } from "@/src/features/notifications/components/AdministrativeNoticesPanel";
 
-const PRIMARY_HEX = "#0058BC";
-const ERROR_HEX = "#BA1A1A";
-const PAGE_BACKGROUND_HEX = "#F2F2F7";
-const SURFACE_HEX = "#FFFFFF";
-const SURFACE_ICON_HEX = "#ECECF8";
-const ON_SURFACE_HEX = "#181C23";
-const ON_SURFACE_VARIANT_HEX = "#414755";
+import { useAppTheme } from "@/src/theme/useAppTheme";
+import { useTranslation } from "@/src/i18n";
 
 const POINTS_PER_APPROVED_REPORT = 100;
 const LEVELS = [
     {
         id: "user",
-        label: "Usuário",
+        key: "user",
         minApprovedReports: 0,
         color: "#7A8494",
         icon: Sprout,
-        message:
-            "Seja bem-vindo à comunidade! Toda grande jornada começa com o primeiro passo. Contribua com seus primeiros 2 relatos aprovados e desperte como Guardião — o início da sua ascensão.",
     },
     {
         id: "guardian",
-        label: "Guardião",
+        key: "guardian",
         minApprovedReports: 2,
         color: "#1769C2",
         icon: Shield,
-        message:
-            "Sua jornada começa a ganhar forma. A comunidade reconheceu seu valor e agora você é um Guardião. Ainda há um caminho a trilhar: conquiste mais 2 relatos aprovados e desperte como Guarda-mor.",
     },
     {
         id: "chief-guard",
-        label: "Guarda-mor",
+        key: "chiefGuard",
         minApprovedReports: 4,
         color: "#783DB5",
         icon: Swords,
-        message:
-            "Sua dedicação já inspira confiança. Você ascendeu a Guarda-mor — um pilar da comunidade. Falta pouco para o topo: com mais 2 relatos aprovados, você receberá o título de Chanceler.",
     },
     {
         id: "chancellor",
-        label: "Chanceler",
+        key: "chancellor",
         minApprovedReports: 6,
         color: "#84223D",
         icon: Badge,
-        message:
-            "Poucos chegam tão longe. Você agora é um Chanceler — a voz de autoridade e sabedoria da comunidade. Seu legado está selado. Continue zelando pela qualidade e inspire os novos a seguirem seus passos.",
     },
 ] as const;
 
@@ -105,6 +92,8 @@ function getGamificationLevel(approvedReportsCount: number): GamificationLevel {
 }
 
 export default function ProfileScreen() {
+    const { t } = useTranslation();
+    const { colors } = useAppTheme();
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { user, signOut } = useAuthStore();
@@ -162,16 +151,14 @@ export default function ProfileScreen() {
                 );
             }
             if (requestId === gamificationRequestId.current) {
-                setGamificationError(
-                    "Não foi possível carregar sua progressão. Verifique a conexão e tente novamente.",
-                );
+                setGamificationError(t("profile.progressError"));
             }
         } finally {
             if (requestId === gamificationRequestId.current) {
                 setIsLoadingGamification(false);
             }
         }
-    }, []);
+    }, [t]);
 
     useFocusEffect(
         useCallback(() => {
@@ -205,8 +192,8 @@ export default function ProfileScreen() {
             router.replace("/(auth)/login");
         } catch {
             Alert.alert(
-                "Não foi possível sair",
-                "Tente novamente em instantes.",
+                t("profile.logoutErrorTitle"),
+                t("profile.logoutErrorMessage"),
             );
         } finally {
             setIsLoggingOut(false);
@@ -239,7 +226,7 @@ export default function ProfileScreen() {
               );
 
     return (
-        <View className="flex-1" style={{ backgroundColor: PAGE_BACKGROUND_HEX }}>
+        <View className="flex-1" style={{ backgroundColor: colors.background }}>
             {/* ── Top App Bar ── */}
             <TopAppBar
                 paddingTop={insets.top}
@@ -294,6 +281,7 @@ export default function ProfileScreen() {
                 )}
                 <SettingsList
                     onReportsPress={() => router.push("/profile/reports")}
+                    onSettingsPress={() => router.push("/profile/settings")}
                     onAboutPress={() => setIsAboutVisible(true)}
                 />
                 <LogoutSection
@@ -320,62 +308,62 @@ export default function ProfileScreen() {
                 onRequestClose={() => setIsLogoutDialogVisible(false)}
             >
                 <View className="flex-1 items-center justify-center bg-black/45 px-5">
-                    <View className="w-full max-w-[390px] rounded-[28px] bg-white p-5 shadow-2xl">
+                    <View className="w-full max-w-[390px] rounded-[28px] bg-white dark:bg-[#1A1D24] p-5 shadow-2xl">
                         <View className="mb-5 flex-row items-start justify-between">
                             <View className="flex-1 flex-row items-center gap-3 pr-4">
-                                <View className="h-11 w-11 items-center justify-center rounded-full bg-[#FFF1E8]">
+                                <View className="h-11 w-11 items-center justify-center rounded-full bg-[#FFF1E8] dark:bg-[#2B2313]">
                                     <CircleAlert
                                         size={24}
                                         color="#C64F00"
                                         strokeWidth={2.25}
                                     />
                                 </View>
-                                <Text className="flex-1 text-[20px] font-display" style={{ color: ON_SURFACE_HEX }}>
-                                    Sair da conta?
+                                <Text className="flex-1 text-[20px] font-display" style={{ color: colors.onSurface }}>
+                                    {t("profile.logoutTitle")}
                                 </Text>
                             </View>
                             <Pressable
-                                accessibilityLabel="Fechar confirmação"
+                                accessibilityLabel={t("profile.closeConfirmation")}
                                 onPress={() => setIsLogoutDialogVisible(false)}
                                 disabled={isLoggingOut}
-                                className="h-9 w-9 items-center justify-center rounded-full bg-[#F1F3FE]"
+                                className="h-9 w-9 items-center justify-center rounded-full bg-[#F1F3FE] dark:bg-[#242833]"
                             >
-                                <X size={18} color={ON_SURFACE_VARIANT_HEX} />
+                                <X size={18} color={colors.onSurfaceVariant} />
                             </Pressable>
                         </View>
 
                         <Text
                             className="font-body mb-6 text-[15px] leading-[21px]"
-                            style={{ color: ON_SURFACE_VARIANT_HEX }}
+                            style={{ color: colors.onSurfaceVariant }}
                         >
-                            Você precisará entrar novamente para acessar sua conta. Deseja sair mesmo assim?
+                            {t("profile.logoutMessage")}
                         </Text>
 
                         <View className="gap-2.5">
                             <Pressable
-                                accessibilityLabel="Continuar conectado"
+                                accessibilityLabel={t("profile.stayLoggedIn")}
                                 onPress={() => setIsLogoutDialogVisible(false)}
                                 disabled={isLoggingOut}
                                 className="h-12 items-center justify-center rounded-xl bg-[#0058BC]"
                             >
                                 <Text className="text-[15px] font-body-bold text-white">
-                                    Continuar conectado
+                                    {t("profile.stayLoggedIn")}
                                 </Text>
                             </Pressable>
                             <Pressable
-                                accessibilityLabel="Sair da conta"
+                                accessibilityLabel={t("profile.confirmLogout")}
                                 onPress={handleLogout}
                                 disabled={isLoggingOut}
-                                className="h-12 items-center justify-center rounded-xl border border-[#F0B7A8] bg-[#FFF8F5]"
+                                className="h-12 items-center justify-center rounded-xl border border-[#F0B7A8] dark:border-[#5C2C26] bg-[#FFF8F5] dark:bg-[#2C1715]"
                             >
                                 {isLoggingOut ? (
-                                    <ActivityIndicator size="small" color={ERROR_HEX} />
+                                    <ActivityIndicator size="small" color={colors.error} />
                                 ) : (
                                     <Text
                                         className="text-[15px] font-body-bold"
-                                        style={{ color: ERROR_HEX }}
+                                        style={{ color: colors.error }}
                                     >
-                                        Sair da conta
+                                        {t("profile.confirmLogout")}
                                     </Text>
                                 )}
                             </Pressable>
@@ -410,11 +398,13 @@ function TopAppBar({
     onBack,
     onNoticesPress,
 }: TopAppBarProps) {
+    const { t } = useTranslation();
+    const { colors } = useAppTheme();
     return (
         <View
             className="flex-row items-center justify-between px-4"
             style={{
-                backgroundColor: "#FFFFFF",
+                backgroundColor: colors.surface,
                 paddingTop: paddingTop + 4,
                 height: 56 + paddingTop,
             }}
@@ -434,13 +424,13 @@ function TopAppBar({
 
             <Text
                 className="text-lg font-body-semibold"
-                style={{ color: ON_SURFACE_HEX }}
+                style={{ color: colors.onSurface }}
             >
-                Profile
+                {t("profile.title")}
             </Text>
 
             <Pressable
-                accessibilityLabel="Avisos administrativos"
+                accessibilityLabel={t("profile.notices")}
                 accessibilityRole="button"
                 hitSlop={8}
                 onPress={onNoticesPress}
@@ -468,6 +458,9 @@ type AvatarSectionProps = {
 };
 
 function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }: AvatarSectionProps) {
+    const { colors } = useAppTheme();
+    const { t } = useTranslation();
+    const levelLabel = t(`profile.levels.${level.key}.label`);
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const opacityAnim = useRef(new Animated.Value(1)).current;
     const titleColor = useTitleColor();
@@ -493,7 +486,7 @@ function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }:
     return (
         <View className="items-center justify-center pb-2 pt-5">
             <Animated.View
-                accessibilityLabel={`Avatar com destaque do nível ${level.label}`}
+                accessibilityLabel={t("profile.avatarLabel", { level: levelLabel })}
                 className="h-[112px] w-[112px] items-center justify-center rounded-full border-[3px] p-[4px] relative"
                 style={{
                     borderColor: "transparent",
@@ -522,15 +515,15 @@ function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }:
                         borderStyle,
                     ]}
                 />
-                <View className="h-full w-full items-center justify-center rounded-full bg-[#E0E7F1]">
-                    <UserIcon size={44} color="#7A8BA5" strokeWidth={1.6} />
+                <View className="h-full w-full items-center justify-center rounded-full bg-[#E0E7F1] dark:bg-[#242833]">
+                    <UserIcon size={44} color={colors.outline} strokeWidth={1.6} />
                 </View>
                 
                 {/* Verificação de e-mail badge */}
                 {!is_email_verified && (
                     <Animated.View 
-                        className="absolute bottom-0 right-0 h-6 w-6 items-center justify-center rounded-full bg-red-500 border-2 border-white"
-                        accessibilityLabel="E-mail não verificado"
+                        className="absolute bottom-0 right-0 h-6 w-6 items-center justify-center rounded-full bg-red-500 border-2 border-white dark:border-[#1A1D24]"
+                        accessibilityLabel={t("profile.emailNotVerified")}
                         style={{
                             transform: [{ scale: scaleAnim }],
                             opacity: opacityAnim,
@@ -543,22 +536,22 @@ function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }:
 
             <Text
                 className="mt-3 text-[22px] font-display leading-7"
-                style={{ color: "#181C23" }}
+                style={{ color: colors.onSurface }}
             >
-                {name ?? "Usuário"}
+                {name ?? t("profile.defaultName")}
             </Text>
 
             <View className="flex-row items-center gap-2 mt-1">
                 <Text
                     className="font-body text-[15px] leading-5"
-                    style={{ color: "#414755" }}
+                    style={{ color: colors.onSurfaceVariant }}
                 >
                     {email?.trim() || "—"}
                 </Text>
                 {!is_email_verified && (
                     <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel="E-mail não verificado. Verificar agora"
+                        accessibilityLabel={t("profile.emailNotVerifiedAction")}
                         onPress={onVerifyEmail}
                         hitSlop={8}
                     >
@@ -566,7 +559,7 @@ function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }:
                             className="text-[12px] font-body-semibold underline"
                             style={{ color: "#F59E0B" }}
                         >
-                            Não verificado · Verificar
+                            {t("profile.verifyNow")}
                         </Text>
                     </Pressable>
                 )}
@@ -600,6 +593,8 @@ function useTitleBackgroundStyle() {
 }
 
 function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
+    const { colors } = useAppTheme();
+    const { t, language } = useTranslation();
     const LevelIcon = level.icon;
     const borderStyle = useTitleBorderStyle();
     const iconBackgroundStyle = useTitleBackgroundStyle();
@@ -609,7 +604,7 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
             className="mt-5 flex-row items-center gap-3 rounded-xl border p-6"
             style={[
                 {
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: colors.surface,
                     shadowColor: "#000",
                     shadowOffset: { width: 0, height: 4 },
                     shadowOpacity: 0.08,
@@ -634,9 +629,9 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
                 <View className="min-w-0 flex-1">
                     <Text
                         className="text-[11px] font-body-semibold uppercase tracking-widest"
-                        style={{ color: "#414755" }}
+                        style={{ color: colors.onSurfaceVariant }}
                     >
-                        Nível Atual
+                        {t("profile.currentLevel")}
                     </Text>
                     <TitleColorText
                         className="text-xl font-display-semibold"
@@ -644,16 +639,15 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
                         adjustsFontSizeToFit
                         minimumFontScale={0.8}
                     >
-                        {level.label}
+                        {t(`profile.levels.${level.key}.label`)}
                     </TitleColorText>
                     <Text
                         className="font-body mt-0.5 text-xs"
-                        style={{ color: ON_SURFACE_VARIANT_HEX }}
+                        style={{ color: colors.onSurfaceVariant }}
                     >
-                        {approvedReportsCount}{" "}
-                        {approvedReportsCount === 1
-                            ? "relato aprovado"
-                            : "relatos aprovados"}
+                        {t("profile.approvedReports", {
+                            count: approvedReportsCount,
+                        })}
                     </Text>
                 </View>
             </View>
@@ -662,18 +656,18 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
             <View className="max-w-[38%] shrink-0 items-end">
                 <Text
                     className="text-[24px] font-display leading-8"
-                    style={{ color: "#181C23" }}
+                    style={{ color: colors.onSurface }}
                     numberOfLines={1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.7}
                 >
-                    {points.toLocaleString("pt-BR")}
+                    {points.toLocaleString(language)}
                 </Text>
                 <Text
                     className="font-body text-[13px] leading-5"
-                    style={{ color: "#414755" }}
+                    style={{ color: colors.onSurfaceVariant }}
                 >
-                    pontos
+                    {t("profile.points")}
                 </Text>
             </View>
         </Reanimated.View>
@@ -694,6 +688,8 @@ function ProgressCard({
     nextLevel,
     progressPercent,
 }: ProgressCardProps) {
+    const { t } = useTranslation();
+    const { colors } = useAppTheme();
     const progress = useRef(new Animated.Value(0)).current;
     const LevelIcon = level.icon;
     const borderStyle = useTitleBorderStyle();
@@ -713,7 +709,7 @@ function ProgressCard({
     return (
         <Reanimated.View
             className="relative mt-4 overflow-hidden rounded-xl border p-6"
-            style={[{ backgroundColor: SURFACE_HEX }, borderStyle]}
+            style={[{ backgroundColor: colors.surface }, borderStyle]}
         >
             {/* Decorative watermark icon */}
             <View
@@ -727,24 +723,27 @@ function ProgressCard({
             <View className="z-10">
                 <Text
                     className="text-base font-body-semibold"
-                    style={{ color: ON_SURFACE_HEX }}
+                    style={{ color: colors.onSurface }}
                 >
                     {nextLevel
-                        ? `Progresso: ${level.label} → ${nextLevel.label}`
-                        : "Nível máximo alcançado"}
+                        ? t("profile.progress", {
+                              from: t(`profile.levels.${level.key}.label`),
+                              to: t(`profile.levels.${nextLevel.key}.label`),
+                          })
+                        : t("profile.maxLevel")}
                 </Text>
 
                 <Text
                     className="font-body mt-2 text-[13px] leading-5"
-                    style={{ color: ON_SURFACE_VARIANT_HEX }}
+                    style={{ color: colors.onSurfaceVariant }}
                 >
-                    {level.message}
+                    {t(`profile.levels.${level.key}.message`)}
                 </Text>
 
                 {/* Progress Bar */}
                 <View
                     className="mt-5 h-2.5 overflow-hidden rounded-full"
-                    style={{ backgroundColor: "#E2E4ED" }}
+                    style={{ backgroundColor: colors.surfaceStrong }}
                 >
                     <Animated.View
                         className="h-full overflow-hidden rounded-full"
@@ -770,9 +769,11 @@ function ProgressCard({
 }
 
 function TrustVotesCard({ count }: { count: number }) {
+    const { t } = useTranslation();
+    const { colors } = useAppTheme();
     return (
-        <View className="mt-4 flex-row items-center gap-4 rounded-xl border border-[#D8E2FF] bg-white p-5">
-            <View className="h-12 w-12 items-center justify-center rounded-full bg-[#EAF1FF]">
+        <View className="mt-4 flex-row items-center gap-4 rounded-xl border border-[#D8E2FF] dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] p-5">
+            <View className="h-12 w-12 items-center justify-center rounded-full bg-[#EAF1FF] dark:bg-[#16253F]">
                 <TitleColorIcon
                     icon={BadgeCheck}
                     size={25}
@@ -782,17 +783,15 @@ function TrustVotesCard({ count }: { count: number }) {
             <View className="flex-1">
                 <Text
                     className="text-base font-body-semibold"
-                    style={{ color: ON_SURFACE_HEX }}
+                    style={{ color: colors.onSurface }}
                 >
-                    Selos de confiança
+                    {t("profile.trustSeals")}
                 </Text>
                 <Text
                     className="font-body mt-1 text-[13px]"
-                    style={{ color: ON_SURFACE_VARIANT_HEX }}
+                    style={{ color: colors.onSurfaceVariant }}
                 >
-                    {count === 1
-                        ? "1 voto confiável recebido"
-                        : `${count} votos confiáveis recebidos`}
+                    {t("profile.trustVotes", { count })}
                 </Text>
             </View>
             <TitleColorText className="text-2xl font-display">
@@ -803,11 +802,13 @@ function TrustVotesCard({ count }: { count: number }) {
 }
 
 function GamificationLoading() {
+    const { t } = useTranslation();
+    const { colors } = useAppTheme();
     return (
-        <View className="mt-5 flex-row items-center justify-center gap-2 rounded-xl bg-white p-4">
-            <ActivityIndicator size="small" color={PRIMARY_HEX} />
-            <Text className="font-body text-sm" style={{ color: ON_SURFACE_VARIANT_HEX }}>
-                Atualizando sua progressão...
+        <View className="mt-5 flex-row items-center justify-center gap-2 rounded-xl bg-white dark:bg-[#1A1D24] p-4">
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text className="font-body text-sm" style={{ color: colors.onSurfaceVariant }}>
+                {t("profile.loadingProgress")}
             </Text>
         </View>
     );
@@ -819,18 +820,20 @@ type GamificationErrorProps = {
 };
 
 function GamificationError({ message, onRetry }: GamificationErrorProps) {
+    const { t } = useTranslation();
+    const { colors } = useAppTheme();
     return (
-        <View className="mt-4 rounded-xl border border-[#F0B7A8] bg-[#FFF8F5] p-4">
-            <Text className="font-body text-sm" style={{ color: ERROR_HEX }}>
+        <View className="mt-4 rounded-xl border border-[#F0B7A8] dark:border-[#5C2C26] bg-[#FFF8F5] dark:bg-[#2C1715] p-4">
+            <Text className="font-body text-sm" style={{ color: colors.error }}>
                 {message}
             </Text>
             <Pressable
                 accessibilityRole="button"
                 onPress={onRetry}
-                className="mt-3 self-start rounded-lg bg-white px-3 py-2"
+                className="mt-3 self-start rounded-lg bg-white dark:bg-[#1A1D24] px-3 py-2"
             >
-                <Text className="text-sm font-body-semibold" style={{ color: ERROR_HEX }}>
-                    Tentar novamente
+                <Text className="text-sm font-body-semibold" style={{ color: colors.error }}>
+                    {t("common.retry")}
                 </Text>
             </Pressable>
         </View>
@@ -851,24 +854,25 @@ function SettingsRow({
     label,
     onPress,
 }: SettingsRowProps) {
+    const { colors } = useAppTheme();
     return (
         <Pressable
             onPress={onPress}
             className="flex-row items-center justify-between px-5 py-4"
             style={({ pressed }) => ({
-                backgroundColor: pressed ? "#F7F8FC" : SURFACE_HEX,
+                backgroundColor: pressed ? colors.surfaceMuted : colors.surface,
             })}
         >
             <View className="flex-row items-center gap-4">
                 <View
                     className="h-8 w-8 items-center justify-center rounded-lg"
-                    style={{ backgroundColor: SURFACE_ICON_HEX }}
+                    style={{ backgroundColor: colors.surfaceMuted }}
                 >
                     <TitleColorIcon icon={Icon} size={20} strokeWidth={2} />
                 </View>
                 <Text
                     className="font-body text-base"
-                    style={{ color: ON_SURFACE_HEX }}
+                    style={{ color: colors.onSurface }}
                 >
                     {label}
                 </Text>
@@ -879,26 +883,32 @@ function SettingsRow({
 }
 
 function SettingsDivider() {
+    const { colors } = useAppTheme();
     return (
         <View
             className="h-px"
-            style={{ marginLeft: 68, backgroundColor: "#F0F1F6" }}
+            style={{ marginLeft: 68, backgroundColor: colors.divider }}
         />
     );
 }
 
 function SettingsList({
     onReportsPress,
+    onSettingsPress,
     onAboutPress,
 }: {
     onReportsPress: () => void;
+    onSettingsPress: () => void;
     onAboutPress: () => void;
 }) {
+    const { t } = useTranslation();
+    const { colors } = useAppTheme();
+
     return (
         <View
             className="mt-5 overflow-hidden rounded-xl"
             style={{
-                backgroundColor: SURFACE_HEX,
+                backgroundColor: colors.surface,
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.05,
@@ -908,21 +918,21 @@ function SettingsList({
         >
             <SettingsRow
                 icon={History}
-                label="Meus Relatos"
+                label={t("profile.myReports")}
                 onPress={onReportsPress}
             />
             <SettingsDivider />
 
-            {/* TODO: Navigate to settings */}
             <SettingsRow
                 icon={Settings}
-                label="Configurações"
+                label={t("profile.settings")}
+                onPress={onSettingsPress}
             />
             <SettingsDivider />
 
             <SettingsRow
                 icon={Info}
-                label="Sobre o App"
+                label={t("profile.about")}
                 onPress={onAboutPress}
             />
         </View>
@@ -937,11 +947,13 @@ type LogoutSectionProps = {
 };
 
 function LogoutSection({ isLoggingOut, onPress }: LogoutSectionProps) {
+    const { t } = useTranslation();
+    const { colors } = useAppTheme();
     return (
         <View
             className="mt-4 overflow-hidden rounded-xl"
             style={{
-                backgroundColor: SURFACE_HEX,
+                backgroundColor: colors.surface,
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.05,
@@ -954,17 +966,17 @@ function LogoutSection({ isLoggingOut, onPress }: LogoutSectionProps) {
                 disabled={isLoggingOut}
                 className="flex-row items-center justify-center px-5 py-4"
                 style={({ pressed }) => ({
-                    backgroundColor: pressed ? "#FFF4F4" : SURFACE_HEX,
+                    backgroundColor: pressed ? colors.errorContainer : colors.surface,
                 })}
             >
                 {isLoggingOut ? (
-                    <ActivityIndicator size="small" color={ERROR_HEX} />
+                    <ActivityIndicator size="small" color={colors.error} />
                 ) : (
                     <Text
                         className="text-base font-body-semibold"
-                        style={{ color: ERROR_HEX }}
+                        style={{ color: colors.error }}
                     >
-                        Sair
+                        {t("profile.logout")}
                     </Text>
                 )}
             </Pressable>
