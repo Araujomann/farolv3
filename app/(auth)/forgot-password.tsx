@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-    Image,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -16,7 +15,6 @@ import { z } from "zod";
 import { ChevronLeft, KeyRound, Mail } from "lucide-react-native";
 
 import { Text } from "@/components/ui/text";
-import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
 import { VStack } from "@/components/ui/vstack";
 import { Box } from "@/components/ui/box";
@@ -24,6 +22,12 @@ import {
     requestPasswordResetService,
     verifyPasswordResetCodeService,
 } from "@/src/api/auth";
+import { AuthBrand } from "@/src/features/auth/components/AuthBrand";
+import { AuthServerError } from "@/src/features/auth/components/AuthServerError";
+import {
+    AuthTextField,
+    CODE_INPUT_CLASS_NAME,
+} from "@/src/features/auth/components/AuthTextField";
 
 import { useAppTheme } from "@/src/theme/useAppTheme";
 import { useTranslation, type TranslationKey } from "@/src/i18n";
@@ -145,17 +149,7 @@ export default function ForgotPasswordScreen() {
                         showsVerticalScrollIndicator={false}
                     >
                         <Box className="flex-1 w-full bg-white dark:bg-[#1A1D24] px-7">
-                            <Box className="w-full flex-row items-center justify-center gap-1.5 pt-4 pb-2">
-                                <Image
-                                    source={require("../../assets/images/app-icon.png")}
-                                    resizeMode="contain"
-                                    style={{ width: 36, height: 36 }}
-                                    accessibilityLabel={t("auth.logoLabel")}
-                                />
-                                <Text className="text-xl font-display tracking-tight text-slate-900 dark:text-[#ECEEF4]">
-                                    Farol
-                                </Text>
-                            </Box>
+                            <AuthBrand />
 
                             <Box className="flex-1 justify-center py-6">
                                 <VStack space="xs" className="mb-9 items-center">
@@ -176,50 +170,28 @@ export default function ForgotPasswordScreen() {
                                                 {t("auth.forgot.codeHint")}
                                             </Text>
                                         </Box>
-                                        <VStack space="xs">
-                                            <Box className="relative">
-                                                <Text className="absolute -top-2 left-3.5 z-10 bg-white dark:bg-[#1A1D24] px-1.5 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
-                                                    {t("auth.forgot.codeLabel")}
-                                                </Text>
-                                                <Controller
-                                                    control={codeControl}
-                                                    name="code"
-                                                    render={({ field: { onChange, onBlur, value } }) => (
-                                                        <Input
-                                                            isInvalid={!!codeErrors.code}
-                                                            className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
-                                                        >
-                                                            <InputSlot className="pl-0">
-                                                                <InputIcon as={KeyRound} className="text-slate-400 dark:text-[#8B92A1]" />
-                                                            </InputSlot>
-                                                            <InputField
-                                                                placeholder="000000"
-                                                                placeholderTextColor={colors.outline}
-                                                                keyboardType="number-pad"
-                                                                maxLength={6}
-                                                                autoComplete="one-time-code"
-                                                                onBlur={onBlur}
-                                                                onChangeText={(text) => onChange(text.replace(/\D/g, ""))}
-                                                                value={value}
-                                                                className="text-sm font-body-medium tracking-[4px] text-slate-800 dark:text-[#ECEEF4]"
-                                                                accessibilityLabel={t("auth.forgot.codeAccessibility")}
-                                                            />
-                                                        </Input>
-                                                    )}
+                                        <Controller
+                                            control={codeControl}
+                                            name="code"
+                                            render={({ field: { onChange, onBlur, value } }) => (
+                                                <AuthTextField
+                                                    label={t("auth.forgot.codeLabel")}
+                                                    icon={KeyRound}
+                                                    error={codeErrors.code}
+                                                    inputClassName={CODE_INPUT_CLASS_NAME}
+                                                    placeholder="000000"
+                                                    keyboardType="number-pad"
+                                                    maxLength={6}
+                                                    autoComplete="one-time-code"
+                                                    onBlur={onBlur}
+                                                    onChangeText={(text) => onChange(text.replace(/\D/g, ""))}
+                                                    value={value}
+                                                    accessibilityLabel={t("auth.forgot.codeAccessibility")}
                                                 />
-                                            </Box>
-                                            {codeErrors.code && (
-                                                <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
-                                                    {t(codeErrors.code.message as TranslationKey)}
-                                                </Text>
                                             )}
-                                        </VStack>
+                                        />
 
-                                        {serverError && (
-                                            <Box className="rounded-xl bg-red-50 dark:bg-[#2C1715] px-4 py-3">
-                                                <Text className="font-body text-sm text-red-700 dark:text-[#FF7B70]">{serverError}</Text>
-                                            </Box>
-                                        )}
+                                        {serverError && <AuthServerError message={serverError} />}
 
                                         <Button
                                             className="h-12 rounded-xl bg-[#0058BC]"
@@ -252,51 +224,28 @@ export default function ForgotPasswordScreen() {
                                     </VStack>
                                 ) : (
                                     <VStack space="lg">
-                                        <VStack space="xs">
-                                            <Box className="relative">
-                                                <Text className="absolute -top-2 left-3.5 z-10 bg-white dark:bg-[#1A1D24] px-1.5 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
-                                                    {t("auth.email")}
-                                                </Text>
-                                                <Controller
-                                                    control={control}
-                                                    name="email"
-                                                    render={({ field: { onChange, onBlur, value } }) => (
-                                                        <Input
-                                                            isInvalid={!!errors.email}
-                                                            className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
-                                                        >
-                                                            <InputSlot className="pl-0">
-                                                                <InputIcon as={Mail} className="text-slate-400 dark:text-[#8B92A1]" />
-                                                            </InputSlot>
-                                                            <InputField
-                                                                placeholder={t("auth.emailPlaceholder")}
-                                                                placeholderTextColor={colors.outline}
-                                                                keyboardType="email-address"
-                                                                autoCapitalize="none"
-                                                                autoCorrect={false}
-                                                                autoComplete="email"
-                                                                onBlur={onBlur}
-                                                                onChangeText={onChange}
-                                                                value={value}
-                                                                className="text-sm font-body-medium text-slate-800 dark:text-[#ECEEF4]"
-                                                                accessibilityLabel={t("auth.email")}
-                                                            />
-                                                        </Input>
-                                                    )}
+                                        <Controller
+                                            control={control}
+                                            name="email"
+                                            render={({ field: { onChange, onBlur, value } }) => (
+                                                <AuthTextField
+                                                    label={t("auth.email")}
+                                                    icon={Mail}
+                                                    error={errors.email}
+                                                    placeholder={t("auth.emailPlaceholder")}
+                                                    keyboardType="email-address"
+                                                    autoCapitalize="none"
+                                                    autoCorrect={false}
+                                                    autoComplete="email"
+                                                    onBlur={onBlur}
+                                                    onChangeText={onChange}
+                                                    value={value}
+                                                    accessibilityLabel={t("auth.email")}
                                                 />
-                                            </Box>
-                                            {errors.email && (
-                                                <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
-                                                    {t(errors.email.message as TranslationKey)}
-                                                </Text>
                                             )}
-                                        </VStack>
+                                        />
 
-                                        {serverError && (
-                                            <Box className="rounded-xl bg-red-50 dark:bg-[#2C1715] px-4 py-3">
-                                                <Text className="font-body text-sm text-red-700 dark:text-[#FF7B70]">{serverError}</Text>
-                                            </Box>
-                                        )}
+                                        {serverError && <AuthServerError message={serverError} />}
 
                                         <Button
                                             className="h-12 rounded-xl bg-[#0058BC]"

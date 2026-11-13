@@ -8,6 +8,14 @@ import { api } from "@/src/api/client";
 const PUSH_TOKEN_STORAGE_KEY = "expo_push_token";
 export const ACCIDENT_APPROVED_EVENT = "ACCIDENT_APPROVED";
 
+/** Indica se a notificação recebida avisa que um acidente foi aprovado. */
+export function isAccidentApprovedNotification(
+    notification: Notifications.Notification,
+): boolean {
+    const { type, accidentId } = notification.request.content.data;
+    return type === ACCIDENT_APPROVED_EVENT && typeof accidentId === "string";
+}
+
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
         shouldShowBanner: true,

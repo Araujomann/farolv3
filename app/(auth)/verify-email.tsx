@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Image,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -16,7 +15,6 @@ import { z } from "zod";
 import { CircleCheck, KeyRound, LogOut } from "lucide-react-native";
 
 import { Text } from "@/components/ui/text";
-import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
 import { VStack } from "@/components/ui/vstack";
 import { Box } from "@/components/ui/box";
@@ -26,9 +24,15 @@ import {
     resendVerificationCodeService,
     verifyEmailCodeService,
 } from "@/src/api/auth";
+import { AuthBrand } from "@/src/features/auth/components/AuthBrand";
+import { AuthServerError } from "@/src/features/auth/components/AuthServerError";
+import {
+    AuthTextField,
+    CODE_INPUT_CLASS_NAME,
+} from "@/src/features/auth/components/AuthTextField";
 
 import { useAppTheme } from "@/src/theme/useAppTheme";
-import { useTranslation, type TranslationKey } from "@/src/i18n";
+import { useTranslation } from "@/src/i18n";
 const RESEND_COOLDOWN_SECONDS = 60;
 
 const codeSchema = z.object({
@@ -250,17 +254,7 @@ export default function VerifyEmailScreen() {
                         showsVerticalScrollIndicator={false}
                     >
                         <Box className="flex-1 w-full bg-white dark:bg-[#1A1D24] px-7">
-                            <Box className="w-full flex-row items-center justify-center gap-1.5 pt-4 pb-2">
-                                <Image
-                                    source={require("../../assets/images/app-icon.png")}
-                                    resizeMode="contain"
-                                    style={{ width: 36, height: 36 }}
-                                    accessibilityLabel={t("auth.logoLabel")}
-                                />
-                                <Text className="text-xl font-display tracking-tight text-slate-900 dark:text-[#ECEEF4]">
-                                    Farol
-                                </Text>
-                            </Box>
+                            <AuthBrand />
 
                             <Box className="flex-1 justify-center py-6">
                                 <VStack space="xs" className="mb-9 items-center">
@@ -283,46 +277,28 @@ export default function VerifyEmailScreen() {
                                         </Text>
                                     </Box>
 
-                                    <VStack space="xs">
-                                        <Box className="relative">
-                                            <Text className="absolute -top-2 left-3.5 z-10 bg-white dark:bg-[#1A1D24] px-1.5 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
-                                                {t("auth.verify.codeLabel")}
-                                            </Text>
-                                            <Controller
-                                                control={control}
-                                                name="code"
-                                                render={({ field: { onChange, onBlur, value } }) => (
-                                                    <Input
-                                                        isInvalid={!!errors.code}
-                                                        className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
-                                                    >
-                                                        <InputSlot className="pl-0">
-                                                            <InputIcon as={KeyRound} className="text-slate-400 dark:text-[#8B92A1]" />
-                                                        </InputSlot>
-                                                        <InputField
-                                                            placeholder="000000"
-                                                            placeholderTextColor={colors.outline}
-                                                            keyboardType="number-pad"
-                                                            maxLength={6}
-                                                            autoComplete="one-time-code"
-                                                            textContentType="oneTimeCode"
-                                                            onBlur={onBlur}
-                                                            onChangeText={(text) => onChange(text.replace(/\D/g, ""))}
-                                                            onSubmitEditing={handleSubmit(onVerifyCode)}
-                                                            value={value}
-                                                            className="text-sm font-body-medium tracking-[4px] text-slate-800 dark:text-[#ECEEF4]"
-                                                            accessibilityLabel={t("auth.verify.codeAccessibility")}
-                                                        />
-                                                    </Input>
-                                                )}
+                                    <Controller
+                                        control={control}
+                                        name="code"
+                                        render={({ field: { onChange, onBlur, value } }) => (
+                                            <AuthTextField
+                                                label={t("auth.verify.codeLabel")}
+                                                icon={KeyRound}
+                                                error={errors.code}
+                                                inputClassName={CODE_INPUT_CLASS_NAME}
+                                                placeholder="000000"
+                                                keyboardType="number-pad"
+                                                maxLength={6}
+                                                autoComplete="one-time-code"
+                                                textContentType="oneTimeCode"
+                                                onBlur={onBlur}
+                                                onChangeText={(text) => onChange(text.replace(/\D/g, ""))}
+                                                onSubmitEditing={handleSubmit(onVerifyCode)}
+                                                value={value}
+                                                accessibilityLabel={t("auth.verify.codeAccessibility")}
                                             />
-                                        </Box>
-                                        {errors.code && (
-                                            <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
-                                                {t(errors.code.message as TranslationKey)}
-                                            </Text>
                                         )}
-                                    </VStack>
+                                    />
 
                                     {infoMessage && !serverError && (
                                         <Box className="rounded-xl bg-green-50 dark:bg-[#12271B] px-4 py-3">
@@ -330,11 +306,7 @@ export default function VerifyEmailScreen() {
                                         </Box>
                                     )}
 
-                                    {serverError && (
-                                        <Box className="rounded-xl bg-red-50 dark:bg-[#2C1715] px-4 py-3">
-                                            <Text className="font-body text-sm text-red-700 dark:text-[#FF7B70]">{serverError}</Text>
-                                        </Box>
-                                    )}
+                                    {serverError && <AuthServerError message={serverError} />}
 
                                     <Button
                                         className="h-12 rounded-xl bg-[#0058BC]"

@@ -1,12 +1,10 @@
 
 import React, { useState } from "react";
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   TouchableOpacity,
-  Pressable,
   StatusBar,
   StyleSheet,
   View,
@@ -16,23 +14,9 @@ import { useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Eye,
-  EyeOff,
-  Mail,
-  Lock,
-  User,
-  Check,
-  ChevronLeft,
-} from "lucide-react-native";
+import { Mail, Lock, User } from "lucide-react-native";
 
 import { Text } from "@/components/ui/text";
-import {
-  Input,
-  InputField,
-  InputSlot,
-  InputIcon,
-} from "@/components/ui/input";
 import {
   Button,
   ButtonText,
@@ -43,6 +27,10 @@ import { Box } from "@/components/ui/box";
 
 import { registerService } from "@/src/api/auth";
 import { useAuthStore } from "@/src/store/authStore";
+import { AuthServerError } from "@/src/features/auth/components/AuthServerError";
+import { AuthTextField } from "@/src/features/auth/components/AuthTextField";
+import { RegisterHeader } from "@/src/features/auth/components/RegisterHeader";
+import { TermsCheckbox } from "@/src/features/auth/components/TermsCheckbox";
 
 import { useAppTheme } from "@/src/theme/useAppTheme";
 import { useTranslation, type TranslationKey } from "@/src/i18n";
@@ -183,47 +171,7 @@ export default function RegisterScreen() {
       />
 
       <View style={styles.screen}>
-        {/* ==================================
-            CABEÇALHO
-        ================================== */}
-
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-            style={styles.backButton}
-            accessibilityRole="button"
-            accessibilityLabel={t("common.back")}
-          >
-            <ChevronLeft
-              size={20}
-              color={colors.onSurfaceVariant}
-              strokeWidth={2}
-            />
-          </TouchableOpacity>
-
-          <View
-            style={styles.brandContainer}
-            pointerEvents="none"
-          >
-            <Image
-              source={require(
-                "../../assets/images/app-icon.png"
-              )}
-              style={styles.brandIcon}
-              resizeMode="contain"
-              accessibilityLabel={t("auth.logoLabel")}
-            />
-
-            <Text className="font-body" style={styles.brandName}>
-              Farol
-            </Text>
-          </View>
-        </View>
-
-        {/* ==================================
-            PAINEL PRINCIPAL
-        ================================== */}
+        <RegisterHeader onBack={() => router.back()} />
 
         <View style={styles.panel}>
           <KeyboardAvoidingView
@@ -245,10 +193,6 @@ export default function RegisterScreen() {
             >
               <Box className="flex-1 w-full bg-white dark:bg-[#1A1D24] px-7">
 
-            {/* ==================================
-                CONTEÚDO CENTRAL
-            ================================== */}
-
             <Box className="flex-1 justify-center py-8">
 
               {/* TÍTULO */}
@@ -266,332 +210,109 @@ export default function RegisterScreen() {
                 </Text>
               </VStack>
 
-              {/* ==================================
-                  FORMULÁRIO
-              ================================== */}
+              {/* FORMULÁRIO */}
 
               <VStack space="md">
-
-                {/* ==============================
-                    NOME COMPLETO
-                ============================== */}
-
-                <VStack space="xs">
-                  <Box className="relative">
-
-                    <Text className="absolute -top-2 left-3 z-10 bg-white dark:bg-[#1A1D24] px-1 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
-                      {t("auth.register.fullName")}
-                    </Text>
-
-                    <Controller
-                      control={control}
-                      name="name"
-                      render={({
-                        field: {
-                          onChange,
-                          onBlur,
-                          value,
-                        },
-                      }) => (
-                        <Input
-                          isInvalid={!!errors.name}
-                          className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
-                        >
-                          <InputSlot className="pl-0">
-                            <InputIcon
-                              as={User}
-                              className="text-slate-400 dark:text-[#8B92A1]"
-                            />
-                          </InputSlot>
-
-                          <InputField
-                            placeholder={t("auth.register.namePlaceholder")}
-                            placeholderTextColor={colors.outline}
-                            autoCapitalize="words"
-                            autoCorrect={false}
-                            autoComplete="name"
-                            onBlur={onBlur}
-                            onChangeText={onChange}
-                            value={value}
-                            className="text-sm font-body-medium text-slate-800 dark:text-[#ECEEF4]"
-                            accessibilityLabel={t("auth.register.fullNameLabel")}
-                          />
-                        </Input>
-                      )}
+                <Controller
+                  control={control}
+                  name="name"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <AuthTextField
+                      label={t("auth.register.fullName")}
+                      labelVariant="compact"
+                      icon={User}
+                      error={errors.name}
+                      placeholder={t("auth.register.namePlaceholder")}
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                      autoComplete="name"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      accessibilityLabel={t("auth.register.fullNameLabel")}
                     />
-                  </Box>
-
-                  {errors.name && (
-                    <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
-                      {t(errors.name.message as TranslationKey)}
-                    </Text>
                   )}
-                </VStack>
+                />
 
-                {/* ==============================
-                    E-MAIL
-                ============================== */}
-
-                <VStack space="xs">
-                  <Box className="relative">
-
-                    <Text className="absolute -top-2 left-3 z-10 bg-white dark:bg-[#1A1D24] px-1 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
-                      {t("auth.email")}
-                    </Text>
-
-                    <Controller
-                      control={control}
-                      name="email"
-                      render={({
-                        field: {
-                          onChange,
-                          onBlur,
-                          value,
-                        },
-                      }) => (
-                        <Input
-                          isInvalid={!!errors.email}
-                          className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
-                        >
-                          <InputSlot className="pl-0">
-                            <InputIcon
-                              as={Mail}
-                              className="text-slate-400 dark:text-[#8B92A1]"
-                            />
-                          </InputSlot>
-
-                          <InputField
-                            placeholder={t("auth.emailPlaceholder")}
-                            placeholderTextColor={colors.outline}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                            autoComplete="email"
-                            onBlur={onBlur}
-                            onChangeText={onChange}
-                            value={value}
-                            className="text-sm font-body-medium text-slate-800 dark:text-[#ECEEF4]"
-                            accessibilityLabel={t("auth.email")}
-                          />
-                        </Input>
-                      )}
+                <Controller
+                  control={control}
+                  name="email"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <AuthTextField
+                      label={t("auth.email")}
+                      labelVariant="compact"
+                      icon={Mail}
+                      error={errors.email}
+                      placeholder={t("auth.emailPlaceholder")}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      autoComplete="email"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      accessibilityLabel={t("auth.email")}
                     />
-                  </Box>
-
-                  {errors.email && (
-                    <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
-                      {t(errors.email.message as TranslationKey)}
-                    </Text>
                   )}
-                </VStack>
+                />
 
-                {/* ==============================
-                    SENHA
-                ============================== */}
-
-                <VStack space="xs">
-                  <Box className="relative">
-
-                    <Text className="absolute -top-2 left-3 z-10 bg-white dark:bg-[#1A1D24] px-1 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
-                      {t("auth.password")}
-                    </Text>
-
-                    <Controller
-                      control={control}
-                      name="password"
-                      render={({
-                        field: {
-                          onChange,
-                          onBlur,
-                          value,
-                        },
-                      }) => (
-                        <Input
-                          isInvalid={!!errors.password}
-                          className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
-                        >
-                          <InputSlot className="pl-0">
-                            <InputIcon
-                              as={Lock}
-                              className="text-slate-400 dark:text-[#8B92A1]"
-                            />
-                          </InputSlot>
-
-                          <InputField
-                            placeholder="••••••••"
-                            placeholderTextColor={colors.outline}
-                            secureTextEntry={!showPassword}
-                            autoComplete="new-password"
-                            onBlur={onBlur}
-                            onChangeText={onChange}
-                            value={value}
-                            className="text-sm font-body-medium text-slate-800 dark:text-[#ECEEF4]"
-                            accessibilityLabel={t("auth.password")}
-                          />
-
-                          <InputSlot
-                            className="pr-0"
-                            onPress={() =>
-                              setShowPassword(
-                                (previous) => !previous
-                              )
-                            }
-                            accessibilityLabel={
-                              showPassword
-                                ? t("auth.hidePassword")
-                                : t("auth.showPassword")
-                            }
-                          >
-                            <InputIcon
-                              as={
-                                showPassword
-                                  ? Eye
-                                  : EyeOff
-                              }
-                              className="text-slate-400 dark:text-[#8B92A1]"
-                            />
-                          </InputSlot>
-                        </Input>
-                      )}
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <AuthTextField
+                      label={t("auth.password")}
+                      labelVariant="compact"
+                      icon={Lock}
+                      error={errors.password}
+                      placeholder="••••••••"
+                      secureTextEntry={!showPassword}
+                      autoComplete="new-password"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      accessibilityLabel={t("auth.password")}
+                      passwordVisibility={{
+                        isVisible: showPassword,
+                        onToggle: () =>
+                          setShowPassword((previous) => !previous),
+                      }}
                     />
-                  </Box>
-
-                  {errors.password && (
-                    <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
-                      {t(errors.password.message as TranslationKey)}
-                    </Text>
                   )}
-                </VStack>
+                />
 
-                {/* ==============================
-                    CONFIRMAR SENHA
-                ============================== */}
-
-                <VStack space="xs">
-                  <Box className="relative">
-
-                    <Text className="absolute -top-2 left-3 z-10 bg-white dark:bg-[#1A1D24] px-1 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
-                      {t("auth.register.confirmPassword")}
-                    </Text>
-
-                    <Controller
-                      control={control}
-                      name="confirmPassword"
-                      render={({
-                        field: {
-                          onChange,
-                          onBlur,
-                          value,
-                        },
-                      }) => (
-                        <Input
-                          isInvalid={
-                            !!errors.confirmPassword
-                          }
-                          className="h-12 rounded-xl border-slate-300 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-3 dark:bg-[#1A1D24]"
-                        >
-                          <InputSlot className="pl-0">
-                            <InputIcon
-                              as={Lock}
-                              className="text-slate-400 dark:text-[#8B92A1]"
-                            />
-                          </InputSlot>
-
-                          <InputField
-                            placeholder="••••••••"
-                            placeholderTextColor={colors.outline}
-                            secureTextEntry={
-                              !showConfirmPassword
-                            }
-                            autoComplete="new-password"
-                            onBlur={onBlur}
-                            onChangeText={onChange}
-                            value={value}
-                            className="text-sm font-body-medium text-slate-800 dark:text-[#ECEEF4]"
-                            accessibilityLabel={t("auth.register.confirmPasswordLabel")}
-                          />
-
-                          <InputSlot
-                            className="pr-0"
-                            onPress={() =>
-                              setShowConfirmPassword(
-                                (previous) => !previous
-                              )
-                            }
-                            accessibilityLabel={
-                              showConfirmPassword
-                                ? t("auth.hidePassword")
-                                : t("auth.showPassword")
-                            }
-                          >
-                            <InputIcon
-                              as={
-                                showConfirmPassword
-                                  ? Eye
-                                  : EyeOff
-                              }
-                              className="text-slate-400 dark:text-[#8B92A1]"
-                            />
-                          </InputSlot>
-                        </Input>
-                      )}
+                <Controller
+                  control={control}
+                  name="confirmPassword"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <AuthTextField
+                      label={t("auth.register.confirmPassword")}
+                      labelVariant="compact"
+                      icon={Lock}
+                      error={errors.confirmPassword}
+                      placeholder="••••••••"
+                      secureTextEntry={!showConfirmPassword}
+                      autoComplete="new-password"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      accessibilityLabel={t("auth.register.confirmPasswordLabel")}
+                      passwordVisibility={{
+                        isVisible: showConfirmPassword,
+                        onToggle: () =>
+                          setShowConfirmPassword((previous) => !previous),
+                      }}
                     />
-                  </Box>
-
-                  {errors.confirmPassword && (
-                    <Text className="font-body text-xs text-red-600 dark:text-[#FF7B70]">
-                      {t(errors.confirmPassword.message as TranslationKey)}
-                    </Text>
                   )}
-                </VStack>
+                />
 
-                {/* ==============================
-                    TERMOS DE USO
-                ============================== */}
+                {/* TERMOS DE USO */}
 
                 <Controller
                   control={control}
                   name="acceptedTerms"
-                  render={({
-                    field: {
-                      value,
-                      onChange,
-                    },
-                  }) => (
-                    <Pressable
-                      onPress={() => onChange(!value)}
-                      className="flex-row items-center gap-2 pt-1"
-                      accessibilityRole="checkbox"
-                      accessibilityState={{
-                        checked: value,
-                      }}
-                    >
-                      <View
-                        style={[
-                          styles.checkbox,
-                          value && styles.checkboxChecked,
-                        ]}
-                      >
-                        {value && (
-                          <Check
-                            size={12}
-                            color="#FFFFFF"
-                            strokeWidth={2.5}
-                          />
-                        )}
-                      </View>
-
-                      <Text className="flex-1 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
-                        {t("auth.register.agreePrefix")}{" "}
-                        <Text className="text-xs font-body-semibold text-[#0058BC] dark:text-[#3B87F5]">
-                          {t("auth.register.terms")}
-                        </Text>
-                        {" "}{t("auth.register.and")}{" "}
-                        <Text className="text-xs font-body-semibold text-[#0058BC] dark:text-[#3B87F5]">
-                          {t("auth.register.privacy")}
-                        </Text>
-                      </Text>
-                    </Pressable>
+                  render={({ field: { value, onChange } }) => (
+                    <TermsCheckbox value={value} onChange={onChange} />
                   )}
                 />
 
@@ -601,22 +322,9 @@ export default function RegisterScreen() {
                   </Text>
                 )}
 
-                {/* ==============================
-                    ERRO DO SERVIDOR
-                ============================== */}
+                {serverError && <AuthServerError message={serverError} />}
 
-                {serverError && (
-                  <Box className="rounded-xl bg-red-50 dark:bg-[#2C1715] px-4 py-3">
-                    <Text className="font-body text-sm text-red-700 dark:text-[#FF7B70]">
-                      {serverError}
-                    </Text>
-                  </Box>
-                )}
-
-                {/* ==============================
-                    BOTÃO CADASTRAR
-                    PADRÃO DO LOGIN
-                ============================== */}
+                {/* BOTÃO CADASTRAR (mesmo padrão do login) */}
 
                 <Button
                   className={`mt-2 h-12 rounded-xl active:bg-[#003F88] ${
@@ -665,7 +373,7 @@ export default function RegisterScreen() {
 }
 
 // ==========================================
-// ESTILOS DO CABEÇALHO
+// ESTILOS DA TELA
 // ==========================================
 
 const createStyles = (colors: AppColors) => StyleSheet.create({
@@ -678,69 +386,11 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     flex: 1,
   },
 
-  header: {
-    height: 60,
-    backgroundColor: colors.surfaceMuted,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 18,
-    position: "relative",
-  },
-
-  backButton: {
-    width: 32,
-    height: 32,
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 2,
-  },
-
-  brandContainer: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
-  },
-
-  brandIcon: {
-    width: 28,
-    height: 28,
-  },
-
-  brandName: {
-    fontSize: 16,
-    fontFamily: "PlusJakartaSans_700Bold",
-    color: colors.onSurface,
-  },
-
   panel: {
     flex: 1,
     backgroundColor: colors.surface,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     overflow: "hidden",
-  },
-
-  checkbox: {
-    width: 16,
-    height: 16,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  checkboxChecked: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
   },
 });

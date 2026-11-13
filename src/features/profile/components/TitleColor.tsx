@@ -24,6 +24,22 @@ export function useTitleColor(): SharedValue<string> {
     );
 }
 
+/** Borda translúcida na cor do título, animada na thread de UI. */
+export function useTitleBorderStyle() {
+    const titleColor = useTitleColor();
+    return useAnimatedStyle(() => ({
+        borderColor: `${titleColor.value}44`,
+    }));
+}
+
+/** Fundo na cor do título, animado na thread de UI. */
+export function useTitleBackgroundStyle() {
+    const titleColor = useTitleColor();
+    return useAnimatedStyle(() => ({
+        backgroundColor: titleColor.value,
+    }));
+}
+
 type TitleColorIconProps = {
     icon: LucideIcon;
     size: number;

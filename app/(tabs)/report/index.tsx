@@ -1,51 +1,34 @@
+
 import Mapbox, { type MapState } from "@rnmapbox/maps";
 import { useFocusEffect, useNavigation, useRouter } from "expo-router";
-import {
-    ArrowLeft,
-    Check,
-    CircleAlert,
-    Crosshair,
-    Expand,
-    Minus,
-    Plus,
-} from "lucide-react-native";
-import Animated, {
-    Easing,
-    interpolate,
-    useAnimatedStyle,
-    useSharedValue,
-    withTiming,
-} from "react-native-reanimated";
+import { ArrowLeft } from "lucide-react-native";
+import Animated from "react-native-reanimated";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Alert,
     BackHandler,
     Platform,
     Pressable,
-    Text,
     useWindowDimensions,
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/src/store/authStore";
 import { verifyEmailFromAppRoute } from "@/src/features/auth/verifyEmailRoute";
+import { LocationConfirmation } from "@/src/features/report/components/location/LocationConfirmation";
+import { LocationIntroSheet } from "@/src/features/report/components/location/LocationIntroSheet";
+import { LocationPin } from "@/src/features/report/components/location/LocationPin";
+import { MapZoomControls } from "@/src/features/report/components/location/MapZoomControls";
+import { useLocationPickerAnimation } from "@/src/features/report/hooks/useLocationPickerAnimation";
 
 import { useAppTheme } from "@/src/theme/useAppTheme";
 import { tr, useTranslation } from "@/src/i18n";
-const DEFAULT_CENTER: [number, number] = [-47.47812, -5.52693];
+import {
+    BASEMAP_CONFIG,
+    DEFAULT_CENTER,
+    MAP_STYLE,
+} from "@/src/features/map/constants/mapConfig";
 const INITIAL_ZOOM = 15;
-const EXPANSION_DURATION = 650;
-// Curva suave (estilo "emphasized decelerate"): começa sem tranco e assenta devagar.
-const EXPANSION_EASING = Easing.bezier(0.32, 0.72, 0, 1);
-const mapStyle = {
-    version: 8,
-    imports: [
-        {
-            id: "basemap",
-            url: "mapbox://styles/mapbox/standard",
-        },
-    ],
-} as const;
 
 export default function ReportScreen() {
     const { t } = useTranslation();
@@ -63,9 +46,22 @@ export default function ReportScreen() {
     const [selectedLocation, setSelectedLocation] =
         useState<[number, number]>(DEFAULT_CENTER);
     const [zoomLevel, setZoomLevel] = useState(INITIAL_ZOOM);
-    const expansionProgress = useSharedValue(0);
     const initialMapSize = Math.min(width - 32, height * 0.52);
     const initialMapTop = Math.max(insets.top + 32, 56);
+    const {
+        startExpansion,
+        mapWrapperStyle,
+        mapContentStyle,
+        mapRingStyle,
+        bottomSheetStyle,
+        expandedControlsStyle,
+        confirmationStyle,
+    } = useLocationPickerAnimation({
+        width,
+        height,
+        initialMapTop,
+        initialMapSize,
+    });
     const lastCameraUpdateRef = useRef(0);
     const isConfirmedRef = useRef(false);
     const confirmationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -161,11 +157,7 @@ export default function ReportScreen() {
     );
 
     const handleExpandMap = () => {
-        // Inicia a animação na UI thread imediatamente, sem esperar o re-render.
-        expansionProgress.value = withTiming(1, {
-            duration: EXPANSION_DURATION,
-            easing: EXPANSION_EASING,
-        });
+        startExpansion();
         setIsMapExpanded(true);
     };
 
@@ -177,102 +169,6 @@ export default function ReportScreen() {
             }
         };
     }, []);
-
-    const mapWrapperStyle = useAnimatedStyle(() => ({
-        top: interpolate(
-            expansionProgress.value,
-            [0, 1],
-            [initialMapTop, 0],
-        ),
-        left: interpolate(expansionProgress.value, [0, 1], [16, 0]),
-        width: interpolate(
-            expansionProgress.value,
-            [0, 1],
-            [initialMapSize, width],
-        ),
-        height: interpolate(
-            expansionProgress.value,
-            [0, 1],
-            [initialMapSize, height],
-        ),
-        borderRadius: interpolate(
-            expansionProgress.value,
-            [0, 1],
-            [initialMapSize / 2, 0],
-        ),
-    }));
-
-    // O mapa tem sempre o tamanho da tela: só a "janela" (wrapper) cresce.
-    // Assim o Mapbox não precisa redimensionar a superfície GL a cada frame,
-    // que era o que deixava a expansão travando. Apenas transladamos o mapa
-    // para que o centro dele continue no centro da janela.
-    const mapContentStyle = useAnimatedStyle(() => {
-        const size = interpolate(
-            expansionProgress.value,
-            [0, 1],
-            [initialMapSize, width],
-        );
-        const wrapperHeight = interpolate(
-            expansionProgress.value,
-            [0, 1],
-            [initialMapSize, height],
-        );
-
-        return {
-            transform: [
-                { translateX: (size - width) / 2 },
-                { translateY: (wrapperHeight - height) / 2 },
-            ],
-        };
-    });
-
-    const mapRingStyle = useAnimatedStyle(() => ({
-        borderRadius: interpolate(
-            expansionProgress.value,
-            [0, 1],
-            [initialMapSize / 2, 0],
-        ),
-        opacity: interpolate(expansionProgress.value, [0, 0.6], [1, 0], "clamp"),
-    }));
-
-    const bottomSheetStyle = useAnimatedStyle(() => ({
-        opacity: interpolate(expansionProgress.value, [0, 0.35, 1], [1, 0.8, 0]),
-        transform: [
-            {
-                translateY: interpolate(
-                    expansionProgress.value,
-                    [0, 1],
-                    [0, height * 0.42],
-                ),
-            },
-        ],
-    }));
-
-    const expandedControlsStyle = useAnimatedStyle(() => ({
-        opacity: interpolate(expansionProgress.value, [0, 0.65, 1], [0, 0.2, 1]),
-        transform: [
-            {
-                translateY: interpolate(
-                    expansionProgress.value,
-                    [0, 1],
-                    [12, 0],
-                ),
-            },
-        ],
-    }));
-
-    const confirmationStyle = useAnimatedStyle(() => ({
-        opacity: interpolate(expansionProgress.value, [0, 0.7, 1], [0, 0.2, 1]),
-        transform: [
-            {
-                translateY: interpolate(
-                    expansionProgress.value,
-                    [0, 1],
-                    [28, 0],
-                ),
-            },
-        ],
-    }));
 
     return (
         <View className="flex-1 overflow-hidden bg-[#F1F3FE] dark:bg-[#242833]">
@@ -304,7 +200,7 @@ export default function ReportScreen() {
                         // TextureView respeita o recorte arredondado e as
                         // transformações do pai; SurfaceView "vaza" no Android.
                         surfaceView={Platform.OS === "android" ? false : undefined}
-                        styleJSON={JSON.stringify(mapStyle)}
+                        styleJSON={JSON.stringify(MAP_STYLE)}
                         onCameraChanged={handleCameraChanged}
                         attributionPosition={{ bottom: 8, right: 8 }}
                         compassEnabled={false}
@@ -315,14 +211,7 @@ export default function ReportScreen() {
                             existing
                             config={{
                                 lightPreset: isDark ? "night" : "day",
-                                theme: "default",
-                                font: "DIN Pro",
-                                showTransitLabels: true,
-                                show3dObjects: true,
-                                show3dBuildings: true,
-                                show3dTrees: true,
-                                show3dFacades: true,
-                                show3dLandmarks: true,
+                                ...BASEMAP_CONFIG,
                             }}
                         />
                         <Mapbox.Camera
@@ -341,92 +230,29 @@ export default function ReportScreen() {
                     style={mapRingStyle}
                 />
 
-                    <View
-                        pointerEvents="none"
-                        className="absolute inset-0 items-center justify-center"
-                    >
-                        <View className="-mt-2 items-center">
-                            <View
-                                style={{
-                                    width: 34,
-                                    height: 40,
-                                    alignItems: "center",
-                                    justifyContent: "flex-start",
-                                }}
-                            >
-                                <View
-                                    style={{
-                                        width: 29,
-                                        height: 29,
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        backgroundColor: "#FF3B30",
-                                        borderWidth: 3,
-                                        borderColor: colors.surface,
-                                        borderRadius: 18,
-                                        borderBottomRightRadius: 6,
-                                        transform: [{ rotate: "45deg" }],
-                                        shadowColor: "#000000",
-                                        shadowOffset: { width: 0, height: 4 },
-                                        shadowOpacity: 0.38,
-                                        shadowRadius: 5,
-                                        elevation: 7,
-                                    }}
-                                >
-                                    <View
-                                        style={{
-                                            width: 8,
-                                            height: 8,
-                                            borderRadius: 4,
-                                            backgroundColor: colors.surface,
-                                            transform: [{ rotate: "-45deg" }],
-                                        }}
-                                    />
-                                </View>
-                            </View>
-                            <View className="-mt-2 h-3.5 w-4 rounded-full bg-black/35" />
-                        </View>
-                    </View>
+                <LocationPin />
 
-                    <Animated.View
-                        className="absolute bottom-4 right-4 gap-2"
-                        style={expandedControlsStyle}
-                        pointerEvents={isMapExpanded ? "auto" : "none"}
-                    >
-                        <View className="overflow-hidden rounded-xl border border-[#C1C6D7]/30 dark:border-[#3A3F4B]/30 bg-white/90 dark:bg-[#1A1D24]/90 shadow-lg">
-                            <Pressable
-                                accessibilityLabel={t("report.zoomIn")}
-                                onPress={() =>
-                                    cameraRef.current?.zoomTo(
-                                        Math.min(20, zoomLevel + 1),
-                                        250,
-                                    )
-                                }
-                                className="border-b border-[#C1C6D7]/20 dark:border-[#3A3F4B]/20 p-2.5"
-                            >
-                                <Plus size={20} color={colors.onSurface} />
-                            </Pressable>
-                            <Pressable
-                                accessibilityLabel={t("report.zoomOut")}
-                                onPress={() =>
-                                    cameraRef.current?.zoomTo(
-                                        Math.max(3, zoomLevel - 1),
-                                        250,
-                                    )
-                                }
-                                className="p-2.5"
-                            >
-                                <Minus size={20} color={colors.onSurface} />
-                            </Pressable>
-                        </View>
-                        <Pressable
-                            accessibilityLabel={t("report.recenter")}
-                            onPress={handleResetLocation}
-                            className="h-10 w-10 items-center justify-center rounded-xl border border-[#C1C6D7]/30 dark:border-[#3A3F4B]/30 bg-white/90 dark:bg-[#1A1D24]/90 shadow-lg"
-                        >
-                            <Crosshair size={20} color={colors.onSurface} />
-                        </Pressable>
-                    </Animated.View>
+                <Animated.View
+                    className="absolute bottom-4 right-4 gap-2"
+                    style={expandedControlsStyle}
+                    pointerEvents={isMapExpanded ? "auto" : "none"}
+                >
+                    <MapZoomControls
+                        onZoomIn={() =>
+                            cameraRef.current?.zoomTo(
+                                Math.min(20, zoomLevel + 1),
+                                250,
+                            )
+                        }
+                        onZoomOut={() =>
+                            cameraRef.current?.zoomTo(
+                                Math.max(3, zoomLevel - 1),
+                                250,
+                            )
+                        }
+                        onRecenter={handleResetLocation}
+                    />
+                </Animated.View>
             </Animated.View>
 
             <Animated.View
@@ -434,46 +260,10 @@ export default function ReportScreen() {
                 style={bottomSheetStyle}
                 pointerEvents={isMapExpanded ? "none" : "auto"}
             >
-                    <View className="mx-auto mb-6 h-1.5 w-12 rounded-full bg-[#717786]/40" />
-                    <View className="flex-1 justify-between">
-                        <View className="gap-4">
-                            <Text className="text-center text-[22px] font-display text-[#181C23] dark:text-[#ECEEF4]">
-                                {t("report.locationTitle")}
-                            </Text>
-                            <View className="flex-row items-center gap-2.5 rounded-2xl border border-[#ADC6FF]/30 bg-[#ADC6FF]/20 px-3 py-2.5">
-                                <CircleAlert
-                                    size={19}
-                                    color={colors.primary}
-                                    strokeWidth={2.25}
-                                />
-                                <Text className="font-body flex-1 text-[15px] leading-[20px] text-[#414755] dark:text-[#AAB0BD]">
-                                    {t("report.locationHint")}
-                                </Text>
-                            </View>
-                            <View className="flex-row items-center gap-2.5 rounded-2xl border border-[#ADC6FF]/30 bg-[#ADC6FF]/20 px-3 py-2.5">
-                                <Expand
-                                    size={19}
-                                    color={colors.primary}
-                                    strokeWidth={2.25}
-                                />
-                                <Text className="font-body flex-1 text-[15px] leading-[20px] text-[#414755] dark:text-[#AAB0BD]">
-                                    {t("report.pinchHint")}
-                                </Text>
-                            </View>
-                        </View>
-                        <Pressable
-                            accessibilityLabel={t("report.gotIt")}
-                            onPress={handleExpandMap}
-                            className="h-14 items-center justify-center rounded-xl bg-[#0058BC] shadow-lg"
-                            style={{
-                                marginBottom: Math.max(insets.bottom + 16, 40),
-                            }}
-                        >
-                            <Text className="text-[17px] font-body-bold text-white">
-                                {t("report.gotIt")}
-                            </Text>
-                        </Pressable>
-                    </View>
+                <LocationIntroSheet
+                    bottomInset={insets.bottom}
+                    onGotIt={handleExpandMap}
+                />
             </Animated.View>
 
             <Animated.View
@@ -481,45 +271,13 @@ export default function ReportScreen() {
                 style={[confirmationStyle, { paddingBottom: Math.max(insets.bottom, 4) }]}
                 pointerEvents={isMapExpanded ? "auto" : "none"}
             >
-                    <View className="mx-auto flex-row items-center gap-6 rounded-full border border-[#717786]/30 bg-white/85 dark:bg-[#1A1D24]/85 px-5 py-2.5 shadow-md">
-                        <Coordinate label={t("report.latitude")} value={selectedLocation[1]} />
-                        <View className="h-6 w-px bg-[#717786]/40" />
-                        <Coordinate
-                            label={t("report.longitude")}
-                            value={selectedLocation[0]}
-                        />
-                    </View>
-                    <Pressable
-                        accessibilityLabel={t("report.confirmLocationLabel")}
-                        accessibilityState={{ disabled: isConfirmed }}
-                        disabled={isConfirmed}
-                        onPress={handleConfirmLocation}
-                        className={`h-14 flex-row items-center justify-center gap-2 rounded-xl shadow-lg ${
-                            isConfirmed ? "bg-[#16803C]" : "bg-[#0058BC]"
-                        }`}
-                    >
-                        {isConfirmed && <Check size={21} color="#FFFFFF" />}
-                        <Text className="text-[17px] font-body-bold text-white">
-                            {isConfirmed
-                                ? t("report.locationConfirmed")
-                                : t("report.confirmLocation")}
-                        </Text>
-                    </Pressable>
+                <LocationConfirmation
+                    selectedLocation={selectedLocation}
+                    isConfirmed={isConfirmed}
+                    onConfirm={handleConfirmLocation}
+                />
             </Animated.View>
 
-        </View>
-    );
-}
-
-function Coordinate({ label, value }: { label: string; value: number }) {
-    return (
-        <View className="items-center">
-            <Text className="mb-0.5 text-[10px] font-body-semibold uppercase tracking-wider text-[#717786] dark:text-[#8B92A1]">
-                {label}
-            </Text>
-            <Text className="text-xs font-body-medium tabular-nums text-[#181C23] dark:text-[#ECEEF4]">
-                {value.toFixed(6)}
-            </Text>
         </View>
     );
 }

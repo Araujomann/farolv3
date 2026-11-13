@@ -1,54 +1,32 @@
-import { Text } from "@/components/ui/text";
+import { AccidentComments } from "@/src/features/map/components/details/AccidentComments";
+import { AccidentDetailsHeader } from "@/src/features/map/components/details/AccidentDetailsHeader";
 import {
-    createAccidentComment,
-    getAccidentDetails,
-    getAccidentTrust,
-    setAccidentTrust,
-} from "@/src/features/map/services/accidentService";
-import { reverseGeocode } from "@/src/features/map/services/reverseGeocode";
-import type { AccidentDetail } from "@/src/features/map/types/accident.types";
+    AccidentDetailsError,
+    AccidentDetailsLoading,
+} from "@/src/features/map/components/details/AccidentDetailsStatus";
+import { AccidentLocationSection } from "@/src/features/map/components/details/AccidentLocationSection";
+import { AccidentSourceSection } from "@/src/features/map/components/details/AccidentSourceSection";
+import { AccidentSummaryCard } from "@/src/features/map/components/details/AccidentSummaryCard";
+import { AccidentTrustCard } from "@/src/features/map/components/details/AccidentTrustCard";
+import { SectionCard } from "@/src/features/map/components/details/SectionCard";
+import { useAccidentAddress } from "@/src/features/map/hooks/useAccidentAddress";
+import { useAccidentDetails } from "@/src/features/map/hooks/useAccidentDetails";
+import { useKeyboardHeight } from "@/src/shared/hooks/useKeyboardHeight";
+import { Text } from "@/components/ui/text";
 import { useAuthStore } from "@/src/store/authStore";
 import { verifyEmailFromAppRoute } from "@/src/features/auth/verifyEmailRoute";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useRef } from "react";
 import {
-    ArrowLeft,
-    BadgeCheck,
-    CalendarDays,
-    MapPin,
-    Send,
-    ShieldCheck,
-    UserRound,
-} from "lucide-react-native";
-import { Image } from "expo-image";
-import {
-    useCallback,
-    useEffect,
-    useRef,
-    useState,
-    type ReactNode,
-} from "react";
-import {
-    ActivityIndicator,
-    Alert,
     KeyboardAvoidingView,
-    Keyboard,
-    Linking,
     Platform,
-    Pressable,
     ScrollView,
-    TextInput,
-    View,
     useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAppTheme } from "@/src/theme/useAppTheme";
-import {
-    formatDateTime as formatDate,
-    tr,
-    translateAccidentType,
-    useTranslation,
-} from "@/src/i18n";
+import { useTranslation } from "@/src/i18n";
 
 export default function AccidentDetailsScreen() {
     const { t } = useTranslation();
@@ -62,42 +40,14 @@ export default function AccidentDetailsScreen() {
     const user = useAuthStore((state) => state.user);
     const { width } = useWindowDimensions();
     const imageWidth = width - 32;
-    const requestId = useRef(0);
     const scrollViewRef = useRef<ScrollView>(null);
-    const [accident, setAccident] = useState<AccidentDetail | null>(null);
-    const [trustedByMe, setTrustedByMe] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [comment, setComment] = useState("");
-    const [isSendingComment, setIsSendingComment] = useState(false);
-    const [isUpdatingTrust, setIsUpdatingTrust] = useState(false);
-    const [commentError, setCommentError] = useState<string | null>(null);
-    const [trustError, setTrustError] = useState<string | null>(null);
-    const [activeImage, setActiveImage] = useState(0);
-    const [address, setAddress] = useState<string | null>(null);
-    const [isLoadingAddress, setIsLoadingAddress] = useState(false);
-    const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-    useEffect(() => {
-        const showSubscription = Keyboard.addListener(
-            "keyboardDidShow",
-            (event) => {
-                setKeyboardHeight(event.endCoordinates.height);
-                setTimeout(() => {
-                    scrollViewRef.current?.scrollToEnd({ animated: true });
-                }, 80);
-            },
-        );
-        const hideSubscription = Keyboard.addListener(
-            "keyboardDidHide",
-            () => setKeyboardHeight(0),
-        );
-
-        return () => {
-            showSubscription.remove();
-            hideSubscription.remove();
-        };
-    }, []);
+    // Ao abrir o teclado (campo de comentário), rola até o fim da tela.
+    const keyboardHeight = useKeyboardHeight(() => {
+        setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 80);
+    });
 
     const scrollToComment = useCallback(() => {
         requestAnimationFrame(() => {
@@ -105,189 +55,25 @@ export default function AccidentDetailsScreen() {
         });
     }, []);
 
-    const loadAccident = useCallback(async () => {
-        const currentRequestId = ++requestId.current;
-        if (!accidentId) {
-            setError(tr("accident.invalidId"));
-            setIsLoading(false);
-            return;
-        }
-
-        setIsLoading(true);
-        setError(null);
-        setCommentError(null);
-        setTrustError(null);
-
-        try {
-            const [detailsResult, trustResult] = await Promise.allSettled([
-                getAccidentDetails(accidentId),
-                getAccidentTrust(accidentId),
-            ]);
-
-            if (detailsResult.status === "rejected") {
-                throw detailsResult.reason;
-            }
-
-            const details = detailsResult.value;
-            const trust =
-                trustResult.status === "fulfilled"
-                    ? trustResult.value
-                    : null;
-
-            if (requestId.current === currentRequestId) {
-                setAccident({
-                    ...details,
-                    trusted_count:
-                        trust?.trusted_count ?? details.trusted_count ?? 0,
-                });
-                setTrustedByMe(trust?.trusted_by_me ?? false);
-                if (trustResult.status === "rejected") {
-                    if (__DEV__) {
-                        console.warn(
-                            "Falha ao carregar os selos de confiança",
-                            trustResult.reason,
-                        );
-                    }
-                    setTrustError(
-                        tr("accident.trustLoadError"),
-                    );
-                }
-                setActiveImage(0);
-            }
-        } catch (loadError) {
-            if (__DEV__) {
-                console.warn("Falha ao carregar detalhes do acidente", loadError);
-            }
-            if (requestId.current === currentRequestId) {
-                setError(
-                    tr("accident.loadError"),
-                );
-            }
-        } finally {
-            if (requestId.current === currentRequestId) {
-                setIsLoading(false);
-            }
-        }
-    }, [accidentId]);
-
-    useEffect(() => {
-        void loadAccident();
-        return () => {
-            requestId.current += 1;
-        };
-    }, [loadAccident]);
-
-    const addressAccidentId = accident?.id;
-    const addressLongitude = accident?.longitude;
-    const addressLatitude = accident?.latitude;
-
-    useEffect(() => {
-        if (
-            addressAccidentId === undefined ||
-            addressLongitude === undefined ||
-            addressLatitude === undefined
-        ) {
-            return;
-        }
-
-        let isCurrent = true;
-        setAddress(null);
-        setIsLoadingAddress(true);
-
-        reverseGeocode(addressLongitude, addressLatitude)
-            .then((result) => {
-                if (isCurrent) setAddress(result);
-            })
-            .catch((addressError) => {
-                if (__DEV__) {
-                    console.warn(
-                        "Falha ao carregar o endereço do acidente",
-                        addressError,
-                    );
-                }
-            })
-            .finally(() => {
-                if (isCurrent) setIsLoadingAddress(false);
-            });
-
-        return () => {
-            isCurrent = false;
-        };
-    }, [addressAccidentId, addressLatitude, addressLongitude]);
-
-    const handleSendComment = useCallback(async () => {
-        const body = comment.trim();
-        if (!accidentId || !body || isSendingComment) return;
-
-        setIsSendingComment(true);
-        setCommentError(null);
-        try {
-            const createdComment = await createAccidentComment(accidentId, body);
-            setAccident((current) =>
-                current
-                    ? {
-                          ...current,
-                          comments: [...current.comments, createdComment],
-                      }
-                    : current,
-            );
-            setComment("");
-        } catch (commentError) {
-            if (__DEV__) {
-                console.warn("Falha ao publicar comentário", commentError);
-            }
-            setCommentError(
-                tr("accident.commentError"),
-            );
-        } finally {
-            setIsSendingComment(false);
-        }
-    }, [accidentId, comment, isSendingComment]);
-
-    const handleToggleTrust = useCallback(async () => {
-        if (!accidentId || !accident || isUpdatingTrust) return;
-
-        setIsUpdatingTrust(true);
-        setTrustError(null);
-        try {
-            const nextTrust = await setAccidentTrust(
-                accidentId,
-                !trustedByMe,
-            );
-            setTrustedByMe(nextTrust.trusted_by_me);
-            setAccident((current) =>
-                current
-                    ? { ...current, trusted_count: nextTrust.trusted_count }
-                    : current,
-            );
-        } catch (trustError) {
-            if (__DEV__) {
-                console.warn("Falha ao atualizar selo de confiança", trustError);
-            }
-            setTrustError(
-                tr("accident.trustError"),
-            );
-        } finally {
-            setIsUpdatingTrust(false);
-        }
-    }, [accident, accidentId, isUpdatingTrust, trustedByMe]);
-
-    const handleOpenMap = useCallback(async () => {
-        if (!accident) return;
-        const url = `https://maps.google.com/?q=${accident.latitude},${accident.longitude}`;
-
-        try {
-            await Linking.openURL(url);
-        } catch (openError) {
-            if (__DEV__) {
-                console.warn("Falha ao abrir a localização", openError);
-            }
-            Alert.alert(
-                tr("accident.openMapErrorTitle"),
-                tr("accident.openMapErrorMessage"),
-            );
-        }
-    }, [accident]);
+    const {
+        accident,
+        trustedByMe,
+        isLoading,
+        error,
+        comment,
+        setComment,
+        isSendingComment,
+        isUpdatingTrust,
+        commentError,
+        trustError,
+        activeImage,
+        setActiveImage,
+        loadAccident,
+        handleSendComment,
+        handleToggleTrust,
+        handleOpenMap,
+    } = useAccidentDetails(accidentId);
+    const { address, isLoadingAddress } = useAccidentAddress(accident);
 
     const isOwnReport =
         Boolean(user?.id) && accident?.created_by_id === user?.id;
@@ -305,45 +91,18 @@ export default function AccidentDetailsScreen() {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
         >
-            <View
-                className="flex-row items-center border-b border-gray-100 dark:border-[#3A3F4B] bg-white dark:bg-[#1A1D24] px-4 pb-3"
-                style={{ paddingTop: insets.top + 8 }}
-            >
-                <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t("accident.backToMap")}
-                    onPress={() => router.back()}
-                    className="h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-[#242833]"
-                >
-                    <ArrowLeft size={20} color={colors.primary} />
-                </Pressable>
-                <Text className="flex-1 text-center text-lg font-body-bold text-[#181C23] dark:text-[#ECEEF4]">
-                    {t("accident.title")}
-                </Text>
-                <View className="h-10 w-10" />
-            </View>
+            <AccidentDetailsHeader
+                paddingTop={insets.top + 8}
+                onBack={() => router.back()}
+            />
 
             {isLoading && !accident ? (
-                <View className="flex-1 items-center justify-center px-6">
-                    <ActivityIndicator size="large" color={colors.primary} />
-                    <Text className="font-body mt-3 text-sm text-gray-600 dark:text-[#AAB0BD]">
-                        {t("accident.loading")}
-                    </Text>
-                </View>
+                <AccidentDetailsLoading />
             ) : error && !accident ? (
-                <View className="flex-1 items-center justify-center px-6">
-                    <Text className="font-body text-center text-sm text-gray-700 dark:text-[#AAB0BD]">
-                        {error}
-                    </Text>
-                    <Pressable
-                        onPress={() => void loadAccident()}
-                        className="mt-4 rounded-full bg-[#0058BC] px-5 py-3"
-                    >
-                        <Text className="font-body-semibold text-white">
-                            {t("common.retry")}
-                        </Text>
-                    </Pressable>
-                </View>
+                <AccidentDetailsError
+                    message={error}
+                    onRetry={() => void loadAccident()}
+                />
             ) : accident ? (
                 <ScrollView
                     ref={scrollViewRef}
@@ -352,104 +111,24 @@ export default function AccidentDetailsScreen() {
                     contentContainerStyle={{
                         paddingHorizontal: 16,
                         paddingTop: 16,
+                        // No Android o sistema já desloca a janela para
+                        // mostrar o campo focado (softwareKeyboardLayoutMode
+                        // "pan"); somar a altura do teclado aqui criava um
+                        // vão do tamanho do teclado acima dele.
                         paddingBottom:
-                            keyboardHeight + insets.bottom + 28,
+                            (Platform.OS === "android" ? 0 : keyboardHeight) +
+                            insets.bottom +
+                            28,
                     }}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    <View className="overflow-hidden rounded-2xl bg-white dark:bg-[#1A1D24]">
-                        {accident.images.length > 0 ? (
-                            <View>
-                                <ScrollView
-                                    horizontal
-                                    pagingEnabled
-                                    showsHorizontalScrollIndicator={false}
-                                    onMomentumScrollEnd={(event) => {
-                                        const nextIndex = Math.round(
-                                            event.nativeEvent.contentOffset.x /
-                                                imageWidth,
-                                        );
-                                        setActiveImage(
-                                            Math.min(
-                                                nextIndex,
-                                                accident.images.length - 1,
-                                            ),
-                                        );
-                                    }}
-                                >
-                                    {accident.images.map((image) => (
-                                        <Image
-                                            key={image.id}
-                                            source={{ uri: image.image_url }}
-                                            contentFit="cover"
-                                            accessibilityLabel={
-                                                image.caption ??
-                                                t("accident.imageFallback")
-                                            }
-                                            style={{
-                                                width: imageWidth,
-                                                height: 220,
-                                            }}
-                                        />
-                                    ))}
-                                </ScrollView>
-                                {accident.images.length > 1 && (
-                                    <View className="absolute bottom-3 left-0 right-0 flex-row justify-center gap-2">
-                                        {accident.images.map((image, index) => (
-                                            <View
-                                                key={image.id}
-                                                className={`h-2 w-2 rounded-full ${
-                                                    index === activeImage
-                                                        ? "bg-white dark:bg-[#1A1D24]"
-                                                        : "bg-white/50 dark:bg-[#1A1D24]/50"
-                                                }`}
-                                            />
-                                        ))}
-                                    </View>
-                                )}
-                            </View>
-                        ) : (
-                            <View className="h-45 items-center justify-center bg-[#EAF1FF] dark:bg-[#16253F]">
-                                <MapPin size={34} color={colors.primary} />
-                                <Text className="mt-2 text-sm font-body-medium text-[#414755] dark:text-[#AAB0BD]">
-                                    {t("accident.noImage")}
-                                </Text>
-                            </View>
-                        )}
-                        <View className="p-4">
-                            <View className="flex-row items-start justify-between gap-3">
-                                <Text className="flex-1 text-[22px] font-display text-[#181C23] dark:text-[#ECEEF4]">
-                                    {accident.tipo_acidente
-                                        ? translateAccidentType(accident.tipo_acidente)
-                                        : t("map.occurrence")}
-                                </Text>
-                                <View className="rounded-full bg-[#FFF1E8] dark:bg-[#2B2313] px-3 py-1.5">
-                                    <Text className="text-xs font-body-semibold text-[#B42318] dark:text-[#FF7B70]">
-                                        {t(`enums.severity.${accident.severity}`)}
-                                    </Text>
-                                </View>
-                            </View>
-                            <View className="mt-3 flex-row flex-wrap gap-2">
-                                <InfoChip
-                                    icon={<CalendarDays size={15} color={colors.onSurfaceVariant} />}
-                                    label={formatDate(accident.occurred_at)}
-                                />
-                                <InfoChip
-                                    icon={<ShieldCheck size={15} color={colors.onSurfaceVariant} />}
-                                    label={t(
-                                        `enums.classification.${accident.classificacao_acidente}`,
-                                    )}
-                                />
-                                <InfoChip
-                                    icon={<MapPin size={15} color={colors.onSurfaceVariant} />}
-                                    label={t(
-                                        `enums.weather.${accident.condicao_meteorologica}`,
-                                    )}
-                                />
-                            </View>
-                        </View>
-                    </View>
+                    <AccidentSummaryCard
+                        accident={accident}
+                        imageWidth={imageWidth}
+                        activeImage={activeImage}
+                        onActiveImageChange={setActiveImage}
+                    />
 
                     {accident.description && (
                         <SectionCard title={t("accident.description")}>
@@ -459,277 +138,40 @@ export default function AccidentDetailsScreen() {
                         </SectionCard>
                     )}
 
-                    <SectionCard title={t("accident.location")}>
-                        <View className="flex-row items-center gap-2">
-                            <MapPin size={18} color={colors.primary} />
-                            {isLoadingAddress ? (
-                                <View className="flex-1 flex-row items-center gap-2">
-                                    <ActivityIndicator
-                                        size="small"
-                                        color={colors.primary}
-                                    />
-                                    <Text className="font-body flex-1 text-sm text-[#414755] dark:text-[#AAB0BD]">
-                                        {t("accident.searchingAddress")}
-                                    </Text>
-                                </View>
-                            ) : (
-                                <Text className="font-body flex-1 text-sm text-[#414755] dark:text-[#AAB0BD]">
-                                    {address ?? t("accident.addressUnavailable")}
-                                </Text>
-                            )}
-                        </View>
-                        <Pressable
-                            accessibilityRole="button"
-                            onPress={() => void handleOpenMap()}
-                            className="mt-3 items-center rounded-xl bg-[#F1F3FE] dark:bg-[#242833] py-3"
-                        >
-                            <Text className="text-sm font-body-semibold text-[#0058BC] dark:text-[#3B87F5]">
-                                {t("accident.openLocation")}
-                            </Text>
-                        </Pressable>
-                    </SectionCard>
+                    <AccidentLocationSection
+                        address={address}
+                        isLoadingAddress={isLoadingAddress}
+                        onOpenMap={() => void handleOpenMap()}
+                    />
 
-                    <SectionCard title={t("accident.reportSource")}>
-                        <View className="flex-row items-center justify-between">
-                            <View className="flex-row items-center gap-2">
-                                <BadgeCheck
-                                    size={20}
-                                    color={accident.source === "PRF" ? colors.success : colors.primary}
-                                />
-                                <Text className="text-sm font-body-semibold text-[#181C23] dark:text-[#ECEEF4]">
-                                    {accident.source === "PRF"
-                                        ? t("accident.sourcePrf")
-                                        : t("accident.sourceCommunity")}
-                                </Text>
-                            </View>
-                            <Text className="font-body text-xs text-gray-500 dark:text-[#8B92A1]">
-                                {formatDate(accident.created_at)}
-                            </Text>
-                        </View>
-                    </SectionCard>
+                    <AccidentSourceSection accident={accident} />
 
-                    <View className="mt-4 rounded-2xl bg-white dark:bg-[#1A1D24] p-4">
-                        <View className="flex-row items-center justify-between gap-3">
-                            <View className="flex-1">
-                                <Text className="text-xs font-body-semibold uppercase tracking-wide text-[#5D5E63] dark:text-[#AAB0BD]">
-                                    {t("accident.reliability")}
-                                </Text>
-                                <Text className="font-body mt-1 text-sm text-[#414755] dark:text-[#AAB0BD]">
-                                    {trustedByMe
-                                        ? t("accident.trustedByYou")
-                                        : t("accident.trustInvite")}
-                                </Text>
-                            </View>
-                            <View className="items-center rounded-xl bg-[#F1F3FE] dark:bg-[#242833] px-3 py-2">
-                                <Text className="text-xl font-display text-[#0058BC] dark:text-[#3B87F5]">
-                                    {accident.trusted_count}
-                                </Text>
-                                <Text className="font-body text-[10px] text-[#414755] dark:text-[#AAB0BD]">
-                                    {t("accident.seals", { count: accident.trusted_count ?? 0 })}
-                                </Text>
-                            </View>
-                        </View>
-                        <Pressable
-                            accessibilityRole="button"
-                            accessibilityState={{
-                                disabled: !canTrust || isUpdatingTrust,
-                                selected: trustedByMe,
-                            }}
-                            disabled={!canTrust || isUpdatingTrust}
-                            onPress={() => void handleToggleTrust()}
-                            className={`mt-4 flex-row items-center justify-center gap-2 rounded-xl py-3 ${
-                                trustedByMe
-                                    ? "bg-[#EAF7EF] dark:bg-[#12271B]"
-                                    : "bg-[#0058BC]"
-                            } ${!canTrust || isUpdatingTrust ? "opacity-60" : ""}`}
-                        >
-                            {isUpdatingTrust ? (
-                                <ActivityIndicator
-                                    size="small"
-                                    color={trustedByMe ? colors.success : "#FFFFFF"}
-                                />
-                            ) : (
-                                <BadgeCheck
-                                    size={19}
-                                    color={trustedByMe ? colors.success : "#FFFFFF"}
-                                />
-                            )}
-                            <Text
-                                className={`text-sm font-body-semibold ${
-                                    trustedByMe
-                                        ? "text-[#14804A] dark:text-[#5BD48A]"
-                                        : "text-white"
-                                }`}
-                            >
-                                {trustedByMe
-                                    ? t("accident.removeTrust")
-                                    : canTrust
-                                      ? t("accident.markTrusted")
-                                      : isOwnReport
-                                        ? t("accident.ownReport")
-                                        : !isEmailVerified
-                                          ? t("accident.verifyToVote")
-                                          : t("accident.trustOnlyCommunity")}
-                            </Text>
-                        </Pressable>
-                    </View>
-                    {trustError && (
-                        <Text
-                            accessibilityRole="alert"
-                            className="font-body mt-3 text-xs text-[#BA1A1A] dark:text-[#FF7B70]"
-                        >
-                            {trustError}
-                        </Text>
-                    )}
+                    <AccidentTrustCard
+                        trustedCount={accident.trusted_count}
+                        trustedByMe={trustedByMe}
+                        canTrust={canTrust}
+                        isUpdatingTrust={isUpdatingTrust}
+                        isOwnReport={isOwnReport}
+                        isEmailVerified={isEmailVerified}
+                        trustError={trustError}
+                        onToggleTrust={() => void handleToggleTrust()}
+                    />
 
-                    <SectionCard
-                        title={t("accident.comments", {
-                            count: String(accident.comments.length),
-                        })}
-                    >
-                        {accident.comments.length === 0 ? (
-                            <Text className="font-body py-2 text-sm text-gray-500 dark:text-[#8B92A1]">
-                                {t("accident.noComments")}
-                            </Text>
-                        ) : (
-                            <View className="gap-4">
-                                {accident.comments.map((item) => (
-                                    <View
-                                        key={item.id}
-                                        className="flex-row gap-3"
-                                    >
-                                        <View className="h-9 w-9 items-center justify-center rounded-full bg-[#F1F3FE] dark:bg-[#242833]">
-                                            <UserRound
-                                                size={18}
-                                                color={colors.onSurfaceVariant}
-                                            />
-                                        </View>
-                                        <View className="flex-1">
-                                            <View className="flex-row flex-wrap items-center justify-between gap-x-2">
-                                                <Text className="text-xs font-body-semibold text-[#181C23] dark:text-[#ECEEF4]">
-                                                    {item.author_name ??
-                                                        t("accident.communityMember")}
-                                                </Text>
-                                                <Text className="font-body text-[11px] text-gray-500 dark:text-[#8B92A1]">
-                                                    {formatDate(item.created_at)}
-                                                </Text>
-                                            </View>
-                                            <Text className="font-body mt-1 text-sm leading-5 text-[#414755] dark:text-[#AAB0BD]">
-                                                {item.body}
-                                            </Text>
-                                        </View>
-                                    </View>
-                                ))}
-                            </View>
-                        )}
-
-                        {isEmailVerified ? (
-                            <View className="mt-4">
-                                <View className="flex-row items-end gap-2">
-                                    <TextInput
-                                        accessibilityLabel={t("accident.addComment")}
-                                        value={comment}
-                                        onChangeText={setComment}
-                                        onFocus={scrollToComment}
-                                        placeholder={t("accident.addCommentPlaceholder")}
-                                        placeholderTextColor={colors.outline}
-                                        maxLength={2000}
-                                        multiline
-                                        editable={!isSendingComment}
-                                        returnKeyType="send"
-                                        onSubmitEditing={() =>
-                                            void handleSendComment()
-                                        }
-                                        className="font-body min-h-11 flex-1 rounded-2xl bg-[#F1F3FE] dark:bg-[#242833] px-4 py-3 pl-3 text-[15px] text-[#181C23] dark:text-[#ECEEF4]"
-                                        style={{
-                                            maxHeight: 120,
-                                            textAlignVertical: "top",
-                                        }}
-                                    />
-                                    <Pressable
-                                        accessibilityRole="button"
-                                        accessibilityLabel={t("accident.sendComment")}
-                                        accessibilityState={{
-                                            disabled:
-                                                !comment.trim() ||
-                                                isSendingComment,
-                                        }}
-                                        disabled={
-                                            !comment.trim() || isSendingComment
-                                        }
-                                        onPress={() =>
-                                            void handleSendComment()
-                                        }
-                                        className="h-11 w-11 items-center justify-center rounded-full bg-[#0058BC] disabled:opacity-50"
-                                    >
-                                        {isSendingComment ? (
-                                            <ActivityIndicator
-                                                size="small"
-                                                color="#FFFFFF"
-                                            />
-                                        ) : (
-                                            <Send
-                                                size={18}
-                                                color="#FFFFFF"
-                                            />
-                                        )}
-                                    </Pressable>
-                                </View>
-                                {commentError && (
-                                    <Text
-                                        accessibilityRole="alert"
-                                        className="font-body mt-2 text-xs text-[#BA1A1A] dark:text-[#FF7B70]"
-                                    >
-                                        {commentError}
-                                    </Text>
-                                )}
-                            </View>
-                        ) : (
-                            <Pressable
-                                accessibilityRole="button"
-                                accessibilityLabel={t("accident.verifyToComment")}
-                                onPress={() =>
-                                    router.push(verifyEmailFromAppRoute)
-                                }
-                                className="mt-4 rounded-xl bg-amber-50 dark:bg-[#2B2313] px-3 py-3"
-                            >
-                                <Text className="font-body text-sm text-amber-800 dark:text-[#F5D58A]">
-                                    {t("accident.verifyToCommentText")}{" "}
-                                    <Text className="text-sm font-body-bold text-[#0058BC] dark:text-[#3B87F5]">
-                                        {t("accident.verifyNow")}
-                                    </Text>
-                                </Text>
-                            </Pressable>
-                        )}
-                    </SectionCard>
+                    <AccidentComments
+                        comments={accident.comments}
+                        isEmailVerified={isEmailVerified}
+                        comment={comment}
+                        onChangeComment={setComment}
+                        onCommentFocus={scrollToComment}
+                        isSendingComment={isSendingComment}
+                        commentError={commentError}
+                        onSendComment={() => void handleSendComment()}
+                        onVerifyEmail={() =>
+                            router.push(verifyEmailFromAppRoute)
+                        }
+                    />
                 </ScrollView>
             ) : null}
         </KeyboardAvoidingView>
-    );
-}
-
-function SectionCard({
-    title,
-    children,
-}: {
-    title: string;
-    children: ReactNode;
-}) {
-    return (
-        <View className="mt-4 rounded-2xl bg-white dark:bg-[#1A1D24] p-4">
-            <Text className="mb-3 text-xs font-body-semibold uppercase tracking-wide text-[#5D5E63] dark:text-[#AAB0BD]">
-                {title}
-            </Text>
-            {children}
-        </View>
-    );
-}
-
-function InfoChip({ icon, label }: { icon: ReactNode; label: string }) {
-    return (
-        <View className="flex-row items-center gap-1.5 rounded-full bg-[#F1F3FE] dark:bg-[#242833] px-2.5 py-1.5">
-            {icon}
-            <Text className="text-xs font-body-medium text-[#414755] dark:text-[#AAB0BD]">{label}</Text>
-        </View>
     );
 }
