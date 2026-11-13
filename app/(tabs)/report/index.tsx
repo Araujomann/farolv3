@@ -18,6 +18,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+    Alert,
     BackHandler,
     Pressable,
     Text,
@@ -25,6 +26,8 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuthStore } from "@/src/store/authStore";
+import { verifyEmailFromAppRoute } from "@/src/features/auth/verifyEmailRoute";
 
 const DEFAULT_CENTER: [number, number] = [-47.47812, -5.52693];
 const INITIAL_ZOOM = 15;
@@ -41,6 +44,9 @@ const mapStyle = {
 
 export default function ReportScreen() {
     const router = useRouter();
+    const isEmailVerified = useAuthStore((state) =>
+        Boolean(state.user?.is_email_verified),
+    );
     const tabsNavigation = useNavigation("/(tabs)");
     const insets = useSafeAreaInsets();
     const { width, height } = useWindowDimensions();
@@ -96,6 +102,22 @@ export default function ReportScreen() {
     };
 
     const handleConfirmLocation = () => {
+        // Contas sem e-mail verificado só podem visualizar o mapa
+        if (!isEmailVerified) {
+            Alert.alert(
+                "Verifique seu e-mail",
+                "Para relatar acidentes, confirme seu e-mail com o código de 6 dígitos que enviamos.",
+                [
+                    { text: "Agora não", style: "cancel" },
+                    {
+                        text: "Verificar agora",
+                        onPress: () => router.push(verifyEmailFromAppRoute),
+                    },
+                ],
+            );
+            return;
+        }
+
         isConfirmedRef.current = true;
         setIsConfirmed(true);
 

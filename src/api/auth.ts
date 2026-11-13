@@ -82,22 +82,22 @@ export const getMeService = async () => {
 // VERIFICAÇÃO DE EMAIL
 // ==========================================
 
-export type VerifyEmailPayload = {
-    token: string;
-}
-
-type VerifyEmailResponse = {
+type ResendVerificationResponse = {
     data: {
         message: string;
+        retryAfterSeconds: number;
     };
 }
 
-export const verifyEmailService = async (token: string) => {
-    const response = await api.post<VerifyEmailResponse>("/auth/verify-email", { token });
-    return response.data.data.message;
+// Confirma o e-mail do usuário logado com o código de 6 dígitos.
+// Retorna o usuário já atualizado (is_email_verified = true).
+export const verifyEmailCodeService = async (code: string) => {
+    const response = await api.post<GetMeResponse>("/auth/verify-email", { code });
+    return response.data.data;
 }
 
-export const resendVerificationEmailService = async (email: string) => {
-    const response = await api.post("/auth/resend-verification", { email });
-    return response.data;
+// Envia um novo código para o e-mail do usuário logado.
+export const resendVerificationCodeService = async () => {
+    const response = await api.post<ResendVerificationResponse>("/auth/resend-verification", {});
+    return response.data.data;
 }

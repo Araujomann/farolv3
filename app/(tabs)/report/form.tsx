@@ -198,7 +198,7 @@ export default function ReportFormScreen() {
         // Verificação de e-mail não verificado
         if (!user?.is_email_verified) {
             setSubmitError(
-                "Para enviar um relato, é necessário verificar seu e-mail. Por favor, clique no link de verificação enviado para o seu e-mail e tente novamente.",
+                "Para enviar um relato, é necessário verificar seu e-mail com o código de 6 dígitos que enviamos. Acesse a tela inicial ou o perfil e toque em \"Verificar\".",
             );
             return;
         }

@@ -34,6 +34,7 @@ import AboutScreen from "@/src/features/profile/components/AboutScreen";
 import { getMyGamificationStats } from "@/src/api/profile";
 import { ACCIDENT_APPROVED_EVENT } from "@/src/features/notifications/pushNotifications";
 import { useAuthStore } from "@/src/store/authStore";
+import { verifyEmailFromAppRoute } from "@/src/features/auth/verifyEmailRoute";
 import { useProfileTitleColorStore } from "@/src/features/profile/titleColorStore";
 import {
     AnimatedColorIcon,
@@ -254,6 +255,7 @@ export default function ProfileScreen() {
                     email={user?.email}
                     level={level}
                     is_email_verified={user?.is_email_verified}
+                    onVerifyEmail={() => router.push(verifyEmailFromAppRoute)}
                 />
                 {isLoadingGamification && (
                     <GamificationLoading />
@@ -464,9 +466,10 @@ type AvatarSectionProps = {
     email?: string;
     level: GamificationLevel;
     is_email_verified?: boolean;
+    onVerifyEmail: () => void;
 };
 
-function AvatarSection({ name, email, level, is_email_verified }: AvatarSectionProps) {
+function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }: AvatarSectionProps) {
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const opacityAnim = useRef(new Animated.Value(1)).current;
 
@@ -535,12 +538,19 @@ function AvatarSection({ name, email, level, is_email_verified }: AvatarSectionP
                     {email?.trim() || "—"}
                 </Text>
                 {!is_email_verified && (
-                    <Text
-                        className="text-[12px] font-semibold"
-                        style={{ color: "#F59E0B" }}
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="E-mail não verificado. Verificar agora"
+                        onPress={onVerifyEmail}
+                        hitSlop={8}
                     >
-                        Não verificado
-                    </Text>
+                        <Text
+                            className="text-[12px] font-semibold underline"
+                            style={{ color: "#F59E0B" }}
+                        >
+                            Não verificado · Verificar
+                        </Text>
+                    </Pressable>
                 )}
             </View>
         </View>

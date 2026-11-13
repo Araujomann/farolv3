@@ -8,6 +8,7 @@ import {
 import { reverseGeocode } from "@/src/features/map/services/reverseGeocode";
 import type { AccidentDetail } from "@/src/features/map/types/accident.types";
 import { useAuthStore } from "@/src/store/authStore";
+import { verifyEmailFromAppRoute } from "@/src/features/auth/verifyEmailRoute";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
     ArrowLeft,
@@ -695,10 +696,22 @@ export default function AccidentDetailsScreen() {
                                 )}
                             </View>
                         ) : (
-                            <Text className="mt-4 text-sm text-gray-500">
-                                Confirme seu e-mail para participar dos
-                                comentários e votar.
-                            </Text>
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="Verificar e-mail para comentar"
+                                onPress={() =>
+                                    router.push(verifyEmailFromAppRoute)
+                                }
+                                className="mt-4 rounded-xl bg-amber-50 px-3 py-3"
+                            >
+                                <Text className="text-sm text-amber-800">
+                                    Confirme seu e-mail para participar dos
+                                    comentários e votar.{" "}
+                                    <Text className="text-sm font-bold text-[#0058BC]">
+                                        Verificar agora
+                                    </Text>
+                                </Text>
+                            </Pressable>
                         )}
                     </SectionCard>
                 </ScrollView>

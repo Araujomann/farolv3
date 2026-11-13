@@ -5,6 +5,7 @@ import { getMyGamificationStats } from "@/src/api/profile";
 import type { GamificationStats } from "@/src/api/profile";
 import { ACCIDENT_APPROVED_EVENT } from "@/src/features/notifications/pushNotifications";
 import { useAuthStore } from "@/src/store/authStore";
+import { verifyEmailFromAppRoute } from "@/src/features/auth/verifyEmailRoute";
 import { useFocusEffect, useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import {
@@ -760,12 +761,20 @@ export default function HomeScreen() {
                 <View className="mb-5">
                     {/* Badge de Verificação de E-mail */}
                     {!user?.is_email_verified && (
-                        <View className="mb-3 flex-row items-center gap-2 rounded-xl bg-amber-100 px-3 py-2">
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Verificar e-mail"
+                            onPress={() => router.push(verifyEmailFromAppRoute)}
+                            className="mb-3 flex-row items-center gap-2 rounded-xl bg-amber-100 px-3 py-2"
+                        >
                             <Mail size={16} color="#F59E0B" strokeWidth={2} />
-                            <Text className="text-xs font-medium text-amber-700">
-                                Verifique seu e-mail para relatar acidentes
+                            <Text className="flex-1 text-xs font-medium text-amber-700">
+                                Verifique seu e-mail para relatar acidentes e comentar
                             </Text>
-                        </View>
+                            <Text className="text-xs font-bold text-amber-800">
+                                Verificar
+                            </Text>
+                        </Pressable>
                     )}
                     <View className="mb-5 flex-row items-center">
                         <View

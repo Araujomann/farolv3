@@ -24,7 +24,8 @@ Mapbox.setAccessToken(mapboxToken);
 LogBox.ignoreLogs(['Unable to activate keep awake']);
 
 export default function RootLayout() {
-    const { token, isLoading, user, restoreSession } = useAuthStore();
+    const { token, isLoading, user, restoreSession, emailVerificationPrompt } =
+        useAuthStore();
     const segments = useSegments();
     const router = useRouter();
     const rootNavigationState = useRootNavigationState();
@@ -45,21 +46,42 @@ export default function RootLayout() {
             inAuthGroup &&
             (segments[1] === "forgot-password" ||
                 segments[1] === "reset-password");
+        const inEmailVerification =
+            inAuthGroup && segments[1] === "verify-email";
 
-        if (!token && !inAuthGroup) {
+        if (!token && (!inAuthGroup || inEmailVerification)) {
             // Sem token → vai para login
             router.replace("/(auth)/login");
-        } else if (token && !inTabsGroup && !inPasswordRecovery) {
-            // Com token mas fora da área logada
-            // Verifica se precisa verificar e-mail
-            if (!user?.is_email_verified) {
-                router.replace("/(auth)/verify-reminder");
+        } else if (
+            token &&
+            !inTabsGroup &&
+            !inPasswordRecovery &&
+            !inEmailVerification
+        ) {
+            // Com token mas fora da área logada.
+            // Logo após cadastro/login sem e-mail verificado → tela do código.
+            // (No cadastro o código já foi enviado; no login pedimos um novo.)
+            if (!user?.is_email_verified && emailVerificationPrompt) {
+                router.replace({
+                    pathname: "/(auth)/verify-email",
+                    params:
+                        emailVerificationPrompt === "login"
+                            ? { send: "1" }
+                            : {},
+                });
             } else {
                 router.replace("/(tabs)/home");
             }
         }
 
-    }, [token, isLoading, rootNavigationState?.key, segments, user?.is_email_verified]);
+    }, [
+        token,
+        isLoading,
+        rootNavigationState?.key,
+        segments,
+        user?.is_email_verified,
+        emailVerificationPrompt,
+    ]);
 
     return (
         <GluestackUIProvider mode="dark">

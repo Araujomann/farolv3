@@ -145,14 +145,14 @@ export default function RegisterScreen() {
           password: data.password,
         });
 
+      // O _layout.tsx redireciona para a tela do código de verificação
+      // (o código já foi enviado pela API no cadastro).
       await signIn(
         user,
         tokens.accessToken,
-        tokens.refreshToken
+        tokens.refreshToken,
+        "register"
       );
-
-      // Redireciona para a tela de lembrete de verificação
-      router.replace("/(auth)/verify-reminder");
     } catch (error: any) {
       const message =
         error?.response?.data?.error?.message ??

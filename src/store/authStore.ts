@@ -10,12 +10,23 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     user: null,
     token: null,
     isLoading: true, // Começa em true enquanto checamos se o usuário já tem login salvo
+    emailVerificationPrompt: null,
 
     // Ação de Login: Salva no SecureStore e atualiza o estado global
-    signIn: async (user, token, refreshToken) => {
+    signIn: async (user, token, refreshToken, source = "login") => {
         await SecureStore.setItemAsync("token", token);
         await SecureStore.setItemAsync("refresh_token", refreshToken);
-        set({ user, token, isLoading: false });
+        set({
+            user,
+            token,
+            isLoading: false,
+            emailVerificationPrompt: user.is_email_verified ? null : source,
+        });
+    },
+
+    // "Verificar depois" ou verificação concluída: não abre mais a tela de código
+    dismissEmailVerificationPrompt: () => {
+        set({ emailVerificationPrompt: null });
     },
 
     // Ação de Logout: Remove do SecureStore e limpa o estado
@@ -28,7 +39,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
         await SecureStore.deleteItemAsync("token");
         await SecureStore.deleteItemAsync("refresh_token");
-        set({ user: null, token: null, isLoading: false });
+        set({ user: null, token: null, isLoading: false, emailVerificationPrompt: null });
     },
 
     // Atualiza o usuário diretamente (útil após verificação de e-mail)
