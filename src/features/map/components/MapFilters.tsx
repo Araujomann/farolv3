@@ -151,12 +151,12 @@ export function MapFilters({
                 style={{ top: insets.top + topOffset }}
             >
                 <SlidersHorizontal size={16} color="#374151" />
-                <Text className="text-sm font-semibold text-gray-700">
+                <Text className="text-sm font-body-semibold text-gray-700">
                     Filtros
                 </Text>
                 {activeCount > 0 && (
                     <View className="ml-0.5 h-5 w-5 items-center justify-center rounded-full bg-[#0969D7]">
-                        <Text className="text-[10px] font-bold text-white">
+                        <Text className="text-[10px] font-body-bold text-white">
                             {activeCount}
                         </Text>
                     </View>
@@ -171,7 +171,7 @@ export function MapFilters({
             onTouchStart={onInteraction}
         >
             <View className="mb-4 flex-row items-center justify-between px-5">
-                <Text className="text-lg font-bold text-gray-900">
+                <Text className="text-lg font-body-bold text-gray-900">
                     Filtros
                 </Text>
                 <Pressable
@@ -260,7 +260,7 @@ export function MapFilters({
                     onPress={handleClear}
                     className="flex-1 items-center rounded-full border border-gray-200 bg-gray-50 py-3"
                 >
-                    <Text className="text-sm font-semibold text-gray-700">
+                    <Text className="text-sm font-body-semibold text-gray-700">
                         Limpar
                     </Text>
                 </Pressable>
@@ -268,7 +268,7 @@ export function MapFilters({
                     onPress={handleApply}
                     className="flex-1 items-center rounded-full bg-[#0969D7] py-3"
                 >
-                    <Text className="text-sm font-semibold text-white">
+                    <Text className="text-sm font-body-semibold text-white">
                         Aplicar
                     </Text>
                 </Pressable>
@@ -287,7 +287,7 @@ function FilterSection({
 }) {
     return (
         <View className="mb-4">
-            <Text className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">
+            <Text className="mb-2 text-xs font-body-bold uppercase tracking-wide text-gray-500">
                 {title}
             </Text>
             <View className="flex-row flex-wrap gap-2">{children}</View>
@@ -327,7 +327,7 @@ function FilterChip({
             )}
             {!dot && active && <Check size={14} color="#FFFFFF" />}
             <Text
-                className="text-sm font-medium"
+                className="text-sm font-body-medium"
                 style={{ color: active ? "#FFFFFF" : "#374151" }}
             >
                 {label}

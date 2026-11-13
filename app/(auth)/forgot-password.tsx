@@ -155,17 +155,17 @@ export default function ForgotPasswordScreen() {
                                     style={{ width: 36, height: 36 }}
                                     accessibilityLabel="Ícone do Farol"
                                 />
-                                <Text className="text-xl font-bold tracking-tight text-slate-900">
+                                <Text className="text-xl font-display tracking-tight text-slate-900">
                                     Farol
                                 </Text>
                             </Box>
 
                             <Box className="flex-1 justify-center py-6">
                                 <VStack space="xs" className="mb-9 items-center">
-                                    <Text className="text-center text-2xl font-bold tracking-tight text-slate-900">
+                                    <Text className="text-center text-2xl font-display tracking-tight text-slate-900">
                                         {stage === "code" ? "Digite o código" : "Recuperar senha"}
                                     </Text>
-                                    <Text className="text-center text-sm text-slate-500">
+                                    <Text className="font-body text-center text-sm text-slate-500">
                                         {stage === "code"
                                             ? `Se houver uma conta associada a ${submittedEmail}, enviaremos um código para esse endereço.`
                                             : "Informe o e-mail da sua conta para receber um código de recuperação."}
@@ -175,13 +175,13 @@ export default function ForgotPasswordScreen() {
                                 {stage === "code" ? (
                                     <VStack space="lg">
                                         <Box className="rounded-xl bg-blue-50 px-4 py-3">
-                                            <Text className="text-sm text-slate-700">
+                                            <Text className="font-body text-sm text-slate-700">
                                                 O código tem 6 dígitos e expira em 5 minutos. Confira também sua caixa de spam.
                                             </Text>
                                         </Box>
                                         <VStack space="xs">
                                             <Box className="relative">
-                                                <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-medium text-slate-500">
+                                                <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-body-medium text-slate-500">
                                                     Código de recuperação
                                                 </Text>
                                                 <Controller
@@ -204,7 +204,7 @@ export default function ForgotPasswordScreen() {
                                                                 onBlur={onBlur}
                                                                 onChangeText={(text) => onChange(text.replace(/\D/g, ""))}
                                                                 value={value}
-                                                                className="text-sm font-medium tracking-[4px] text-slate-800"
+                                                                className="text-sm font-body-medium tracking-[4px] text-slate-800"
                                                                 accessibilityLabel="Código de recuperação de seis dígitos"
                                                             />
                                                         </Input>
@@ -212,7 +212,7 @@ export default function ForgotPasswordScreen() {
                                                 />
                                             </Box>
                                             {codeErrors.code && (
-                                                <Text className="text-xs text-red-600">
+                                                <Text className="font-body text-xs text-red-600">
                                                     {codeErrors.code.message}
                                                 </Text>
                                             )}
@@ -220,7 +220,7 @@ export default function ForgotPasswordScreen() {
 
                                         {serverError && (
                                             <Box className="rounded-xl bg-red-50 px-4 py-3">
-                                                <Text className="text-sm text-red-700">{serverError}</Text>
+                                                <Text className="font-body text-sm text-red-700">{serverError}</Text>
                                             </Box>
                                         )}
 
@@ -232,7 +232,7 @@ export default function ForgotPasswordScreen() {
                                             {isVerifying ? (
                                                 <ButtonSpinner className="text-white" />
                                             ) : (
-                                                <ButtonText className="text-sm font-medium text-white">
+                                                <ButtonText className="text-sm font-body-medium text-white">
                                                     Confirmar código
                                                 </ButtonText>
                                             )}
@@ -244,7 +244,7 @@ export default function ForgotPasswordScreen() {
                                             accessibilityRole="button"
                                             className="items-center py-2"
                                         >
-                                            <Text className={`text-sm font-medium ${resendCooldown > 0 ? "text-slate-400" : "text-[#0058BC]"}`}>
+                                            <Text className={`text-sm font-body-medium ${resendCooldown > 0 ? "text-slate-400" : "text-[#0058BC]"}`}>
                                                 {isResending
                                                     ? "Enviando código..."
                                                     : resendCooldown > 0
@@ -257,7 +257,7 @@ export default function ForgotPasswordScreen() {
                                     <VStack space="lg">
                                         <VStack space="xs">
                                             <Box className="relative">
-                                                <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-medium text-slate-500">
+                                                <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-body-medium text-slate-500">
                                                     E-mail
                                                 </Text>
                                                 <Controller
@@ -281,7 +281,7 @@ export default function ForgotPasswordScreen() {
                                                                 onBlur={onBlur}
                                                                 onChangeText={onChange}
                                                                 value={value}
-                                                                className="text-sm font-medium text-slate-800"
+                                                                className="text-sm font-body-medium text-slate-800"
                                                                 accessibilityLabel="E-mail"
                                                             />
                                                         </Input>
@@ -289,7 +289,7 @@ export default function ForgotPasswordScreen() {
                                                 />
                                             </Box>
                                             {errors.email && (
-                                                <Text className="text-xs text-red-600">
+                                                <Text className="font-body text-xs text-red-600">
                                                     {errors.email.message}
                                                 </Text>
                                             )}
@@ -297,7 +297,7 @@ export default function ForgotPasswordScreen() {
 
                                         {serverError && (
                                             <Box className="rounded-xl bg-red-50 px-4 py-3">
-                                                <Text className="text-sm text-red-700">{serverError}</Text>
+                                                <Text className="font-body text-sm text-red-700">{serverError}</Text>
                                             </Box>
                                         )}
 
@@ -309,7 +309,7 @@ export default function ForgotPasswordScreen() {
                                             {isSubmitting ? (
                                                 <ButtonSpinner className="text-white" />
                                             ) : (
-                                                <ButtonText className="text-sm font-medium text-white">
+                                                <ButtonText className="text-sm font-body-medium text-white">
                                                     Enviar código de recuperação
                                                 </ButtonText>
                                             )}
@@ -329,7 +329,7 @@ export default function ForgotPasswordScreen() {
                         className="flex-row items-center gap-1"
                     >
                         <ChevronLeft size={16} color="#475569" />
-                        <Text className="text-sm font-bold text-slate-700">Voltar para entrar</Text>
+                        <Text className="text-sm font-body-bold text-slate-700">Voltar para entrar</Text>
                     </TouchableOpacity>
                 </Box>
             </View>

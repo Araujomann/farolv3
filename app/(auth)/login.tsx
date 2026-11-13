@@ -127,7 +127,7 @@ export default function LoginScreen() {
                                 accessibilityLabel="Ícone do Farol"
                             />
 
-                            <Text className="text-xl font-bold tracking-tight text-slate-900">
+                            <Text className="text-xl font-display tracking-tight text-slate-900">
                                 Farol
                             </Text>
                         </Box>
@@ -140,11 +140,11 @@ export default function LoginScreen() {
                             {/* TÍTULO */}
 
                             <VStack space="xs" className="mb-9 items-center">
-                                <Text className="text-center text-2xl font-bold tracking-tight text-slate-900">
+                                <Text className="text-center text-2xl font-display tracking-tight text-slate-900">
                                     Bem-vindo!
                                 </Text>
 
-                                <Text className="text-center text-lg font-bold tracking-tight text-slate-800">
+                                <Text className="text-center text-lg font-body-bold tracking-tight text-slate-800">
                                     Entre para continuar
                                 </Text>
                             </VStack>
@@ -158,7 +158,7 @@ export default function LoginScreen() {
 
                                 <VStack space="xs">
                                     <Box className="relative">
-                                        <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-medium text-slate-500">
+                                        <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-body-medium text-slate-500">
                                             E-mail
                                         </Text>
 
@@ -193,7 +193,7 @@ export default function LoginScreen() {
                                                         onBlur={onBlur}
                                                         onChangeText={onChange}
                                                         value={value}
-                                                        className="text-sm font-medium text-slate-800"
+                                                        className="text-sm font-body-medium text-slate-800"
                                                         accessibilityLabel="E-mail"
                                                     />
                                                 </Input>
@@ -202,7 +202,7 @@ export default function LoginScreen() {
                                     </Box>
 
                                     {errors.email && (
-                                        <Text className="text-xs text-red-600">
+                                        <Text className="font-body text-xs text-red-600">
                                             {errors.email.message}
                                         </Text>
                                     )}
@@ -214,7 +214,7 @@ export default function LoginScreen() {
 
                                 <VStack space="xs">
                                     <Box className="relative">
-                                        <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-medium text-slate-500">
+                                        <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-body-medium text-slate-500">
                                             Senha
                                         </Text>
 
@@ -250,7 +250,7 @@ export default function LoginScreen() {
                                                         onBlur={onBlur}
                                                         onChangeText={onChange}
                                                         value={value}
-                                                        className="text-sm font-medium text-slate-800"
+                                                        className="text-sm font-body-medium text-slate-800"
                                                         accessibilityLabel="Senha"
                                                     />
 
@@ -284,7 +284,7 @@ export default function LoginScreen() {
                                     </Box>
 
                                     {errors.password && (
-                                        <Text className="text-xs text-red-600">
+                                        <Text className="font-body text-xs text-red-600">
                                             {errors.password.message}
                                         </Text>
                                     )}
@@ -329,7 +329,7 @@ export default function LoginScreen() {
                                             )}
                                         </Box>
 
-                                        <Text className="text-xs font-medium text-slate-500">
+                                        <Text className="text-xs font-body-medium text-slate-500">
                                             Lembrar de mim
                                         </Text>
                                     </TouchableOpacity>
@@ -345,7 +345,7 @@ export default function LoginScreen() {
                                         activeOpacity={0.7}
                                         accessibilityRole="button"
                                     >
-                                        <Text className="text-xs font-medium text-[#0058BC]">
+                                        <Text className="text-xs font-body-medium text-[#0058BC]">
                                         Esqueceu a senha?
                                         </Text>
                                     </TouchableOpacity>
@@ -357,7 +357,7 @@ export default function LoginScreen() {
 
                                 {serverError && (
                                     <Box className="rounded-xl bg-red-50 px-4 py-3">
-                                        <Text className="text-sm text-red-700">
+                                        <Text className="font-body text-sm text-red-700">
                                             {serverError}
                                         </Text>
                                     </Box>
@@ -379,7 +379,7 @@ export default function LoginScreen() {
                                     {isSubmitting ? (
                                         <ButtonSpinner className="text-white" />
                                     ) : (
-                                        <ButtonText className="text-sm font-medium text-white">
+                                        <ButtonText className="text-sm font-body-medium text-white">
                                             Entrar
                                         </ButtonText>
                                     )}
@@ -392,7 +392,7 @@ export default function LoginScreen() {
                     </KeyboardAvoidingView>
 
                     <Box className="w-full flex-row items-center justify-center gap-1 bg-white px-7 pb-5 pt-6">
-                        <Text className="text-center text-sm text-slate-600">
+                        <Text className="font-body text-center text-sm text-slate-600">
                             Não tem uma conta?
                         </Text>
 
@@ -401,7 +401,7 @@ export default function LoginScreen() {
                             activeOpacity={0.7}
                             accessibilityRole="button"
                         >
-                            <Text className="text-sm font-bold text-slate-900">
+                            <Text className="text-sm font-body-bold text-slate-900">
                                 Cadastre-se
                             </Text>
                         </TouchableOpacity>

@@ -220,10 +220,10 @@ export default function VerifyEmailScreen() {
                     <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-green-50">
                         <CircleCheck size={56} color="#168047" strokeWidth={2} />
                     </View>
-                    <Text className="mb-2 text-center text-2xl font-bold tracking-tight text-slate-900">
+                    <Text className="mb-2 text-center text-2xl font-display tracking-tight text-slate-900">
                         E-mail verificado!
                     </Text>
-                    <Text className="text-center text-sm leading-5 text-slate-500">
+                    <Text className="font-body text-center text-sm leading-5 text-slate-500">
                         Agora você pode relatar acidentes e comentar nos relatos do mapa.
                     </Text>
                     {!isVerified && (
@@ -231,7 +231,7 @@ export default function VerifyEmailScreen() {
                             className="mt-8 h-12 w-full rounded-xl bg-[#0058BC]"
                             onPress={onVerifyLater}
                         >
-                            <ButtonText className="text-sm font-medium text-white">
+                            <ButtonText className="text-sm font-body-medium text-white">
                                 Continuar
                             </ButtonText>
                         </Button>
@@ -262,19 +262,19 @@ export default function VerifyEmailScreen() {
                                     style={{ width: 36, height: 36 }}
                                     accessibilityLabel="Ícone do Farol"
                                 />
-                                <Text className="text-xl font-bold tracking-tight text-slate-900">
+                                <Text className="text-xl font-display tracking-tight text-slate-900">
                                     Farol
                                 </Text>
                             </Box>
 
                             <Box className="flex-1 justify-center py-6">
                                 <VStack space="xs" className="mb-9 items-center">
-                                    <Text className="text-center text-2xl font-bold tracking-tight text-slate-900">
+                                    <Text className="text-center text-2xl font-display tracking-tight text-slate-900">
                                         Verifique seu e-mail
                                     </Text>
-                                    <Text className="text-center text-sm text-slate-500">
+                                    <Text className="font-body text-center text-sm text-slate-500">
                                         Enviamos um código de 6 dígitos para{" "}
-                                        <Text className="text-sm font-semibold text-slate-700">
+                                        <Text className="text-sm font-body-semibold text-slate-700">
                                             {user.email}
                                         </Text>
                                         . Digite-o abaixo para confirmar sua conta.
@@ -283,14 +283,14 @@ export default function VerifyEmailScreen() {
 
                                 <VStack space="lg">
                                     <Box className="rounded-xl bg-blue-50 px-4 py-3">
-                                        <Text className="text-sm text-slate-700">
+                                        <Text className="font-body text-sm text-slate-700">
                                             O código expira em 1 hora. Confira também sua caixa de spam.
                                         </Text>
                                     </Box>
 
                                     <VStack space="xs">
                                         <Box className="relative">
-                                            <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-medium text-slate-500">
+                                            <Text className="absolute -top-2 left-3.5 z-10 bg-white px-1.5 text-xs font-body-medium text-slate-500">
                                                 Código de verificação
                                             </Text>
                                             <Controller
@@ -315,7 +315,7 @@ export default function VerifyEmailScreen() {
                                                             onChangeText={(text) => onChange(text.replace(/\D/g, ""))}
                                                             onSubmitEditing={handleSubmit(onVerifyCode)}
                                                             value={value}
-                                                            className="text-sm font-medium tracking-[4px] text-slate-800"
+                                                            className="text-sm font-body-medium tracking-[4px] text-slate-800"
                                                             accessibilityLabel="Código de verificação de seis dígitos"
                                                         />
                                                     </Input>
@@ -323,7 +323,7 @@ export default function VerifyEmailScreen() {
                                             />
                                         </Box>
                                         {errors.code && (
-                                            <Text className="text-xs text-red-600">
+                                            <Text className="font-body text-xs text-red-600">
                                                 {errors.code.message}
                                             </Text>
                                         )}
@@ -331,13 +331,13 @@ export default function VerifyEmailScreen() {
 
                                     {infoMessage && !serverError && (
                                         <Box className="rounded-xl bg-green-50 px-4 py-3">
-                                            <Text className="text-sm text-green-700">{infoMessage}</Text>
+                                            <Text className="font-body text-sm text-green-700">{infoMessage}</Text>
                                         </Box>
                                     )}
 
                                     {serverError && (
                                         <Box className="rounded-xl bg-red-50 px-4 py-3">
-                                            <Text className="text-sm text-red-700">{serverError}</Text>
+                                            <Text className="font-body text-sm text-red-700">{serverError}</Text>
                                         </Box>
                                     )}
 
@@ -349,7 +349,7 @@ export default function VerifyEmailScreen() {
                                         {isSubmitting ? (
                                             <ButtonSpinner className="text-white" />
                                         ) : (
-                                            <ButtonText className="text-sm font-medium text-white">
+                                            <ButtonText className="text-sm font-body-medium text-white">
                                                 Confirmar código
                                             </ButtonText>
                                         )}
@@ -362,7 +362,7 @@ export default function VerifyEmailScreen() {
                                         accessibilityRole="button"
                                         className="items-center py-2"
                                     >
-                                        <Text className={`text-sm font-medium ${resendCooldown > 0 || isResending ? "text-slate-400" : "text-[#0058BC]"}`}>
+                                        <Text className={`text-sm font-body-medium ${resendCooldown > 0 || isResending ? "text-slate-400" : "text-[#0058BC]"}`}>
                                             {isResending
                                                 ? "Enviando código..."
                                                 : resendCooldown > 0
@@ -383,7 +383,7 @@ export default function VerifyEmailScreen() {
                         accessibilityRole="button"
                         className="items-center"
                     >
-                        <Text className="text-sm font-bold text-slate-700">Verificar depois</Text>
+                        <Text className="text-sm font-body-bold text-slate-700">Verificar depois</Text>
                         <Text className="mt-0.5 text-center text-xs text-slate-500">
                             Você poderá ver o mapa, mas não relatar acidentes nem comentar.
                         </Text>

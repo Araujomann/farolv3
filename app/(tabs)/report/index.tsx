@@ -380,7 +380,7 @@ export default function ReportScreen() {
                     <View className="mx-auto mb-6 h-1.5 w-12 rounded-full bg-[#717786]/40" />
                     <View className="flex-1 justify-between">
                         <View className="gap-4">
-                            <Text className="text-center text-[22px] font-bold text-[#181C23]">
+                            <Text className="text-center text-[22px] font-display text-[#181C23]">
                                 Local do Acidente
                             </Text>
                             <View className="flex-row items-center gap-2.5 rounded-2xl border border-[#ADC6FF]/30 bg-[#ADC6FF]/20 px-3 py-2.5">
@@ -389,7 +389,7 @@ export default function ReportScreen() {
                                     color="#0058BC"
                                     strokeWidth={2.25}
                                 />
-                                <Text className="flex-1 text-[15px] leading-[20px] text-[#414755]">
+                                <Text className="font-body flex-1 text-[15px] leading-[20px] text-[#414755]">
                                     Arraste o mapa até que o pino esteja sobre o
                                     local exato do acidente.
                                 </Text>
@@ -400,7 +400,7 @@ export default function ReportScreen() {
                                     color="#0058BC"
                                     strokeWidth={2.25}
                                 />
-                                <Text className="flex-1 text-[15px] leading-[20px] text-[#414755]">
+                                <Text className="font-body flex-1 text-[15px] leading-[20px] text-[#414755]">
                                     Use pinça para ajustar o zoom.
                                 </Text>
                             </View>
@@ -413,7 +413,7 @@ export default function ReportScreen() {
                                 marginBottom: Math.max(insets.bottom + 16, 40),
                             }}
                         >
-                            <Text className="text-[17px] font-bold text-white">
+                            <Text className="text-[17px] font-body-bold text-white">
                                 Entendi
                             </Text>
                         </Pressable>
@@ -443,7 +443,7 @@ export default function ReportScreen() {
                         }`}
                     >
                         {isConfirmed && <Check size={21} color="#FFFFFF" />}
-                        <Text className="text-[17px] font-bold text-white">
+                        <Text className="text-[17px] font-body-bold text-white">
                             {isConfirmed
                                 ? "Localização confirmada"
                                 : "Confirmar Localização"}
@@ -458,10 +458,10 @@ export default function ReportScreen() {
 function Coordinate({ label, value }: { label: string; value: number }) {
     return (
         <View className="items-center">
-            <Text className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#717786]">
+            <Text className="mb-0.5 text-[10px] font-body-semibold uppercase tracking-wider text-[#717786]">
                 {label}
             </Text>
-            <Text className="text-xs font-medium tabular-nums text-[#181C23]">
+            <Text className="text-xs font-body-medium tabular-nums text-[#181C23]">
                 {value.toFixed(6)}
             </Text>
         </View>

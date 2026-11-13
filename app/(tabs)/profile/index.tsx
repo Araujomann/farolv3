@@ -330,7 +330,7 @@ export default function ProfileScreen() {
                                         strokeWidth={2.25}
                                     />
                                 </View>
-                                <Text className="flex-1 text-[20px] font-bold" style={{ color: ON_SURFACE_HEX }}>
+                                <Text className="flex-1 text-[20px] font-display" style={{ color: ON_SURFACE_HEX }}>
                                     Sair da conta?
                                 </Text>
                             </View>
@@ -345,7 +345,7 @@ export default function ProfileScreen() {
                         </View>
 
                         <Text
-                            className="mb-6 text-[15px] leading-[21px]"
+                            className="font-body mb-6 text-[15px] leading-[21px]"
                             style={{ color: ON_SURFACE_VARIANT_HEX }}
                         >
                             Você precisará entrar novamente para acessar sua conta. Deseja sair mesmo assim?
@@ -358,7 +358,7 @@ export default function ProfileScreen() {
                                 disabled={isLoggingOut}
                                 className="h-12 items-center justify-center rounded-xl bg-[#0058BC]"
                             >
-                                <Text className="text-[15px] font-bold text-white">
+                                <Text className="text-[15px] font-body-bold text-white">
                                     Continuar conectado
                                 </Text>
                             </Pressable>
@@ -372,7 +372,7 @@ export default function ProfileScreen() {
                                     <ActivityIndicator size="small" color={ERROR_HEX} />
                                 ) : (
                                     <Text
-                                        className="text-[15px] font-bold"
+                                        className="text-[15px] font-body-bold"
                                         style={{ color: ERROR_HEX }}
                                     >
                                         Sair da conta
@@ -433,7 +433,7 @@ function TopAppBar({
             </Pressable>
 
             <Text
-                className="text-lg font-semibold"
+                className="text-lg font-body-semibold"
                 style={{ color: ON_SURFACE_HEX }}
             >
                 Profile
@@ -542,7 +542,7 @@ function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }:
             </Animated.View>
 
             <Text
-                className="mt-3 text-[22px] font-bold leading-7"
+                className="mt-3 text-[22px] font-display leading-7"
                 style={{ color: "#181C23" }}
             >
                 {name ?? "Usuário"}
@@ -550,7 +550,7 @@ function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }:
 
             <View className="flex-row items-center gap-2 mt-1">
                 <Text
-                    className="text-[15px] leading-5"
+                    className="font-body text-[15px] leading-5"
                     style={{ color: "#414755" }}
                 >
                     {email?.trim() || "—"}
@@ -563,7 +563,7 @@ function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }:
                         hitSlop={8}
                     >
                         <Text
-                            className="text-[12px] font-semibold underline"
+                            className="text-[12px] font-body-semibold underline"
                             style={{ color: "#F59E0B" }}
                         >
                             Não verificado · Verificar
@@ -633,13 +633,13 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
                 </Reanimated.View>
                 <View className="min-w-0 flex-1">
                     <Text
-                        className="text-[11px] font-semibold uppercase tracking-widest"
+                        className="text-[11px] font-body-semibold uppercase tracking-widest"
                         style={{ color: "#414755" }}
                     >
                         Nível Atual
                     </Text>
                     <TitleColorText
-                        className="text-xl font-semibold"
+                        className="text-xl font-display-semibold"
                         numberOfLines={1}
                         adjustsFontSizeToFit
                         minimumFontScale={0.8}
@@ -647,7 +647,7 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
                         {level.label}
                     </TitleColorText>
                     <Text
-                        className="mt-0.5 text-xs"
+                        className="font-body mt-0.5 text-xs"
                         style={{ color: ON_SURFACE_VARIANT_HEX }}
                     >
                         {approvedReportsCount}{" "}
@@ -661,7 +661,7 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
             {/* Right side: points */}
             <View className="max-w-[38%] shrink-0 items-end">
                 <Text
-                    className="text-[24px] font-bold leading-8"
+                    className="text-[24px] font-display leading-8"
                     style={{ color: "#181C23" }}
                     numberOfLines={1}
                     adjustsFontSizeToFit
@@ -670,7 +670,7 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
                     {points.toLocaleString("pt-BR")}
                 </Text>
                 <Text
-                    className="text-[13px] leading-5"
+                    className="font-body text-[13px] leading-5"
                     style={{ color: "#414755" }}
                 >
                     pontos
@@ -726,7 +726,7 @@ function ProgressCard({
             {/* Content */}
             <View className="z-10">
                 <Text
-                    className="text-base font-semibold"
+                    className="text-base font-body-semibold"
                     style={{ color: ON_SURFACE_HEX }}
                 >
                     {nextLevel
@@ -735,7 +735,7 @@ function ProgressCard({
                 </Text>
 
                 <Text
-                    className="mt-2 text-[13px] leading-5"
+                    className="font-body mt-2 text-[13px] leading-5"
                     style={{ color: ON_SURFACE_VARIANT_HEX }}
                 >
                     {level.message}
@@ -761,7 +761,7 @@ function ProgressCard({
                         />
                     </Animated.View>
                 </View>
-                <TitleColorText className="mt-2 text-right text-xs font-semibold">
+                <TitleColorText className="mt-2 text-right text-xs font-body-semibold">
                     {`${Math.round(progressPercent)}%`}
                 </TitleColorText>
             </View>
@@ -781,13 +781,13 @@ function TrustVotesCard({ count }: { count: number }) {
             </View>
             <View className="flex-1">
                 <Text
-                    className="text-base font-semibold"
+                    className="text-base font-body-semibold"
                     style={{ color: ON_SURFACE_HEX }}
                 >
                     Selos de confiança
                 </Text>
                 <Text
-                    className="mt-1 text-[13px]"
+                    className="font-body mt-1 text-[13px]"
                     style={{ color: ON_SURFACE_VARIANT_HEX }}
                 >
                     {count === 1
@@ -795,7 +795,7 @@ function TrustVotesCard({ count }: { count: number }) {
                         : `${count} votos confiáveis recebidos`}
                 </Text>
             </View>
-            <TitleColorText className="text-2xl font-bold">
+            <TitleColorText className="text-2xl font-display">
                 {count}
             </TitleColorText>
         </View>
@@ -806,7 +806,7 @@ function GamificationLoading() {
     return (
         <View className="mt-5 flex-row items-center justify-center gap-2 rounded-xl bg-white p-4">
             <ActivityIndicator size="small" color={PRIMARY_HEX} />
-            <Text className="text-sm" style={{ color: ON_SURFACE_VARIANT_HEX }}>
+            <Text className="font-body text-sm" style={{ color: ON_SURFACE_VARIANT_HEX }}>
                 Atualizando sua progressão...
             </Text>
         </View>
@@ -821,7 +821,7 @@ type GamificationErrorProps = {
 function GamificationError({ message, onRetry }: GamificationErrorProps) {
     return (
         <View className="mt-4 rounded-xl border border-[#F0B7A8] bg-[#FFF8F5] p-4">
-            <Text className="text-sm" style={{ color: ERROR_HEX }}>
+            <Text className="font-body text-sm" style={{ color: ERROR_HEX }}>
                 {message}
             </Text>
             <Pressable
@@ -829,7 +829,7 @@ function GamificationError({ message, onRetry }: GamificationErrorProps) {
                 onPress={onRetry}
                 className="mt-3 self-start rounded-lg bg-white px-3 py-2"
             >
-                <Text className="text-sm font-semibold" style={{ color: ERROR_HEX }}>
+                <Text className="text-sm font-body-semibold" style={{ color: ERROR_HEX }}>
                     Tentar novamente
                 </Text>
             </Pressable>
@@ -867,7 +867,7 @@ function SettingsRow({
                     <TitleColorIcon icon={Icon} size={20} strokeWidth={2} />
                 </View>
                 <Text
-                    className="text-base"
+                    className="font-body text-base"
                     style={{ color: ON_SURFACE_HEX }}
                 >
                     {label}
@@ -961,7 +961,7 @@ function LogoutSection({ isLoggingOut, onPress }: LogoutSectionProps) {
                     <ActivityIndicator size="small" color={ERROR_HEX} />
                 ) : (
                     <Text
-                        className="text-base font-semibold"
+                        className="text-base font-body-semibold"
                         style={{ color: ERROR_HEX }}
                     >
                         Sair

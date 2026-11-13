@@ -7,6 +7,18 @@ import {
 } from "expo-router";
 import { ActivityIndicator, LogBox, View } from 'react-native';
 import Mapbox from '@rnmapbox/maps';
+import { useFonts } from 'expo-font';
+import {
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+} from '@expo-google-fonts/inter';
+import {
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+} from '@expo-google-fonts/plus-jakarta-sans';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { useAuthStore } from '@/src/store/authStore';
 import { usePushNotifications } from '@/src/features/notifications/usePushNotifications';
@@ -29,6 +41,17 @@ export default function RootLayout() {
     const segments = useSegments();
     const router = useRouter();
     const rootNavigationState = useRootNavigationState();
+    const [fontsLoaded, fontError] = useFonts({
+        Inter_400Regular,
+        Inter_500Medium,
+        Inter_600SemiBold,
+        Inter_700Bold,
+        PlusJakartaSans_600SemiBold,
+        PlusJakartaSans_700Bold,
+        PlusJakartaSans_800ExtraBold,
+    });
+    // Em caso de erro no carregamento, segue com a fonte do sistema.
+    const fontsReady = fontsLoaded || Boolean(fontError);
 
     usePushNotifications(Boolean(token));
 
@@ -91,7 +114,7 @@ export default function RootLayout() {
                     <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 </Stack>
-                {isLoading && (
+                {(isLoading || !fontsReady) && (
                     <View className="absolute inset-0 items-center justify-center bg-background">
                         <ActivityIndicator size="large" color="#0058BC" />
                     </View>

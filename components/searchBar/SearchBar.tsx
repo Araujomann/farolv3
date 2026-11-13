@@ -221,7 +221,7 @@ export const SearchBar = ({
           placeholder="Buscar lugar, rua ou bairro..."
           placeholderTextColor={PLACEHOLDER_COLOR}
           returnKeyType="search"
-          className="flex-1 text-[15px] font-normal text-gray-900"
+          className="flex-1 text-[15px] font-body text-gray-900"
         />
 
         {query.length > 0 && (
@@ -246,14 +246,14 @@ export const SearchBar = ({
           <View className="flex-row items-center justify-between border-b border-gray-100 px-4 py-3">
             <View className="flex-row items-center">
               <MapPin size={15} color={ACTIVE_COLOR} />
-              <Text className="ml-2 text-xs font-bold uppercase tracking-wider text-gray-600">
+              <Text className="ml-2 text-xs font-body-bold uppercase tracking-wider text-gray-600">
                 Lugares em Imperatriz
               </Text>
             </View>
             {isSearching || selectingPlaceId ? (
               <ActivityIndicator size="small" color={ACTIVE_COLOR} />
             ) : results.length > 0 ? (
-              <Text className="text-xs font-medium text-gray-400">
+              <Text className="text-xs font-body-medium text-gray-400">
                 {results.length}{" "}
                 {results.length === 1 ? "resultado" : "resultados"}
               </Text>
@@ -262,14 +262,14 @@ export const SearchBar = ({
 
           {selectingPlaceId && (
             <View className="px-4 py-4">
-              <Text className="text-sm text-gray-600">
+              <Text className="font-body text-sm text-gray-600">
                 Abrindo lugar no mapa...
               </Text>
             </View>
           )}
 
           {searchError && (
-            <Text className="px-4 py-4 text-sm text-red-600">
+            <Text className="font-body px-4 py-4 text-sm text-red-600">
               {searchError}
             </Text>
           )}
@@ -279,7 +279,7 @@ export const SearchBar = ({
             !searchError &&
             hasSearched &&
             results.length === 0 && (
-              <Text className="px-4 py-4 text-sm leading-5 text-gray-500">
+              <Text className="font-body px-4 py-4 text-sm leading-5 text-gray-500">
                 Nenhum bairro ou local conhecido encontrado. Tente outro nome.
               </Text>
             )}
@@ -308,19 +308,19 @@ export const SearchBar = ({
                     <View className="ml-3 flex-1">
                       <Text
                         numberOfLines={1}
-                        className="text-sm font-semibold text-gray-900"
+                        className="text-sm font-body-semibold text-gray-900"
                       >
                         {place.name}
                       </Text>
                       <Text
                         numberOfLines={1}
-                        className="mt-1 text-xs text-gray-500"
+                        className="font-body mt-1 text-xs text-gray-500"
                       >
                         {place.placeName}
                       </Text>
                     </View>
                     <View className="ml-2 rounded-full bg-gray-100 px-2.5 py-1">
-                      <Text className="text-[10px] font-semibold text-gray-600">
+                      <Text className="text-[10px] font-body-semibold text-gray-600">
                         {place.category}
                       </Text>
                     </View>

@@ -14,6 +14,7 @@ import {
     Text,
     View,
 } from "react-native";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { ACCIDENT_APPROVED_EVENT } from "@/src/features/notifications/pushNotifications";
 import prfLogo from "../../../policia-rodoviaria-federal-logo-png_seeklogo-351022.png";
 
@@ -305,7 +306,7 @@ export default function MapScreen() {
                         }`}
                     >
                         <Text
-                            className={`text-xs font-semibold ${
+                            className={`text-xs font-body-semibold ${
                                 viewMode === "markers"
                                     ? "text-white"
                                     : "text-gray-600"
@@ -328,7 +329,7 @@ export default function MapScreen() {
                         }`}
                     >
                         <Text
-                            className={`text-xs font-semibold ${
+                            className={`text-xs font-body-semibold ${
                                 viewMode === "heatmap"
                                     ? "text-white"
                                     : "text-gray-600"
@@ -344,7 +345,7 @@ export default function MapScreen() {
                     !error &&
                     accidents.length > 0 && (
                         <View className="rounded-2xl bg-white/95 px-3 py-2 shadow-lg">
-                            <Text className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">
+                            <Text className="mb-1 text-xs font-body-bold uppercase tracking-wide text-gray-500">
                                 Severidade
                             </Text>
                             <View className="flex-row items-center gap-3">
@@ -392,22 +393,22 @@ export default function MapScreen() {
                     )}
                     <View className="relative z-10 flex-row items-start justify-between">
                         <View className="flex-1 pr-3">
-                            <Text className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                            <Text className="text-xs font-body-bold uppercase tracking-wide text-gray-500">
                                 Acidente selecionado
                             </Text>
                             <View className="mt-1 flex-row items-center justify-between gap-3">
-                                <Text className="flex-1 text-lg font-bold text-gray-900">
+                                <Text className="flex-1 text-lg font-body-bold text-gray-900">
                                     {selectedAccident.tipo_acidente ||
                                         "Ocorrência registrada"}
                                 </Text>
                             </View>
-                            <Text className="mt-1 text-sm text-gray-600">
+                            <Text className="font-body mt-1 text-sm text-gray-600">
                                 Severidade:{" "}
                                 {getSeverityLabel(selectedAccident.severity)}
                             </Text>
                             <View className="mt-2 flex-row items-center">
                                 <CalendarDays size={14} color="#6B7280" />
-                                <Text className="ml-1.5 text-xs font-medium text-gray-500">
+                                <Text className="ml-1.5 text-xs font-body-medium text-gray-500">
                                     {formatAccidentDate(selectedAccident.occurred_at)}
                                 </Text>
                             </View>
@@ -432,7 +433,7 @@ export default function MapScreen() {
                         className="mt-3 items-center border-t border-gray-100 pt-2"
                     >
                         <ChevronDown size={20} color="#6B7280" />
-                        <Text className="text-[11px] font-medium text-gray-500">
+                        <Text className="text-[11px] font-body-medium text-gray-500">
                             Mais detalhes
                         </Text>
                     </Pressable>
@@ -440,11 +441,25 @@ export default function MapScreen() {
             )}
 
             {isLoading && (
-                <View className="absolute left-4 right-4 top-28 items-center rounded-2xl bg-white px-4 py-3 shadow-lg">
-                    <ActivityIndicator color="#0969D7" />
-                    <Text className="mt-1 text-sm font-medium text-gray-700">
-                        Carregando acidentes...
-                    </Text>
+                <View
+                    className="absolute inset-0 items-center justify-center"
+                    pointerEvents="none"
+                >
+                    <Animated.View
+                        entering={FadeIn.duration(200)}
+                        exiting={FadeOut.duration(250)}
+                    >
+                        <View
+                            className="flex-row items-center gap-2.5 rounded-full bg-white/95 px-4 py-2.5 shadow-lg"
+                            accessibilityRole="progressbar"
+                            accessibilityLabel="Carregando acidentes"
+                        >
+                            <ActivityIndicator size="small" color="#0969D7" />
+                            <Text className="text-sm font-body-medium text-gray-700">
+                                Carregando acidentes...
+                            </Text>
+                        </View>
+                    </Animated.View>
                 </View>
             )}
 
@@ -453,14 +468,14 @@ export default function MapScreen() {
                     className="absolute left-4 right-4 top-28 items-center rounded-2xl bg-white px-4 py-3 shadow-lg"
                     onTouchStart={Keyboard.dismiss}
                 >
-                    <Text className="text-center text-sm font-medium text-gray-700">
+                    <Text className="text-center text-sm font-body-medium text-gray-700">
                         {error}
                     </Text>
                     <Pressable
                         onPress={retry}
                         className="mt-2 rounded-full bg-[#0969D7] px-4 py-2"
                     >
-                        <Text className="text-sm font-semibold text-white">
+                        <Text className="text-sm font-body-semibold text-white">
                             Tentar novamente
                         </Text>
                     </Pressable>
@@ -469,7 +484,7 @@ export default function MapScreen() {
 
             {!isLoading && !error && accidents.length === 0 && (
                 <View className="absolute left-4 right-4 top-28 items-center rounded-2xl bg-white px-4 py-3 shadow-lg">
-                    <Text className="text-center text-sm font-medium text-gray-700">
+                    <Text className="text-center text-sm font-body-medium text-gray-700">
                         Nenhum acidente registrado.
                     </Text>
                 </View>
@@ -498,7 +513,7 @@ function LegendItem({ color, label }: { color: string; label: string }) {
                 className="h-2.5 w-2.5 rounded-full border border-white"
                 style={{ backgroundColor: color }}
             />
-            <Text className="text-[11px] font-medium text-gray-700">
+            <Text className="text-[11px] font-body-medium text-gray-700">
                 {label}
             </Text>
         </View>

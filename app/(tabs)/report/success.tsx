@@ -246,7 +246,7 @@ export default function ReportSuccessScreen() {
                             top: "38%",
                             color: "rgba(24,28,35,0.1)",
                             fontSize: 92,
-                            fontWeight: "700",
+                            fontFamily: "PlusJakartaSans_700Bold",
                             transform: [{ rotate: "-90deg" }],
                         }}
                     >
@@ -298,14 +298,14 @@ export default function ReportSuccessScreen() {
                                     marginBottom: 12,
                                     color: "#181C23",
                                     fontSize: 40,
-                                    fontWeight: "700",
+                                    fontFamily: "PlusJakartaSans_700Bold",
                                     lineHeight: 46,
                                 }}
                             >
                                 Relato{"\n"}Enviado!
                             </Text>
 
-                            <Text
+                            <Text className="font-body"
                                 style={{
                                     width: "100%",
                                     color: "#414755",
@@ -359,7 +359,7 @@ export default function ReportSuccessScreen() {
                                 marginRight: 12,
                                 color: "#FFFFFF",
                                 fontSize: 17,
-                                fontWeight: "700",
+                                fontFamily: "Inter_700Bold",
                             }}
                         >
                             Voltar para o Início

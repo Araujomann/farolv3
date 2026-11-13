@@ -164,7 +164,7 @@ export default function MyReportsScreen() {
                 >
                     <ArrowLeft size={24} color={PRIMARY_COLOR} />
                 </Pressable>
-                <Text className="text-lg font-semibold text-[#181C23]">
+                <Text className="text-lg font-body-semibold text-[#181C23]">
                     Meus relatos
                 </Text>
                 <View className="h-11 w-11" />
@@ -210,13 +210,13 @@ export default function MyReportsScreen() {
                 {isLoading ? (
                     <View className="items-center py-16">
                         <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-                        <Text className="mt-3 text-sm text-[#626B7A]">
+                        <Text className="font-body mt-3 text-sm text-[#626B7A]">
                             Carregando relatos...
                         </Text>
                     </View>
                 ) : error ? (
                     <View className="items-center rounded-2xl bg-white px-5 py-8">
-                        <Text className="text-center text-[15px] leading-6 text-[#414755]">
+                        <Text className="font-body text-center text-[15px] leading-6 text-[#414755]">
                             {error}
                         </Text>
                         <Pressable
@@ -224,7 +224,7 @@ export default function MyReportsScreen() {
                             onPress={() => void loadReports()}
                             className="mt-4 rounded-xl bg-[#0058BC] px-5 py-3"
                         >
-                            <Text className="font-semibold text-white">
+                            <Text className="font-body-semibold text-white">
                                 Tentar novamente
                             </Text>
                         </Pressable>
@@ -250,7 +250,7 @@ export default function MyReportsScreen() {
                                         color={PRIMARY_COLOR}
                                     />
                                 ) : (
-                                    <Text className="font-semibold text-[#0058BC]">
+                                    <Text className="font-body-semibold text-[#0058BC]">
                                         {loadMoreError
                                             ? "Tentar carregar mais"
                                             : "Carregar mais"}
@@ -279,10 +279,10 @@ function EmptyReports({ status }: { status: ReportStatus }) {
             >
                 <Icon size={26} color={selectedFilter.color} />
             </View>
-            <Text className="text-center text-base font-semibold text-[#181C23]">
+            <Text className="text-center text-base font-body-semibold text-[#181C23]">
                 Nenhum relato {selectedFilter.label.toLowerCase()}
             </Text>
-            <Text className="mt-2 text-center text-sm leading-5 text-[#626B7A]">
+            <Text className="font-body mt-2 text-center text-sm leading-5 text-[#626B7A]">
                 Seus relatos nesta categoria aparecerão aqui.
             </Text>
         </View>
@@ -323,7 +323,7 @@ function ReportCard({ report }: { report: MyReport }) {
         <View className="overflow-hidden rounded-2xl bg-white p-4">
             <View className="mb-3 flex-row items-start justify-between gap-3">
                 <Text
-                    className="flex-1 text-[18px] font-semibold leading-6 text-[#181C23]"
+                    className="flex-1 text-[18px] font-display-semibold leading-6 text-[#181C23]"
                     numberOfLines={2}
                 >
                     {report.tipo_acidente}
@@ -341,7 +341,7 @@ function ReportCard({ report }: { report: MyReport }) {
                 </View>
             </View>
 
-            <Text className="mb-3 text-[13px] text-[#414755]">
+            <Text className="font-body mb-3 text-[13px] text-[#414755]">
                 {formatOccurrenceDate(report.occurred_at)}{" "}
                 <Text className="text-[#7B8290]">•</Text>{" "}
                 {report.latitude.toFixed(4)}, {report.longitude.toFixed(4)}
@@ -350,7 +350,7 @@ function ReportCard({ report }: { report: MyReport }) {
             <View className="mb-3 flex-row items-start gap-2">
                 <MapPin size={17} color={PRIMARY_COLOR} />
                 <Text
-                    className="flex-1 text-[13px] leading-5 text-[#414755]"
+                    className="font-body flex-1 text-[13px] leading-5 text-[#414755]"
                     accessibilityLabel={`Endereço do relato: ${address}`}
                 >
                     {address}
@@ -368,10 +368,10 @@ function ReportCard({ report }: { report: MyReport }) {
 
             {report.moderation_status === "REJECTED" && (
                 <View className="mt-3 rounded-xl bg-[#FFF2F0] p-3">
-                    <Text className="mb-1 text-[13px] font-semibold text-[#9F2018]">
+                    <Text className="mb-1 text-[13px] font-body-semibold text-[#9F2018]">
                         Motivo da rejeição
                     </Text>
-                    <Text className="text-[13px] leading-5 text-[#6F2924]">
+                    <Text className="font-body text-[13px] leading-5 text-[#6F2924]">
                         {report.moderation_message?.trim() ||
                             "A equipe não informou um motivo para a rejeição."}
                     </Text>

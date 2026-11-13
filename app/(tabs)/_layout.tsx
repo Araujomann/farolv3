@@ -288,6 +288,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: "600",
+    fontFamily: "Inter_600SemiBold",
   },
 });

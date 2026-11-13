@@ -175,10 +175,10 @@ export function AdministrativeNoticesPanel({
                                 <Bell size={22} color={titleColor} strokeWidth={2} />
                             </View>
                             <View className="flex-1">
-                                <Text className="text-[19px] font-bold" style={{ color: INK_HEX }}>
+                                <Text className="text-[19px] font-display" style={{ color: INK_HEX }}>
                                     Avisos 
                                 </Text>
-                                <Text className="mt-0.5 text-[12px]" style={{ color: MUTED_HEX }}>
+                                <Text className="font-body mt-0.5 text-[12px]" style={{ color: MUTED_HEX }}>
                                     Comunicados oficiais 
                                 </Text>
                             </View>
@@ -196,7 +196,7 @@ export function AdministrativeNoticesPanel({
 
                     <View className="flex-1">
                         <View className="flex-row items-center justify-between px-5 pb-3 pt-5">
-                            <Text className="text-[13px] font-semibold" style={{ color: MUTED_HEX }}>
+                            <Text className="text-[13px] font-body-semibold" style={{ color: MUTED_HEX }}>
                                 {notices.length === 1
                                     ? "1 aviso publicado"
                                     : `${notices.length} avisos publicados`}
@@ -229,7 +229,7 @@ export function AdministrativeNoticesPanel({
                             {isLoading && notices.length === 0 && (
                                 <View className="flex-1 items-center justify-center gap-3 py-12">
                                     <ActivityIndicator size="large" color={PRIMARY_HEX} />
-                                    <Text className="text-sm" style={{ color: MUTED_HEX }}>
+                                    <Text className="font-body text-sm" style={{ color: MUTED_HEX }}>
                                         Buscando os avisos mais recentes...
                                     </Text>
                                 </View>
@@ -237,7 +237,7 @@ export function AdministrativeNoticesPanel({
 
                             {error && (
                                 <View className="rounded-2xl border border-[#F0B7A8] bg-[#FFF8F5] p-4">
-                                    <Text className="text-sm leading-5" style={{ color: "#BA1A1A" }}>
+                                    <Text className="font-body text-sm leading-5" style={{ color: "#BA1A1A" }}>
                                         {error}
                                     </Text>
                                     <Pressable
@@ -245,7 +245,7 @@ export function AdministrativeNoticesPanel({
                                         onPress={() => void loadNotices()}
                                         className="mt-3 self-start rounded-lg bg-white px-3 py-2"
                                     >
-                                        <Text className="text-sm font-semibold" style={{ color: "#BA1A1A" }}>
+                                        <Text className="text-sm font-body-semibold" style={{ color: "#BA1A1A" }}>
                                             Tentar novamente
                                         </Text>
                                     </Pressable>
@@ -257,10 +257,10 @@ export function AdministrativeNoticesPanel({
                                     <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-[#F1F5FC]">
                                         <Bell size={28} color="#7C8BA4" strokeWidth={1.7} />
                                     </View>
-                                    <Text className="text-center text-base font-semibold" style={{ color: INK_HEX }}>
+                                    <Text className="text-center text-base font-body-semibold" style={{ color: INK_HEX }}>
                                         Tudo em dia
                                     </Text>
-                                    <Text className="mt-2 text-center text-[13px] leading-5" style={{ color: MUTED_HEX }}>
+                                    <Text className="font-body mt-2 text-center text-[13px] leading-5" style={{ color: MUTED_HEX }}>
                                         Quando a equipe publicar um comunicado, ele aparecerá aqui.
                                     </Text>
                                 </View>
@@ -274,14 +274,14 @@ export function AdministrativeNoticesPanel({
                                 >
                                     <View className="mb-3 flex-row items-center gap-2">
                                         <View className="h-2 w-2 rounded-full" style={{ backgroundColor: titleColor }} />
-                                        <Text className="text-[12px] font-semibold" style={{ color: titleColor }}>
+                                        <Text className="text-[12px] font-body-semibold" style={{ color: titleColor }}>
                                             Comunicado oficial
                                         </Text>
-                                        <Text className="ml-auto text-[11px]" style={{ color: "#7A8291" }}>
+                                        <Text className="font-body ml-auto text-[11px]" style={{ color: "#7A8291" }}>
                                             {formatNoticeDate(notice.created_at)}
                                         </Text>
                                     </View>
-                                    <Text className="text-[14px] leading-[22px]" style={{ color: INK_HEX }}>
+                                    <Text className="font-body text-[14px] leading-[22px]" style={{ color: INK_HEX }}>
                                         {notice.message}
                                     </Text>
                                 </View>

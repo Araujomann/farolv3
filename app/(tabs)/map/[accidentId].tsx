@@ -327,7 +327,7 @@ export default function AccidentDetailsScreen() {
                 >
                     <ArrowLeft size={20} color={PRIMARY} />
                 </Pressable>
-                <Text className="flex-1 text-center text-lg font-bold text-[#181C23]">
+                <Text className="flex-1 text-center text-lg font-body-bold text-[#181C23]">
                     Detalhes do acidente
                 </Text>
                 <View className="h-10 w-10" />
@@ -336,20 +336,20 @@ export default function AccidentDetailsScreen() {
             {isLoading && !accident ? (
                 <View className="flex-1 items-center justify-center px-6">
                     <ActivityIndicator size="large" color={PRIMARY} />
-                    <Text className="mt-3 text-sm text-gray-600">
+                    <Text className="font-body mt-3 text-sm text-gray-600">
                         Carregando detalhes...
                     </Text>
                 </View>
             ) : error && !accident ? (
                 <View className="flex-1 items-center justify-center px-6">
-                    <Text className="text-center text-sm text-gray-700">
+                    <Text className="font-body text-center text-sm text-gray-700">
                         {error}
                     </Text>
                     <Pressable
                         onPress={() => void loadAccident()}
                         className="mt-4 rounded-full bg-[#0058BC] px-5 py-3"
                     >
-                        <Text className="font-semibold text-white">
+                        <Text className="font-body-semibold text-white">
                             Tentar novamente
                         </Text>
                     </Pressable>
@@ -422,19 +422,19 @@ export default function AccidentDetailsScreen() {
                         ) : (
                             <View className="h-[180px] items-center justify-center bg-[#EAF1FF]">
                                 <MapPin size={34} color={PRIMARY} />
-                                <Text className="mt-2 text-sm font-medium text-[#414755]">
+                                <Text className="mt-2 text-sm font-body-medium text-[#414755]">
                                     Sem imagem para este acidente
                                 </Text>
                             </View>
                         )}
                         <View className="p-4">
                             <View className="flex-row items-start justify-between gap-3">
-                                <Text className="flex-1 text-[22px] font-bold text-[#181C23]">
+                                <Text className="flex-1 text-[22px] font-display text-[#181C23]">
                                     {accident.tipo_acidente ||
                                         "Ocorrência registrada"}
                                 </Text>
                                 <View className="rounded-full bg-[#FFF1E8] px-3 py-1.5">
-                                    <Text className="text-xs font-semibold text-[#B42318]">
+                                    <Text className="text-xs font-body-semibold text-[#B42318]">
                                         {SEVERITY_LABELS[accident.severity]}
                                     </Text>
                                 </View>
@@ -466,7 +466,7 @@ export default function AccidentDetailsScreen() {
 
                     {accident.description && (
                         <SectionCard title="Descrição">
-                            <Text className="text-[15px] leading-[22px] text-[#414755]">
+                            <Text className="font-body text-[15px] leading-[22px] text-[#414755]">
                                 {accident.description}
                             </Text>
                         </SectionCard>
@@ -481,12 +481,12 @@ export default function AccidentDetailsScreen() {
                                         size="small"
                                         color={PRIMARY}
                                     />
-                                    <Text className="flex-1 text-sm text-[#414755]">
+                                    <Text className="font-body flex-1 text-sm text-[#414755]">
                                         Buscando endereço...
                                     </Text>
                                 </View>
                             ) : (
-                                <Text className="flex-1 text-sm text-[#414755]">
+                                <Text className="font-body flex-1 text-sm text-[#414755]">
                                     {address ?? "Endereço não disponível"}
                                 </Text>
                             )}
@@ -496,7 +496,7 @@ export default function AccidentDetailsScreen() {
                             onPress={() => void handleOpenMap()}
                             className="mt-3 items-center rounded-xl bg-[#F1F3FE] py-3"
                         >
-                            <Text className="text-sm font-semibold text-[#0058BC]">
+                            <Text className="text-sm font-body-semibold text-[#0058BC]">
                                 Abrir localização no mapa
                             </Text>
                         </Pressable>
@@ -509,13 +509,13 @@ export default function AccidentDetailsScreen() {
                                     size={20}
                                     color={accident.source === "PRF" ? "#14804A" : PRIMARY}
                                 />
-                                <Text className="text-sm font-semibold text-[#181C23]">
+                                <Text className="text-sm font-body-semibold text-[#181C23]">
                                     {accident.source === "PRF"
                                         ? "Polícia Rodoviária Federal"
                                         : "Relato da comunidade"}
                                 </Text>
                             </View>
-                            <Text className="text-xs text-gray-500">
+                            <Text className="font-body text-xs text-gray-500">
                                 {formatDate(accident.created_at)}
                             </Text>
                         </View>
@@ -524,20 +524,20 @@ export default function AccidentDetailsScreen() {
                     <View className="mt-4 rounded-2xl bg-white p-4">
                         <View className="flex-row items-center justify-between gap-3">
                             <View className="flex-1">
-                                <Text className="text-xs font-semibold uppercase tracking-wide text-[#5D5E63]">
+                                <Text className="text-xs font-body-semibold uppercase tracking-wide text-[#5D5E63]">
                                     Confiabilidade
                                 </Text>
-                                <Text className="mt-1 text-sm text-[#414755]">
+                                <Text className="font-body mt-1 text-sm text-[#414755]">
                                     {trustedByMe
                                         ? "Você marcou este relato como confiável."
-                                        : "Ajude a comunidade a identificar relatos confiáveis."}
+                                        : "Testemunhou ou confirma esse acidente? Participe!"}
                                 </Text>
                             </View>
                             <View className="items-center rounded-xl bg-[#F1F3FE] px-3 py-2">
-                                <Text className="text-xl font-bold text-[#0058BC]">
+                                <Text className="text-xl font-display text-[#0058BC]">
                                     {accident.trusted_count}
                                 </Text>
-                                <Text className="text-[10px] text-[#414755]">
+                                <Text className="font-body text-[10px] text-[#414755]">
                                     selos
                                 </Text>
                             </View>
@@ -568,7 +568,7 @@ export default function AccidentDetailsScreen() {
                                 />
                             )}
                             <Text
-                                className={`text-sm font-semibold ${
+                                className={`text-sm font-body-semibold ${
                                     trustedByMe
                                         ? "text-[#14804A]"
                                         : "text-white"
@@ -589,7 +589,7 @@ export default function AccidentDetailsScreen() {
                     {trustError && (
                         <Text
                             accessibilityRole="alert"
-                            className="mt-3 text-xs text-[#BA1A1A]"
+                            className="font-body mt-3 text-xs text-[#BA1A1A]"
                         >
                             {trustError}
                         </Text>
@@ -599,7 +599,7 @@ export default function AccidentDetailsScreen() {
                         title={`Comentários (${accident.comments.length})`}
                     >
                         {accident.comments.length === 0 ? (
-                            <Text className="py-2 text-sm text-gray-500">
+                            <Text className="font-body py-2 text-sm text-gray-500">
                                 Nenhum comentário até o momento.
                             </Text>
                         ) : (
@@ -617,15 +617,15 @@ export default function AccidentDetailsScreen() {
                                         </View>
                                         <View className="flex-1">
                                             <View className="flex-row flex-wrap items-center justify-between gap-x-2">
-                                                <Text className="text-xs font-semibold text-[#181C23]">
+                                                <Text className="text-xs font-body-semibold text-[#181C23]">
                                                     {item.author_name ??
                                                         "Pessoa da comunidade"}
                                                 </Text>
-                                                <Text className="text-[11px] text-gray-500">
+                                                <Text className="font-body text-[11px] text-gray-500">
                                                     {formatDate(item.created_at)}
                                                 </Text>
                                             </View>
-                                            <Text className="mt-1 text-sm leading-5 text-[#414755]">
+                                            <Text className="font-body mt-1 text-sm leading-5 text-[#414755]">
                                                 {item.body}
                                             </Text>
                                         </View>
@@ -651,7 +651,7 @@ export default function AccidentDetailsScreen() {
                                         onSubmitEditing={() =>
                                             void handleSendComment()
                                         }
-                                        className="min-h-11 flex-1 rounded-2xl bg-[#F1F3FE] px-4 py-3 pl-3 text-[15px] text-[#181C23]"
+                                        className="font-body min-h-11 flex-1 rounded-2xl bg-[#F1F3FE] px-4 py-3 pl-3 text-[15px] text-[#181C23]"
                                         style={{
                                             maxHeight: 120,
                                             textAlignVertical: "top",
@@ -689,7 +689,7 @@ export default function AccidentDetailsScreen() {
                                 {commentError && (
                                     <Text
                                         accessibilityRole="alert"
-                                        className="mt-2 text-xs text-[#BA1A1A]"
+                                        className="font-body mt-2 text-xs text-[#BA1A1A]"
                                     >
                                         {commentError}
                                     </Text>
@@ -704,10 +704,10 @@ export default function AccidentDetailsScreen() {
                                 }
                                 className="mt-4 rounded-xl bg-amber-50 px-3 py-3"
                             >
-                                <Text className="text-sm text-amber-800">
+                                <Text className="font-body text-sm text-amber-800">
                                     Confirme seu e-mail para participar dos
                                     comentários e votar.{" "}
-                                    <Text className="text-sm font-bold text-[#0058BC]">
+                                    <Text className="text-sm font-body-bold text-[#0058BC]">
                                         Verificar agora
                                     </Text>
                                 </Text>
@@ -729,7 +729,7 @@ function SectionCard({
 }) {
     return (
         <View className="mt-4 rounded-2xl bg-white p-4">
-            <Text className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#5D5E63]">
+            <Text className="mb-3 text-xs font-body-semibold uppercase tracking-wide text-[#5D5E63]">
                 {title}
             </Text>
             {children}
@@ -741,7 +741,7 @@ function InfoChip({ icon, label }: { icon: ReactNode; label: string }) {
     return (
         <View className="flex-row items-center gap-1.5 rounded-full bg-[#F1F3FE] px-2.5 py-1.5">
             {icon}
-            <Text className="text-xs font-medium text-[#414755]">{label}</Text>
+            <Text className="text-xs font-body-medium text-[#414755]">{label}</Text>
         </View>
     );
 }

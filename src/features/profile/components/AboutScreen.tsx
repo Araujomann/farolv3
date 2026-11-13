@@ -39,10 +39,10 @@ function AboutItem({ icon: Icon, title, description }: AboutItemProps) {
                 <Icon size={21} color={PRIMARY_COLOR} strokeWidth={2} />
             </View>
             <View className="flex-1 gap-1">
-                <Text className="text-[15px] font-semibold" style={{ color: TEXT_COLOR }}>
+                <Text className="text-[15px] font-body-semibold" style={{ color: TEXT_COLOR }}>
                     {title}
                 </Text>
-                <Text className="text-[14px] leading-[21px]" style={{ color: MUTED_COLOR }}>
+                <Text className="font-body text-[14px] leading-[21px]" style={{ color: MUTED_COLOR }}>
                     {description}
                 </Text>
             </View>
@@ -78,7 +78,7 @@ export default function AboutScreen({ onClose }: AboutScreenProps) {
                     <ArrowLeft size={24} color={PRIMARY_COLOR} strokeWidth={2} />
                 </Pressable>
                 <Text
-                    className="flex-1 text-center text-lg font-semibold"
+                    className="flex-1 text-center text-lg font-body-semibold"
                     style={{ color: TEXT_COLOR, marginRight: 44 }}
                 >
                     Sobre o app
@@ -100,11 +100,11 @@ export default function AboutScreen({ onClose }: AboutScreenProps) {
                         accessibilityLabel="Símbolo do Farol"
                         className=" w-36 h-23 rounded-2xl"
                     />
-                    <Text className="mt-4 text-[26px] font-bold" style={{ color: TEXT_COLOR }}>
+                    <Text className="mt-4 text-[26px] font-display" style={{ color: TEXT_COLOR }}>
                         Farol
                     </Text>
                     <Text
-                        className="mt-2 text-center text-[15px] leading-5.5"
+                        className="font-body mt-2 text-center text-[15px] leading-5.5"
                         style={{ color: MUTED_COLOR }}
                     >
                         Informação para seguir com mais atenção e consciência no trânsito.
@@ -112,13 +112,13 @@ export default function AboutScreen({ onClose }: AboutScreenProps) {
                 </View>
 
                 <Text
-                    className="mb-2 mt-6 text-[17px] font-bold"
+                    className="mb-2 mt-6 text-[17px] font-body-bold"
                     style={{ color: TEXT_COLOR }}
                 >
                     Sobre o Farol
                 </Text>
                 <Text
-                    className="text-[15px] leading-[23px]"
+                    className="font-body text-[15px] leading-[23px]"
                     style={{ color: MUTED_COLOR }}
                 >
                     O Farol reúne informações sobre ocorrências no trânsito para
@@ -165,10 +165,10 @@ export default function AboutScreen({ onClose }: AboutScreenProps) {
                         />
                     </View>
                     <View className="flex-1 gap-1">
-                        <Text className="text-[15px] font-semibold" style={{ color: "#704800" }}>
+                        <Text className="text-[15px] font-body-semibold" style={{ color: "#704800" }}>
                             Use com responsabilidade
                         </Text>
-                        <Text className="text-[14px] leading-[21px]" style={{ color: "#704800" }}>
+                        <Text className="font-body text-[14px] leading-[21px]" style={{ color: "#704800" }}>
                             O Farol é informativo e não substitui os canais oficiais
                             de emergência. Em uma emergência em rodovia federal,
                             acione a PRF pelo 191. Consulte ou envie informações
@@ -178,7 +178,7 @@ export default function AboutScreen({ onClose }: AboutScreenProps) {
                 </View>
 
                 <Text
-                    className="mt-6 text-center text-[13px]"
+                    className="font-body mt-6 text-center text-[13px]"
                     style={{ color: MUTED_COLOR }}
                 >
                     Farol · Versão {version}

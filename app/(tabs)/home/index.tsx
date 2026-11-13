@@ -150,19 +150,19 @@ function MetricCard({
                 <Icon size={21} color={COLORS.primary} strokeWidth={2.2} />
             </View>
             <Text
-                className="text-[26px] font-bold leading-8"
+                className="text-[26px] font-display leading-8"
                 style={{ color: COLORS.text }}
             >
                 {formatNumber(value)}
             </Text>
             <Text
-                className="mt-0.5 text-sm font-semibold"
+                className="mt-0.5 text-sm font-body-semibold"
                 style={{ color: COLORS.text }}
             >
                 {label}
             </Text>
             <Text
-                className="mt-1 text-xs leading-4"
+                className="font-body mt-1 text-xs leading-4"
                 style={{ color: COLORS.secondaryText }}
             >
                 {detail}
@@ -225,13 +225,13 @@ function TimeOfDayCard({
             <View className="flex-row items-center">
                 <Clock3 size={21} color={COLORS.primary} strokeWidth={2.2} />
                 <Text
-                    className="ml-2 flex-1 text-base font-bold"
+                    className="ml-2 flex-1 text-base font-body-bold"
                     style={{ color: COLORS.text }}
                 >
                     Acidentes por horário
                 </Text>
                 <Text
-                    className="text-xs"
+                    className="font-body text-xs"
                     style={{ color: COLORS.secondaryText }}
                 >
                     Últimos 30 dias
@@ -251,7 +251,7 @@ function TimeOfDayCard({
                         >
                             {period.count > 0 ? (
                                 <Text
-                                    className="mb-1 text-[10px] font-semibold"
+                                    className="mb-1 text-[10px] font-body-semibold"
                                     style={{ color: COLORS.secondaryText }}
                                 >
                                     {formatNumber(period.count)}
@@ -268,7 +268,7 @@ function TimeOfDayCard({
                                 }}
                             />
                             <Text
-                                className="mt-2 text-[9px]"
+                                className="font-body mt-2 text-[9px]"
                                 style={{ color: COLORS.secondaryText }}
                             >
                                 {`${String(period.start_hour).padStart(2, "0")}–${String(
@@ -309,13 +309,13 @@ function SeverityCard({
                 />
                 <View className="ml-2 flex-1">
                     <Text
-                        className="text-base font-bold"
+                        className="text-base font-body-bold"
                         style={{ color: COLORS.text }}
                     >
                         Gravidade dos acidentes
                     </Text>
                     <Text
-                        className="mt-0.5 text-xs"
+                        className="font-body mt-0.5 text-xs"
                         style={{ color: COLORS.secondaryText }}
                     >
                         Entre os registros aprovados
@@ -332,13 +332,13 @@ function SeverityCard({
                         <View key={severity}>
                             <View className="mb-1 flex-row items-center justify-between">
                                 <Text
-                                    className="text-sm"
+                                    className="font-body text-sm"
                                     style={{ color: COLORS.text }}
                                 >
                                     {SEVERITY_LABELS[severity]}
                                 </Text>
                                 <Text
-                                    className="text-xs font-semibold"
+                                    className="text-xs font-body-semibold"
                                     style={{ color: COLORS.secondaryText }}
                                 >
                                     {formatNumber(count)} · {percentage}%
@@ -375,13 +375,13 @@ function CommunityError({
         >
             <Activity size={25} color={COLORS.primary} />
             <Text
-                className="mt-3 text-center text-base font-semibold"
+                className="mt-3 text-center text-base font-body-semibold"
                 style={{ color: COLORS.text }}
             >
                 Não foi possível carregar o panorama
             </Text>
             <Text
-                className="mt-1 text-center text-sm leading-5"
+                className="font-body mt-1 text-center text-sm leading-5"
                 style={{ color: COLORS.secondaryText }}
             >
                 {message}
@@ -394,7 +394,7 @@ function CommunityError({
             >
                 <RefreshCw size={15} color={COLORS.primary} />
                 <Text
-                    className="ml-2 text-sm font-semibold"
+                    className="ml-2 text-sm font-body-semibold"
                     style={{ color: COLORS.primary }}
                 >
                     Tentar novamente
@@ -420,7 +420,7 @@ function RecentAccidentsCard({
         >
             <View className="mb-2 flex-row items-center">
                 <Text
-                    className="flex-1 text-base font-bold"
+                    className="flex-1 text-base font-body-bold"
                     style={{ color: COLORS.text }}
                 >
                     Acidentes recentes
@@ -437,7 +437,7 @@ function RecentAccidentsCard({
             </View>
             {overview.recent_accidents.length === 0 ? (
                 <Text
-                    className="py-4 text-sm"
+                    className="font-body py-4 text-sm"
                     style={{ color: COLORS.secondaryText }}
                 >
                     Ainda não há acidentes aprovados para exibir.
@@ -467,14 +467,14 @@ function RecentAccidentsCard({
                         <View className="mr-2 flex-1">
                             <Text
                                 numberOfLines={1}
-                                className="text-sm font-bold"
+                                className="text-sm font-body-bold"
                                 style={{ color: COLORS.text }}
                             >
                                 {accident.tipo_acidente}
                             </Text>
                             <Text
                                 numberOfLines={1}
-                                className="mt-0.5 text-xs"
+                                className="font-body mt-0.5 text-xs"
                                 style={{ color: COLORS.secondaryText }}
                             >
                                 {accident.classificacao_acidente === "com_vitima"
@@ -523,13 +523,13 @@ function PersonalContribution({
                 </View>
                 <View className="flex-1">
                     <Text
-                        className="text-base font-bold"
+                        className="text-base font-body-bold"
                         style={{ color: COLORS.text }}
                     >
                         Sua contribuição
                     </Text>
                     <Text
-                        className="mt-0.5 text-xs"
+                        className="font-body mt-0.5 text-xs"
                         style={{ color: COLORS.secondaryText }}
                     >
                         Sua participação na comunidade
@@ -550,7 +550,7 @@ function PersonalContribution({
             ) : error ? (
                 <View className="flex-row items-center justify-between">
                     <Text
-                        className="mr-3 flex-1 text-sm leading-5"
+                        className="font-body mr-3 flex-1 text-sm leading-5"
                         style={{ color: COLORS.secondaryText }}
                     >
                         {error}
@@ -562,7 +562,7 @@ function PersonalContribution({
                         style={{ backgroundColor: COLORS.surfaceIcon }}
                     >
                         <Text
-                            className="text-sm font-semibold"
+                            className="text-sm font-body-semibold"
                             style={{ color: COLORS.primary }}
                         >
                             Tentar
@@ -573,13 +573,13 @@ function PersonalContribution({
                 <View className="flex-row">
                     <View className="flex-1">
                         <Text
-                            className="text-2xl font-bold"
+                            className="text-2xl font-display"
                             style={{ color: COLORS.text }}
                         >
                             {formatNumber(stats.approved_reports_count)}
                         </Text>
                         <Text
-                            className="mt-0.5 text-xs"
+                            className="font-body mt-0.5 text-xs"
                             style={{ color: COLORS.secondaryText }}
                         >
                             Relatos aprovados
@@ -587,13 +587,13 @@ function PersonalContribution({
                     </View>
                     <View className="flex-1">
                         <Text
-                            className="text-2xl font-bold"
+                            className="text-2xl font-display"
                             style={{ color: COLORS.text }}
                         >
                             {formatNumber(stats.received_trust_votes_count)}
                         </Text>
                         <Text
-                            className="mt-0.5 text-xs"
+                            className="font-body mt-0.5 text-xs"
                             style={{ color: COLORS.secondaryText }}
                         >
                             Votos de confiança
@@ -608,7 +608,7 @@ function PersonalContribution({
                     className="mt-4 flex-row items-center"
                 >
                     <Text
-                        className="text-sm font-semibold ml-2"
+                        className="text-sm font-body-semibold ml-2"
                         style={{ color: COLORS.primary }}
                     >
                         Ver meus relatos
@@ -768,10 +768,10 @@ export default function HomeScreen() {
                             className="mb-3 flex-row items-center gap-2 rounded-xl bg-amber-100 px-3 py-2"
                         >
                             <Mail size={16} color="#F59E0B" strokeWidth={2} />
-                            <Text className="flex-1 text-xs font-medium text-amber-700">
+                            <Text className="flex-1 text-xs font-body-medium text-amber-700">
                                 Verifique seu e-mail para relatar acidentes e comentar
                             </Text>
-                            <Text className="text-xs font-bold text-amber-800">
+                            <Text className="text-xs font-body-bold text-amber-800">
                                 Verificar
                             </Text>
                         </Pressable>
@@ -784,20 +784,20 @@ export default function HomeScreen() {
                             <MapPin size={20} color="#FFFFFF" strokeWidth={2.4} />
                         </View>
                         <Text
-                            className="text-xl font-extrabold"
+                            className="text-xl font-display-extrabold"
                             style={{ color: COLORS.text }}
                         >
                             Farol
                         </Text>
                     </View>
                     <Text
-                        className="text-[25px] font-bold leading-8"
+                        className="text-[25px] font-display leading-8"
                         style={{ color: COLORS.text }}
                     >
                         Olá, {firstName}! 👋
                     </Text>
                     <Text
-                        className="mt-1 text-sm leading-5"
+                        className="font-body mt-1 text-sm leading-5"
                         style={{ color: COLORS.secondaryText }}
                     >
                         Acompanhe a segurança viária em Imperatriz.
@@ -805,7 +805,7 @@ export default function HomeScreen() {
                     <View className="mt-3 flex-row items-center self-start rounded-full bg-white px-3 py-1.5">
                         <MapPin size={13} color={COLORS.primary} />
                         <Text
-                            className="ml-1.5 text-xs font-semibold"
+                            className="ml-1.5 text-xs font-body-semibold"
                             style={{ color: COLORS.primary }}
                         >
                             Imperatriz, MA
@@ -816,7 +816,7 @@ export default function HomeScreen() {
                 <View className="mb-5 flex-row items-center">
                     <Car size={20} color={COLORS.primary} strokeWidth={2.2} />
                     <Text
-                        className="ml-2 text-lg font-bold"
+                        className="ml-2 text-lg font-body-bold"
                         style={{ color: COLORS.text }}
                     >
                         Panorama da comunidade
@@ -830,7 +830,7 @@ export default function HomeScreen() {
                     >
                         <ActivityIndicator size="large" color={COLORS.primary} />
                         <Text
-                            className="mt-3 text-sm"
+                            className="font-body mt-3 text-sm"
                             style={{ color: COLORS.secondaryText }}
                         >
                             Carregando estatísticas...
@@ -857,7 +857,7 @@ export default function HomeScreen() {
                                     color={COLORS.primary}
                                 />
                                 <Text
-                                    className="ml-2 flex-1 text-xs"
+                                    className="font-body ml-2 flex-1 text-xs"
                                     style={{ color: COLORS.secondaryText }}
                                 >
                                     Não foi possível atualizar os dados. Toque para tentar novamente.
@@ -907,7 +907,7 @@ export default function HomeScreen() {
                 <View className="mb-5 flex-row items-center">
                     <Users size={20} color={COLORS.primary} strokeWidth={2.2} />
                     <Text
-                        className="ml-2 text-lg font-bold"
+                        className="ml-2 text-lg font-body-bold"
                         style={{ color: COLORS.text }}
                     >
                         Você faz parte dessa mudança
@@ -927,10 +927,10 @@ export default function HomeScreen() {
                     className="rounded-3xl p-5"
                     style={{ backgroundColor: COLORS.primary }}
                 >
-                    <Text className="text-lg font-bold text-white">
+                    <Text className="text-lg font-body-bold text-white">
                         Ajude a cuidar do caminho
                     </Text>
-                    <Text className="mt-1 text-sm leading-5 text-white/85">
+                    <Text className="font-body mt-1 text-sm leading-5 text-white/85">
                         Um relato pode ajudar outras pessoas a dirigir com mais atenção.
                     </Text>
                     <Pressable
@@ -939,7 +939,7 @@ export default function HomeScreen() {
                         className="mt-4 flex-row items-center self-start rounded-xl bg-white px-4 py-2.5"
                     >
                         <Text
-                            className="text-sm font-bold"
+                            className="text-sm font-body-bold"
                             style={{ color: COLORS.primary }}
                         >
                             Relatar acidente

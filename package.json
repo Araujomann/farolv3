@@ -12,6 +12,8 @@
     "glue-add": "npx gluestack-ui@latest add"
   },
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@expo/html-elements": "^0.12.5",
     "@expo/vector-icons": "^15.1.1",
     "@gluestack-ui/core": "^5.0.0-alpha.0",

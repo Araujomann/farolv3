@@ -437,7 +437,25 @@
 
 @theme {
 
-  --font-inter: "Inter";
+  /* -------------------------------------------------------
+     Font families (carregadas em app/_layout.tsx)
+
+     Display  -> Plus Jakarta Sans (títulos, rótulos fortes)
+     Body     -> Inter (texto corrido, botões, campos)
+
+     Use a classe de família no lugar de font-bold/semibold:
+     no Android, peso sintético sobre fonte customizada
+     gera negrito "falso".
+     ------------------------------------------------------- */
+
+  --font-display: "PlusJakartaSans_700Bold";
+  --font-display-semibold: "PlusJakartaSans_600SemiBold";
+  --font-display-extrabold: "PlusJakartaSans_800ExtraBold";
+
+  --font-body: "Inter_400Regular";
+  --font-body-medium: "Inter_500Medium";
+  --font-body-semibold: "Inter_600SemiBold";
+  --font-body-bold: "Inter_700Bold";
 
 
   /* -------------------------------------------------------

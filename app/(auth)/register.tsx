@@ -209,7 +209,7 @@ export default function RegisterScreen() {
               accessibilityLabel="Ícone do Farol"
             />
 
-            <Text style={styles.brandName}>
+            <Text className="font-body" style={styles.brandName}>
               Farol
             </Text>
           </View>
@@ -251,11 +251,11 @@ export default function RegisterScreen() {
                 space="xs"
                 className="mb-9 items-center"
               >
-                <Text className="text-center text-2xl font-bold tracking-tight text-slate-900">
+                <Text className="text-center text-2xl font-display tracking-tight text-slate-900">
                   Criar uma conta
                 </Text>
 
-                <Text className="text-center text-xs font-medium text-slate-500">
+                <Text className="text-center text-xs font-body-medium text-slate-500">
                   Preencha seus dados para começar a navegar com segurança
                 </Text>
               </VStack>
@@ -273,7 +273,7 @@ export default function RegisterScreen() {
                 <VStack space="xs">
                   <Box className="relative">
 
-                    <Text className="absolute -top-2 left-3 z-10 bg-white px-1 text-xs font-medium text-slate-500">
+                    <Text className="absolute -top-2 left-3 z-10 bg-white px-1 text-xs font-body-medium text-slate-500">
                       Nome Completo
                     </Text>
 
@@ -307,7 +307,7 @@ export default function RegisterScreen() {
                             onBlur={onBlur}
                             onChangeText={onChange}
                             value={value}
-                            className="text-sm font-medium text-slate-800"
+                            className="text-sm font-body-medium text-slate-800"
                             accessibilityLabel="Nome completo"
                           />
                         </Input>
@@ -316,7 +316,7 @@ export default function RegisterScreen() {
                   </Box>
 
                   {errors.name && (
-                    <Text className="text-xs text-red-600">
+                    <Text className="font-body text-xs text-red-600">
                       {errors.name.message}
                     </Text>
                   )}
@@ -329,7 +329,7 @@ export default function RegisterScreen() {
                 <VStack space="xs">
                   <Box className="relative">
 
-                    <Text className="absolute -top-2 left-3 z-10 bg-white px-1 text-xs font-medium text-slate-500">
+                    <Text className="absolute -top-2 left-3 z-10 bg-white px-1 text-xs font-body-medium text-slate-500">
                       E-mail
                     </Text>
 
@@ -364,7 +364,7 @@ export default function RegisterScreen() {
                             onBlur={onBlur}
                             onChangeText={onChange}
                             value={value}
-                            className="text-sm font-medium text-slate-800"
+                            className="text-sm font-body-medium text-slate-800"
                             accessibilityLabel="E-mail"
                           />
                         </Input>
@@ -373,7 +373,7 @@ export default function RegisterScreen() {
                   </Box>
 
                   {errors.email && (
-                    <Text className="text-xs text-red-600">
+                    <Text className="font-body text-xs text-red-600">
                       {errors.email.message}
                     </Text>
                   )}
@@ -386,7 +386,7 @@ export default function RegisterScreen() {
                 <VStack space="xs">
                   <Box className="relative">
 
-                    <Text className="absolute -top-2 left-3 z-10 bg-white px-1 text-xs font-medium text-slate-500">
+                    <Text className="absolute -top-2 left-3 z-10 bg-white px-1 text-xs font-body-medium text-slate-500">
                       Senha
                     </Text>
 
@@ -419,7 +419,7 @@ export default function RegisterScreen() {
                             onBlur={onBlur}
                             onChangeText={onChange}
                             value={value}
-                            className="text-sm font-medium text-slate-800"
+                            className="text-sm font-body-medium text-slate-800"
                             accessibilityLabel="Senha"
                           />
 
@@ -451,7 +451,7 @@ export default function RegisterScreen() {
                   </Box>
 
                   {errors.password && (
-                    <Text className="text-xs text-red-600">
+                    <Text className="font-body text-xs text-red-600">
                       {errors.password.message}
                     </Text>
                   )}
@@ -464,7 +464,7 @@ export default function RegisterScreen() {
                 <VStack space="xs">
                   <Box className="relative">
 
-                    <Text className="absolute -top-2 left-3 z-10 bg-white px-1 text-xs font-medium text-slate-500">
+                    <Text className="absolute -top-2 left-3 z-10 bg-white px-1 text-xs font-body-medium text-slate-500">
                       Confirmar Senha
                     </Text>
 
@@ -501,7 +501,7 @@ export default function RegisterScreen() {
                             onBlur={onBlur}
                             onChangeText={onChange}
                             value={value}
-                            className="text-sm font-medium text-slate-800"
+                            className="text-sm font-body-medium text-slate-800"
                             accessibilityLabel="Confirmar senha"
                           />
 
@@ -533,7 +533,7 @@ export default function RegisterScreen() {
                   </Box>
 
                   {errors.confirmPassword && (
-                    <Text className="text-xs text-red-600">
+                    <Text className="font-body text-xs text-red-600">
                       {errors.confirmPassword.message}
                     </Text>
                   )}
@@ -575,13 +575,13 @@ export default function RegisterScreen() {
                         )}
                       </View>
 
-                      <Text className="flex-1 text-xs font-medium text-slate-500">
+                      <Text className="flex-1 text-xs font-body-medium text-slate-500">
                         Concordo com os{" "}
-                        <Text className="text-xs font-semibold text-[#0058BC]">
+                        <Text className="text-xs font-body-semibold text-[#0058BC]">
                           Termos de Uso
                         </Text>
                         {" "}e{" "}
-                        <Text className="text-xs font-semibold text-[#0058BC]">
+                        <Text className="text-xs font-body-semibold text-[#0058BC]">
                           Privacidade
                         </Text>
                       </Text>
@@ -590,7 +590,7 @@ export default function RegisterScreen() {
                 />
 
                 {errors.acceptedTerms && (
-                  <Text className="text-xs text-red-600">
+                  <Text className="font-body text-xs text-red-600">
                     {errors.acceptedTerms.message}
                   </Text>
                 )}
@@ -601,7 +601,7 @@ export default function RegisterScreen() {
 
                 {serverError && (
                   <Box className="rounded-xl bg-red-50 px-4 py-3">
-                    <Text className="text-sm text-red-700">
+                    <Text className="font-body text-sm text-red-700">
                       {serverError}
                     </Text>
                   </Box>
@@ -624,7 +624,7 @@ export default function RegisterScreen() {
                   {isSubmitting ? (
                     <ButtonSpinner className="text-white" />
                   ) : (
-                    <ButtonText className="text-sm font-medium text-white">
+                    <ButtonText className="text-sm font-body-medium text-white">
                       Cadastrar
                     </ButtonText>
                   )}
@@ -638,7 +638,7 @@ export default function RegisterScreen() {
           </KeyboardAvoidingView>
 
           <Box className="w-full flex-row items-center justify-center gap-1 bg-white px-7 pb-5 pt-6">
-            <Text className="text-center text-sm text-slate-600">
+            <Text className="font-body text-center text-sm text-slate-600">
               Já tem uma conta?
             </Text>
 
@@ -647,7 +647,7 @@ export default function RegisterScreen() {
               activeOpacity={0.7}
               accessibilityRole="button"
             >
-              <Text className="text-sm font-bold text-slate-900">
+              <Text className="text-sm font-body-bold text-slate-900">
                 Entrar
               </Text>
             </TouchableOpacity>
@@ -710,7 +710,7 @@ const styles = StyleSheet.create({
 
   brandName: {
     fontSize: 16,
-    fontWeight: "700",
+    fontFamily: "PlusJakartaSans_700Bold",
     color: "#17243A",
   },
 
