@@ -19,12 +19,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as Notifications from "expo-notifications";
 import {
     ActivityIndicator,
-    Animated,
     Alert,
     Modal,
     Pressable,
     ScrollView,
+    StyleSheet,
     View,
+    type LayoutChangeEvent,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -36,7 +37,13 @@ import { ACCIDENT_APPROVED_EVENT } from "@/src/features/notifications/pushNotifi
 import { useAuthStore } from "@/src/store/authStore";
 import { verifyEmailFromAppRoute } from "@/src/features/auth/verifyEmailRoute";
 import { useProfileTitleColorStore } from "@/src/features/profile/titleColorStore";
-import Reanimated, { useAnimatedStyle } from "react-native-reanimated";
+import Reanimated, {
+    Easing,
+    useAnimatedStyle,
+    useSharedValue,
+    withDelay,
+    withTiming,
+} from "react-native-reanimated";
 import {
     TitleColorIcon,
     TitleColorText,
@@ -45,7 +52,7 @@ import {
 import { AdministrativeNoticesPanel } from "@/src/features/notifications/components/AdministrativeNoticesPanel";
 
 import { useAppTheme } from "@/src/theme/useAppTheme";
-import { useTranslation } from "@/src/i18n";
+import { formatNumber, useTranslation } from "@/src/i18n";
 
 const POINTS_PER_APPROVED_REPORT = 100;
 const LEVELS = [
@@ -250,7 +257,10 @@ export default function ProfileScreen() {
                     is_email_verified={user?.is_email_verified}
                     onVerifyEmail={() => router.push(verifyEmailFromAppRoute)}
                 />
-                {isLoadingGamification && (
+                {/* Recarregamentos ao voltar para a aba acontecem em segundo
+                    plano: o indicador só aparece enquanto não há dados, para
+                    o conteúdo não "pular" a cada foco. */}
+                {isLoadingGamification && approvedReportsCount === null && (
                     <GamificationLoading />
                 )}
                 {gamificationError && (
@@ -461,31 +471,14 @@ function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }:
     const { colors } = useAppTheme();
     const { t } = useTranslation();
     const levelLabel = t(`profile.levels.${level.key}.label`);
-    const scaleAnim = useRef(new Animated.Value(1)).current;
-    const opacityAnim = useRef(new Animated.Value(1)).current;
     const titleColor = useTitleColor();
     const borderStyle = useAnimatedStyle(() => ({
         borderColor: titleColor.value,
     }));
 
-    useEffect(() => {
-        Animated.parallel([
-            Animated.timing(scaleAnim, {
-                toValue: is_email_verified ? 1 : 1,
-                duration: 300,
-                useNativeDriver: true,
-            }),
-            Animated.timing(opacityAnim, {
-                toValue: is_email_verified ? 1 : 1,
-                duration: 300,
-                useNativeDriver: true,
-            }),
-        ]).start();
-    }, [is_email_verified, scaleAnim, opacityAnim]);
-
     return (
         <View className="items-center justify-center pb-2 pt-5">
-            <Animated.View
+            <View
                 accessibilityLabel={t("profile.avatarLabel", { level: levelLabel })}
                 className="h-[112px] w-[112px] items-center justify-center rounded-full border-[3px] p-[4px] relative"
                 style={{
@@ -495,8 +488,6 @@ function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }:
                     shadowOpacity: 0.1,
                     shadowRadius: 4,
                     elevation: 3,
-                    transform: [{ scale: scaleAnim }],
-                    opacity: opacityAnim,
                 }}
             >
                 {/* Anel com a cor do título (animado na thread de UI) */}
@@ -521,18 +512,14 @@ function AvatarSection({ name, email, level, is_email_verified, onVerifyEmail }:
                 
                 {/* Verificação de e-mail badge */}
                 {!is_email_verified && (
-                    <Animated.View 
+                    <View
                         className="absolute bottom-0 right-0 h-6 w-6 items-center justify-center rounded-full bg-red-500 border-2 border-white dark:border-[#1A1D24]"
                         accessibilityLabel={t("profile.emailNotVerified")}
-                        style={{
-                            transform: [{ scale: scaleAnim }],
-                            opacity: opacityAnim,
-                        }}
                     >
                         <CircleAlert size={12} color="#FFFFFF" strokeWidth={1.5} />
-                    </Animated.View>
+                    </View>
                 )}
-            </Animated.View>
+            </View>
 
             <Text
                 className="mt-3 text-[22px] font-display leading-7"
@@ -661,7 +648,7 @@ function LevelCard({ level, approvedReportsCount, points }: LevelCardProps) {
                     adjustsFontSizeToFit
                     minimumFontScale={0.7}
                 >
-                    {points.toLocaleString(language)}
+                    {formatNumber(points, language)}
                 </Text>
                 <Text
                     className="font-body text-[13px] leading-5"
@@ -683,6 +670,22 @@ type ProgressCardProps = {
     progressPercent: number;
 };
 
+const PROGRESS_ANIMATION_DELAY_MS = 250;
+const PROGRESS_ANIMATION_DURATION_MS = 900;
+
+const progressStyles = StyleSheet.create({
+    track: {
+        marginTop: 20,
+        height: 10,
+        borderRadius: 999,
+        overflow: "hidden",
+    },
+    bar: {
+        ...StyleSheet.absoluteFillObject,
+        borderRadius: 999,
+    },
+});
+
 function ProgressCard({
     level,
     nextLevel,
@@ -690,21 +693,46 @@ function ProgressCard({
 }: ProgressCardProps) {
     const { t } = useTranslation();
     const { colors } = useAppTheme();
-    const progress = useRef(new Animated.Value(0)).current;
     const LevelIcon = level.icon;
     const borderStyle = useTitleBorderStyle();
     const barColorStyle = useTitleBackgroundStyle();
 
-    useEffect(() => {
-        const animation = Animated.timing(progress, {
-            toValue: progressPercent,
-            duration: 700,
-            useNativeDriver: false,
-        });
-        animation.start();
+    // A barra tem sempre a largura total da trilha e só desliza com
+    // `translateX`: transform roda inteiro na thread de UI, sem recalcular
+    // layout a cada frame (animar `width` recalcula).
+    const progress = useSharedValue(0); // 0 → 1
+    const trackWidth = useSharedValue(0);
+    const barTransformStyle = useAnimatedStyle(() => {
+        const width = trackWidth.value;
+        return {
+            // Escondida até a trilha ser medida, para não "piscar" cheia.
+            opacity: width > 0 ? 1 : 0,
+            transform: [{ translateX: (progress.value - 1) * width }],
+        };
+    });
 
-        return () => animation.stop();
-    }, [progress, progressPercent]);
+    const handleTrackLayout = useCallback(
+        (event: LayoutChangeEvent) => {
+            trackWidth.value = event.nativeEvent.layout.width;
+        },
+        [trackWidth],
+    );
+
+    // Sempre que a aba ganha foco (ou o progresso muda), a barra parte do
+    // zero e avança até o valor atual. O pequeno atraso deixa a transição
+    // de tela terminar antes, para a animação não disputar frames com ela.
+    useFocusEffect(
+        useCallback(() => {
+            progress.value = 0;
+            progress.value = withDelay(
+                PROGRESS_ANIMATION_DELAY_MS,
+                withTiming(Math.min(1, Math.max(0, progressPercent / 100)), {
+                    duration: PROGRESS_ANIMATION_DURATION_MS,
+                    easing: Easing.out(Easing.cubic),
+                }),
+            );
+        }, [progress, progressPercent]),
+    );
 
     return (
         <Reanimated.View
@@ -742,23 +770,21 @@ function ProgressCard({
 
                 {/* Progress Bar */}
                 <View
-                    className="mt-5 h-2.5 overflow-hidden rounded-full"
-                    style={{ backgroundColor: colors.surfaceStrong }}
+                    onLayout={handleTrackLayout}
+                    style={[
+                        progressStyles.track,
+                        { backgroundColor: colors.surfaceStrong },
+                    ]}
                 >
-                    <Animated.View
-                        className="h-full overflow-hidden rounded-full"
-                        style={{
-                            width: progress.interpolate({
-                                inputRange: [0, 100],
-                                outputRange: ["0%", "100%"],
-                            }),
-                        }}
-                    >
-                        <Reanimated.View
-                            className="h-full w-full"
-                            style={barColorStyle}
-                        />
-                    </Animated.View>
+                    {/* Sem className nas views animadas: estilos de classe
+                        podem sobrescrever o estilo animado. */}
+                    <Reanimated.View
+                        style={[
+                            progressStyles.bar,
+                            barColorStyle,
+                            barTransformStyle,
+                        ]}
+                    />
                 </View>
                 <TitleColorText className="mt-2 text-right text-xs font-body-semibold">
                     {`${Math.round(progressPercent)}%`}

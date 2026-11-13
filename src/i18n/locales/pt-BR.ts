@@ -523,8 +523,7 @@ const ptBR = {
             "Os registros são apresentados com sua origem, para ajudar você a entender de onde vêm as informações.",
         responsibilityTitle: "Use com responsabilidade",
         responsibilityBody:
-            "O Farol é informativo e não substitui os canais oficiais de emergência. Em uma emergência em rodovia federal, acione a PRF pelo 191. Consulte ou envie informações somente quando estiver em segurança.",
-        version: "Farol · Versão {{version}}",
+"O Farol é uma plataforma informativa e não substitui os serviços oficiais de emergência. Em caso de acidente ou situação de risco, acione a Polícia Militar (190), o SAMU (192), o Corpo de Bombeiros (193) ou a PRF (191), em rodovias federais. Sua segurança vem em primeiro lugar: consulte ou envie relatos somente quando estiver em local seguro.",     version: "Farol · Versão {{version}}",
     },
 };
 

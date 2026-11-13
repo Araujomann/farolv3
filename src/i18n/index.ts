@@ -22,8 +22,20 @@ export const LANGUAGE_NATIVE_NAMES: Record<Language, string> = {
 const STORAGE_KEY = "language_preference";
 const FALLBACK_LANGUAGE: Language = "pt-BR";
 
-/** Idioma do aparelho, reduzido a um dos idiomas suportados. */
+let cachedSystemLanguage: Language | null = null;
+
+/**
+ * Idioma do aparelho, reduzido a um dos idiomas suportados. Fica em cache:
+ * criar um `Intl.DateTimeFormat` é caro no Hermes e esta função é chamada
+ * em toda tradução/formatação feita fora de componentes.
+ */
 export function getSystemLanguage(): Language {
+    if (cachedSystemLanguage) return cachedSystemLanguage;
+    cachedSystemLanguage = detectSystemLanguage();
+    return cachedSystemLanguage;
+}
+
+function detectSystemLanguage(): Language {
     let tag = "";
     try {
         tag = Intl.DateTimeFormat().resolvedOptions().locale ?? "";
@@ -147,15 +159,54 @@ export function tr(key: TranslationKey, params?: TranslationParams): string {
     return translate(getCurrentLanguage(), key, params);
 }
 
+/* ── Formatadores em cache ───────────────────────────────────── */
+
+// Construir formatadores `Intl` é caro (principalmente no Hermes). Como as
+// opções usadas no app são poucas e fixas, cada combinação idioma + opções
+// é criada uma única vez e reutilizada.
+const dateTimeFormatters = new Map<string, Intl.DateTimeFormat>();
+const numberFormatters = new Map<string, Intl.NumberFormat>();
+
+export function getDateTimeFormatter(
+    language: Language,
+    options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+    const key = `${language}|${JSON.stringify(options)}`;
+    let formatter = dateTimeFormatters.get(key);
+    if (!formatter) {
+        formatter = new Intl.DateTimeFormat(language, options);
+        dateTimeFormatters.set(key, formatter);
+    }
+    return formatter;
+}
+
+/** Número formatado no idioma informado (ou no idioma em uso). */
+export function formatNumber(
+    value: number,
+    language: Language = getCurrentLanguage(),
+): string {
+    let formatter = numberFormatters.get(language);
+    if (!formatter) {
+        formatter = new Intl.NumberFormat(language);
+        numberFormatters.set(language, formatter);
+    }
+    return formatter.format(value);
+}
+
+const SHORT_DATE_TIME: Intl.DateTimeFormatOptions = {
+    dateStyle: "short",
+    timeStyle: "short",
+};
+
 /** Data e hora curtas no idioma em uso (ex.: 12/11/2026 14:30). */
-export function formatDateTime(value: string): string {
-    const date = new Date(value);
+export function formatDateTime(
+    value: string | Date,
+    language: Language = getCurrentLanguage(),
+): string {
+    const date = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(date.getTime())) return tr("time.dateNotInformed");
 
-    return new Intl.DateTimeFormat(getCurrentLanguage(), {
-        dateStyle: "short",
-        timeStyle: "short",
-    }).format(date);
+    return getDateTimeFormatter(language, SHORT_DATE_TIME).format(date);
 }
 
 /**

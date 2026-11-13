@@ -18,7 +18,20 @@ import {
 } from "@/src/api/notifications";
 
 import { useAppTheme } from "@/src/theme/useAppTheme";
-import { getCurrentLanguage, tr, useTranslation } from "@/src/i18n";
+import {
+    getCurrentLanguage,
+    getDateTimeFormatter,
+    tr,
+    useTranslation,
+} from "@/src/i18n";
+
+const NOTICE_DATE_FORMAT: Intl.DateTimeFormatOptions = {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+};
 const PANEL_MAX_WIDTH = 440;
 
 type AdministrativeNoticesPanelProps = {
@@ -33,13 +46,9 @@ function formatNoticeDate(value: string) {
         return tr("time.dateUnavailable");
     }
 
-    return date.toLocaleString(getCurrentLanguage(), {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+    return getDateTimeFormatter(getCurrentLanguage(), NOTICE_DATE_FORMAT).format(
+        date,
+    );
 }
 
 export function AdministrativeNoticesPanel({

@@ -20,6 +20,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Alert,
     BackHandler,
+    Platform,
     Pressable,
     Text,
     useWindowDimensions,
@@ -33,7 +34,9 @@ import { useAppTheme } from "@/src/theme/useAppTheme";
 import { tr, useTranslation } from "@/src/i18n";
 const DEFAULT_CENTER: [number, number] = [-47.47812, -5.52693];
 const INITIAL_ZOOM = 15;
-const EXPANSION_DURATION = 600;
+const EXPANSION_DURATION = 650;
+// Curva suave (estilo "emphasized decelerate"): começa sem tranco e assenta devagar.
+const EXPANSION_EASING = Easing.bezier(0.32, 0.72, 0, 1);
 const mapStyle = {
     version: 8,
     imports: [
@@ -157,12 +160,14 @@ export default function ReportScreen() {
         }, [handleBackPress]),
     );
 
-    useEffect(() => {
-        expansionProgress.value = withTiming(isMapExpanded ? 1 : 0, {
+    const handleExpandMap = () => {
+        // Inicia a animação na UI thread imediatamente, sem esperar o re-render.
+        expansionProgress.value = withTiming(1, {
             duration: EXPANSION_DURATION,
-            easing: Easing.bezier(0.22, 1, 0.36, 1),
+            easing: EXPANSION_EASING,
         });
-    }, [expansionProgress, isMapExpanded]);
+        setIsMapExpanded(true);
+    };
 
     useEffect(() => {
         return () => {
@@ -195,7 +200,39 @@ export default function ReportScreen() {
             [0, 1],
             [initialMapSize / 2, 0],
         ),
-        borderWidth: interpolate(expansionProgress.value, [0, 1], [4, 0]),
+    }));
+
+    // O mapa tem sempre o tamanho da tela: só a "janela" (wrapper) cresce.
+    // Assim o Mapbox não precisa redimensionar a superfície GL a cada frame,
+    // que era o que deixava a expansão travando. Apenas transladamos o mapa
+    // para que o centro dele continue no centro da janela.
+    const mapContentStyle = useAnimatedStyle(() => {
+        const size = interpolate(
+            expansionProgress.value,
+            [0, 1],
+            [initialMapSize, width],
+        );
+        const wrapperHeight = interpolate(
+            expansionProgress.value,
+            [0, 1],
+            [initialMapSize, height],
+        );
+
+        return {
+            transform: [
+                { translateX: (size - width) / 2 },
+                { translateY: (wrapperHeight - height) / 2 },
+            ],
+        };
+    });
+
+    const mapRingStyle = useAnimatedStyle(() => ({
+        borderRadius: interpolate(
+            expansionProgress.value,
+            [0, 1],
+            [initialMapSize / 2, 0],
+        ),
+        opacity: interpolate(expansionProgress.value, [0, 0.6], [1, 0], "clamp"),
     }));
 
     const bottomSheetStyle = useAnimatedStyle(() => ({
@@ -253,11 +290,20 @@ export default function ReportScreen() {
             </View>
 
             <Animated.View
-                className="absolute z-10 overflow-hidden border-white dark:border-[#1A1D24]"
+                className="absolute z-10 overflow-hidden"
                 style={mapWrapperStyle}
             >
+                <Animated.View
+                    style={[
+                        { position: "absolute", top: 0, left: 0, width, height },
+                        mapContentStyle,
+                    ]}
+                >
                     <Mapbox.MapView
                         style={{ flex: 1 }}
+                        // TextureView respeita o recorte arredondado e as
+                        // transformações do pai; SurfaceView "vaza" no Android.
+                        surfaceView={Platform.OS === "android" ? false : undefined}
                         styleJSON={JSON.stringify(mapStyle)}
                         onCameraChanged={handleCameraChanged}
                         attributionPosition={{ bottom: 8, right: 8 }}
@@ -287,6 +333,13 @@ export default function ReportScreen() {
                             }}
                         />
                     </Mapbox.MapView>
+                </Animated.View>
+
+                <Animated.View
+                    pointerEvents="none"
+                    className="absolute inset-0 border-4 border-white dark:border-[#1A1D24]"
+                    style={mapRingStyle}
+                />
 
                     <View
                         pointerEvents="none"
@@ -410,7 +463,7 @@ export default function ReportScreen() {
                         </View>
                         <Pressable
                             accessibilityLabel={t("report.gotIt")}
-                            onPress={() => setIsMapExpanded(true)}
+                            onPress={handleExpandMap}
                             className="h-14 items-center justify-center rounded-xl bg-[#0058BC] shadow-lg"
                             style={{
                                 marginBottom: Math.max(insets.bottom + 16, 40),

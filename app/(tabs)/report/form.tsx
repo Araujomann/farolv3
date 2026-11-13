@@ -47,7 +47,12 @@ import type {
 } from "@/src/features/map/types/accident.types";
 
 import { useAppTheme } from "@/src/theme/useAppTheme";
-import { tr, useTranslation, type TranslationKey } from "@/src/i18n";
+import {
+    formatDateTime,
+    tr,
+    useTranslation,
+    type TranslationKey,
+} from "@/src/i18n";
 import { SEVERITY_COLORS } from "@/src/theme/colors";
 const MAX_DESCRIPTION_LENGTH = 1000;
 const MAX_CUSTOM_TYPE_LENGTH = 60;
@@ -415,10 +420,7 @@ export default function ReportFormScreen() {
                     <View className="mb-5 rounded-3xl bg-white dark:bg-[#1A1D24] p-4 shadow-lg">
                         <FieldLabel label={t("report.form.dateTime")} />
                         <Text className="font-body mt-2 rounded-2xl border border-[#C1C6D7]/50 dark:border-[#3A3F4B]/50 bg-[#F8F9FF] dark:bg-[#0E1015] px-3 py-3 text-[15px] text-[#181C23] dark:text-[#ECEEF4]">
-                            {new Intl.DateTimeFormat(language, {
-                                dateStyle: "short",
-                                timeStyle: "short",
-                            }).format(createdAt)}
+                            {formatDateTime(createdAt, language)}
                         </Text>
                     </View>
 

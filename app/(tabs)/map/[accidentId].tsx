@@ -410,7 +410,7 @@ export default function AccidentDetailsScreen() {
                                 )}
                             </View>
                         ) : (
-                            <View className="h-[180px] items-center justify-center bg-[#EAF1FF] dark:bg-[#16253F]">
+                            <View className="h-45 items-center justify-center bg-[#EAF1FF] dark:bg-[#16253F]">
                                 <MapPin size={34} color={colors.primary} />
                                 <Text className="mt-2 text-sm font-body-medium text-[#414755] dark:text-[#AAB0BD]">
                                     {t("accident.noImage")}
@@ -453,7 +453,7 @@ export default function AccidentDetailsScreen() {
 
                     {accident.description && (
                         <SectionCard title={t("accident.description")}>
-                            <Text className="font-body text-[15px] leading-[22px] text-[#414755] dark:text-[#AAB0BD]">
+                            <Text className="font-body text-[15px] leading-5.5 text-[#414755] dark:text-[#AAB0BD]">
                                 {accident.description}
                             </Text>
                         </SectionCard>

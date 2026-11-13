@@ -1,5 +1,5 @@
 import Mapbox from "@rnmapbox/maps";
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback } from "react";
 import { View } from "react-native";
 import { Accident, AccidentSeverity } from "../types/accident.types";
 
@@ -11,10 +11,7 @@ const SEVERITY_COLORS: Record<AccidentSeverity, string> = {
     unknown: "#0969D7",
 };
 
-const getMarkerColor = (severity: AccidentSeverity) =>
-    SEVERITY_COLORS[severity];
-
-const PULSE_COLORS: Record<AccidentSeverity, string> = {
+const HALO_COLORS: Record<AccidentSeverity, string> = {
     low: "#65B7FF",
     medium: "#FFD166",
     high: "#FF8A80",
@@ -22,87 +19,71 @@ const PULSE_COLORS: Record<AccidentSeverity, string> = {
     unknown: "#65B7FF",
 };
 
-const mixColors = (from: string, to: string, amount: number) => {
-    const fromRgb = from.match(/\w\w/g)?.map((value) => parseInt(value, 16));
-    const toRgb = to.match(/\w\w/g)?.map((value) => parseInt(value, 16));
-
-    if (!fromRgb || !toRgb || fromRgb.length !== 3 || toRgb.length !== 3) {
-        return from;
-    }
-
-    const channels = fromRgb.map((channel, index) =>
-        Math.round(channel + (toRgb[index] - channel) * amount),
-    );
-
-    return `#${channels.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
-};
-
 type AccidentMarkerProps = {
     accident: Accident;
     selected?: boolean;
-    onSelected?: () => void;
+    onSelect?: (accidentId: string) => void;
 };
 
-export function AccidentMarker({
+/**
+ * Pino de acidente.
+ *
+ * `PointAnnotation` é rasterizada pelo Mapbox a partir da view: cada
+ * re-render ou `refresh()` gera um novo bitmap na thread JS. Por isso o
+ * marcador é memoizado (só re-renderiza quando o próprio acidente ou a
+ * seleção dele mudam) e o destaque de seleção é estático — antes havia uma
+ * pulsação via `setInterval` a cada 30 ms, que travava o mapa e o resto do
+ * app enquanto um pino estava selecionado.
+ */
+export const AccidentMarker = memo(function AccidentMarker({
     accident,
     selected = false,
-    onSelected,
+    onSelect,
 }: AccidentMarkerProps) {
-    const annotationRef = useRef<Mapbox.PointAnnotation>(null);
-    const [pulsePhase, setPulsePhase] = useState(0);
-    const markerColor = getMarkerColor(accident.severity);
+    const markerColor =
+        SEVERITY_COLORS[accident.severity] ?? SEVERITY_COLORS.unknown;
+    const haloColor = HALO_COLORS[accident.severity] ?? HALO_COLORS.unknown;
+    const handleSelected = useCallback(
+        () => onSelect?.(accident.id),
+        [accident.id, onSelect],
+    );
 
-    useEffect(() => {
-        if (!selected) {
-            setPulsePhase(0);
-            return;
-        }
-
-        const pulseTimer = setInterval(() => {
-            setPulsePhase(
-                (phase) => (phase + (Math.PI * 2 * 30) / 1200) % (Math.PI * 2),
-            );
-        }, 30);
-
-        return () => clearInterval(pulseTimer);
-    }, [selected]);
-
-    useEffect(() => {
-        annotationRef.current?.refresh();
-    }, [pulsePhase]);
-
-    const pulseAmount = selected ? (Math.sin(pulsePhase) + 1) / 2 : 0;
-    const displayedMarkerColor = selected
-        ? mixColors(
-              markerColor,
-              PULSE_COLORS[accident.severity],
-              pulseAmount,
-          )
-        : markerColor;
     return (
         <Mapbox.PointAnnotation
-            ref={annotationRef}
             id={accident.id}
+            // Remonta ao (des)selecionar para o Mapbox gerar o bitmap novo.
             key={`${accident.id}-${selected ? "selected" : "idle"}`}
             coordinate={[accident.longitude, accident.latitude]}
             anchor={{ x: 0.5, y: 1 }}
-            onSelected={onSelected}
+            onSelected={handleSelected}
         >
             <View
                 style={{
-                    width: 36,
-                    height: 42,
+                    width: selected ? 44 : 36,
+                    height: selected ? 50 : 42,
                     alignItems: "center",
                     justifyContent: "center",
                 }}
             >
+                {selected && (
+                    <View
+                        style={{
+                            position: "absolute",
+                            width: 42,
+                            height: 42,
+                            borderRadius: 21,
+                            backgroundColor: haloColor,
+                            opacity: 0.45,
+                        }}
+                    />
+                )}
                 <View
                     style={{
-                        width: 27,
-                        height: 27,
+                        width: selected ? 31 : 27,
+                        height: selected ? 31 : 27,
                         alignItems: "center",
                         justifyContent: "center",
-                        backgroundColor: displayedMarkerColor,
+                        backgroundColor: markerColor,
                         borderWidth: 3,
                         borderColor: "#FFFFFF",
                         borderRadius: 18,
@@ -128,4 +109,4 @@ export function AccidentMarker({
             </View>
         </Mapbox.PointAnnotation>
     );
-}
+});

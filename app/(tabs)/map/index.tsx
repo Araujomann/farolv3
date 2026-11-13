@@ -1,7 +1,7 @@
 import { SearchBar } from "@/components";
 import { AccidentMarker, MapFilters, useAccidents } from "@/src/features/map";
 import type { MapPlaceSearchResult } from "@/src/features/map/services/placeSearch";
-import Mapbox from "@rnmapbox/maps";
+import Mapbox, { type HeatmapLayerStyle } from "@rnmapbox/maps";
 import { useFocusEffect, useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import { Image } from "expo-image";
@@ -49,6 +49,25 @@ const CAMERA_PADDING = {
 const MARKER_COLORS = {
     ...SEVERITY_COLORS,
     unknown: SEVERITY_COLORS.low,
+} as const;
+// Serializado uma vez só: o MapView recebe sempre a mesma string.
+const MAP_STYLE_JSON = JSON.stringify(mapStyle);
+const BASEMAP_CONFIG = {
+    theme: "default",
+    font: "DIN Pro",
+    showTransitLabels: true,
+    show3dObjects: true,
+    show3dBuildings: true,
+    show3dTrees: true,
+    show3dFacades: true,
+    show3dLandmarks: true,
+} as const;
+const FULL_SCREEN = {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
 } as const;
 
 export default function MapScreen() {
@@ -132,24 +151,94 @@ export default function MapScreen() {
         }
     }, [accidents, error, isLoading]);
 
-    const selectedAccident = accidents.find(
-        (accident) => accident.id === selectedAccidentId,
+    const selectedAccident = useMemo(
+        () => accidents.find((accident) => accident.id === selectedAccidentId),
+        [accidents, selectedAccidentId],
     );
-    const accidentGeoJson: GeoJSON.FeatureCollection<GeoJSON.Point> = {
-        type: "FeatureCollection",
-        features: accidents.map((accident) => ({
-            type: "Feature",
-            id: accident.id,
-            geometry: {
-                type: "Point",
-                coordinates: [accident.longitude, accident.latitude],
-            },
-            properties: {
-                accidentId: accident.id,
-                severity: accident.severity,
-            },
-        })),
-    };
+    // Memoizado: uma nova referência faz o ShapeSource reenviar e
+    // reprocessar todo o GeoJSON no lado nativo.
+    const accidentGeoJson = useMemo<GeoJSON.FeatureCollection<GeoJSON.Point>>(
+        () => ({
+            type: "FeatureCollection",
+            features: accidents.map((accident) => ({
+                type: "Feature",
+                id: accident.id,
+                geometry: {
+                    type: "Point",
+                    coordinates: [accident.longitude, accident.latitude],
+                },
+                properties: {
+                    accidentId: accident.id,
+                    severity: accident.severity,
+                },
+            })),
+        }),
+        [accidents],
+    );
+    const basemapConfig = useMemo(
+        () => ({
+            ...BASEMAP_CONFIG,
+            lightPreset: isDark ? ("night" as const) : ("day" as const),
+        }),
+        [isDark],
+    );
+    const heatmapStyle = useMemo<HeatmapLayerStyle>(
+        () => ({
+            heatmapWeight: 1,
+            heatmapIntensity: [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                0,
+                0.8,
+                14,
+                1.4,
+            ],
+            heatmapRadius: [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                0,
+                12,
+                14,
+                32,
+            ],
+            heatmapColor: [
+                "interpolate",
+                ["linear"],
+                ["heatmap-density"],
+                0,
+                "rgba(33, 102, 172, 0)",
+                0.2,
+                "#65B7FF",
+                0.4,
+                "#FFD166",
+                0.7,
+                "#FF8A80",
+                1,
+                colors.error,
+            ],
+            heatmapOpacity: 0.88,
+        }),
+        [colors.error],
+    );
+    const handleSelectAccident = useCallback((accidentId: string) => {
+        setSelectedAccidentId(accidentId);
+    }, []);
+    // Os marcadores só são recriados quando os dados ou a seleção mudam
+    // (não a cada letra digitada na busca, por exemplo).
+    const markers = useMemo(
+        () =>
+            accidents.map((accident) => (
+                <AccidentMarker
+                    key={accident.id}
+                    accident={accident}
+                    selected={selectedAccidentId === accident.id}
+                    onSelect={handleSelectAccident}
+                />
+            )),
+        [accidents, handleSelectAccident, selectedAccidentId],
+    );
     const cameraSettings = useMemo(() => {
         const longitudes = cameraAccidents.map(
             (accident) => accident.longitude,
@@ -201,23 +290,13 @@ export default function MapScreen() {
 
             <Mapbox.MapView
                 style={{ flex: 1 }}
-                styleJSON={JSON.stringify(mapStyle)}
+                styleJSON={MAP_STYLE_JSON}
                 onTouchStart={Keyboard.dismiss}
             >
                 <Mapbox.StyleImport
                     id="basemap"
                     existing
-                    config={{
-                        lightPreset: isDark ? "night" : "day",
-                        theme: "default",
-                        font: "DIN Pro",
-                        showTransitLabels: true,
-                        show3dObjects: true,
-                        show3dBuildings: true,
-                        show3dTrees: true,
-                        show3dFacades: true,
-                        show3dLandmarks: true,
-                    }}
+                    config={basemapConfig}
                 />
 
                 <Mapbox.Camera
@@ -240,58 +319,12 @@ export default function MapScreen() {
                     {viewMode === "heatmap" ? (
                         <Mapbox.HeatmapLayer
                             id="accident-heatmap"
-                            style={{
-                                heatmapWeight: 1,
-                                heatmapIntensity: [
-                                    "interpolate",
-                                    ["linear"],
-                                    ["zoom"],
-                                    0,
-                                    0.8,
-                                    14,
-                                    1.4,
-                                ],
-                                heatmapRadius: [
-                                    "interpolate",
-                                    ["linear"],
-                                    ["zoom"],
-                                    0,
-                                    12,
-                                    14,
-                                    32,
-                                ],
-                                heatmapColor: [
-                                    "interpolate",
-                                    ["linear"],
-                                    ["heatmap-density"],
-                                    0,
-                                    "rgba(33, 102, 172, 0)",
-                                    0.2,
-                                    "#65B7FF",
-                                    0.4,
-                                    "#FFD166",
-                                    0.7,
-                                    "#FF8A80",
-                                    1,
-                                    colors.error,
-                                ],
-                                heatmapOpacity: 0.88,
-                            }}
+                            style={heatmapStyle}
                         />
                     ) : undefined}
                 </Mapbox.ShapeSource>
 
-                {viewMode === "markers" &&
-                    accidents.map((accident) => (
-                        <AccidentMarker
-                            key={accident.id}
-                            accident={accident}
-                            selected={selectedAccidentId === accident.id}
-                            onSelected={() =>
-                                setSelectedAccidentId(accident.id)
-                            }
-                        />
-                    ))}
+                {viewMode === "markers" && markers}
             </Mapbox.MapView>
 
             <View
@@ -449,13 +482,7 @@ export default function MapScreen() {
                 <Animated.View
                     entering={FadeIn.duration(200)}
                     exiting={FadeOut.duration(300)}
-                    style={{
-                        position: "absolute",
-                        top: 0,
-                        right: 0,
-                        bottom: 0,
-                        left: 0,
-                    }}
+                    style={FULL_SCREEN}
                 >
                     <View
                         className="flex-1 items-center justify-center bg-slate-900/25"

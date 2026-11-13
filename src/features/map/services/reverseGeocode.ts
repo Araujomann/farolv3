@@ -4,7 +4,41 @@ type ReverseGeocodeResponse = {
     }>;
 };
 
-export async function reverseGeocode(
+/**
+ * Endereços já resolvidos (ou em resolução), por coordenada. Evita refazer
+ * a mesma chamada ao Mapbox quando a lista de relatos re-renderiza, quando o
+ * usuário volta à tela ou quando duas telas pedem o mesmo ponto.
+ * ~5 casas decimais ≈ 1 m — mais que suficiente para um endereço.
+ */
+const addressCache = new Map<string, Promise<string>>();
+const MAX_CACHE_ENTRIES = 300;
+
+const getCacheKey = (longitude: number, latitude: number) =>
+    `${longitude.toFixed(5)},${latitude.toFixed(5)}`;
+
+export function reverseGeocode(
+    longitude: number,
+    latitude: number,
+): Promise<string> {
+    const key = getCacheKey(longitude, latitude);
+    const cached = addressCache.get(key);
+    if (cached) return cached;
+
+    const request = fetchAddress(longitude, latitude).catch((error) => {
+        // Falhas não ficam em cache: a próxima tentativa refaz a chamada.
+        addressCache.delete(key);
+        throw error;
+    });
+
+    if (addressCache.size >= MAX_CACHE_ENTRIES) {
+        const oldestKey = addressCache.keys().next().value;
+        if (oldestKey !== undefined) addressCache.delete(oldestKey);
+    }
+    addressCache.set(key, request);
+    return request;
+}
+
+async function fetchAddress(
     longitude: number,
     latitude: number,
 ): Promise<string> {

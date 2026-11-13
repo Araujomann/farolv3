@@ -37,8 +37,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAppTheme } from "@/src/theme/useAppTheme";
 import {
+    formatNumber,
     formatRelativeTime,
-    getCurrentLanguage,
     translateAccidentType,
     useTranslation,
 } from "@/src/i18n";
@@ -62,6 +62,9 @@ function useHomeColors() {
 }
 
 
+/** Ao voltar para a aba, só recarrega se os dados tiverem mais que isso. */
+const FOCUS_REFRESH_INTERVAL_MS = 30_000;
+
 const CARD_SHADOW = {
     elevation: 2,
     shadowColor: "#202A44",
@@ -69,10 +72,6 @@ const CARD_SHADOW = {
     shadowOpacity: 0.06,
     shadowRadius: 8,
 };
-
-function formatNumber(value: number) {
-    return new Intl.NumberFormat(getCurrentLanguage()).format(value);
-}
 
 
 function validateOverview(overview: AccidentOverview) {
@@ -621,6 +620,7 @@ export default function HomeScreen() {
     const user = useAuthStore((state) => state.user);
     const requestId = useRef(0);
     const hasLoaded = useRef(false);
+    const lastLoadedAt = useRef(0);
     const [overview, setOverview] = useState<AccidentOverview | null>(null);
     const [personalStats, setPersonalStats] =
         useState<GamificationStats | null>(null);
@@ -695,13 +695,21 @@ export default function HomeScreen() {
         }
 
         hasLoaded.current = true;
+        lastLoadedAt.current = Date.now();
         setIsLoading(false);
         setIsRefreshing(false);
     }, [t]);
 
     useFocusEffect(
         useCallback(() => {
-            void loadDashboard();
+            // Evita refazer as requisições (e re-renderizar a tela inteira
+            // durante a transição de aba) quando os dados acabaram de chegar.
+            if (
+                !hasLoaded.current ||
+                Date.now() - lastLoadedAt.current > FOCUS_REFRESH_INTERVAL_MS
+            ) {
+                void loadDashboard();
+            }
             const subscription =
                 Notifications.addNotificationReceivedListener(
                     (notification) => {

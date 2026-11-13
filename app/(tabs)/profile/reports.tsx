@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
-    Image,
+    FlatList,
     Pressable,
-    ScrollView,
     View,
+    type ListRenderItem,
 } from "react-native";
+import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
 import {
     ArrowLeft,
@@ -22,7 +23,12 @@ import { getMyReports, type MyReport, type ReportStatus } from "@/src/api/report
 import { reverseGeocode } from "@/src/features/map/services/reverseGeocode";
 
 import { useAppTheme } from "@/src/theme/useAppTheme";
-import { useTranslation, type Language, type TranslationKey } from "@/src/i18n";
+import {
+    getDateTimeFormatter,
+    useTranslation,
+    type Language,
+    type TranslationKey,
+} from "@/src/i18n";
 import { type AppColors } from "@/src/theme/colors";
 
 type StatusFilter = {
@@ -62,10 +68,16 @@ const getStatusFilters = (
 
 const PAGE_SIZE = 20;
 
+const keyExtractor = (report: MyReport) => report.id;
+const ReportSeparator = () => <View className="h-4" />;
+
 export default function MyReportsScreen() {
     const { t } = useTranslation();
-    const STATUS_FILTERS = getStatusFilters(useAppTheme().colors, t);
     const { colors } = useAppTheme();
+    const statusFilters = useMemo(
+        () => getStatusFilters(colors, t),
+        [colors, t],
+    );
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const requestId = useRef(0);
@@ -77,6 +89,13 @@ export default function MyReportsScreen() {
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [loadMoreError, setLoadMoreError] = useState(false);
+
+    const findFilter = useCallback(
+        (value: ReportStatus) =>
+            statusFilters.find((filter) => filter.status === value) ??
+            statusFilters[0],
+        [statusFilters],
+    );
 
     const loadReports = useCallback(async () => {
         const currentRequestId = ++requestId.current;
@@ -153,6 +172,16 @@ export default function MyReportsScreen() {
         }
     };
 
+    const renderReport = useCallback<ListRenderItem<MyReport>>(
+        ({ item }) => (
+            <ReportCard
+                report={item}
+                filter={findFilter(item.moderation_status)}
+            />
+        ),
+        [findFilter],
+    );
+
     return (
         <View className="flex-1" style={{ backgroundColor: colors.background }}>
             <View
@@ -176,120 +205,122 @@ export default function MyReportsScreen() {
                 <View className="h-11 w-11" />
             </View>
 
-            <ScrollView
+            {/* Lista virtualizada: só os cards próximos da tela ficam montados. */}
+            <FlatList
+                data={isLoading || error ? [] : reports}
+                keyExtractor={keyExtractor}
+                renderItem={renderReport}
+                ItemSeparatorComponent={ReportSeparator}
                 contentContainerStyle={{
                     paddingHorizontal: 16,
                     paddingTop: 16,
                     paddingBottom: insets.bottom + 24,
                 }}
                 showsVerticalScrollIndicator={false}
-            >
-                <View className="mb-5 flex-row rounded-2xl bg-[#E3E5EF] dark:bg-[#242833] p-1">
-                    {STATUS_FILTERS.map((filter) => {
-                        const Icon = filter.icon;
-                        const isSelected = status === filter.status;
+                initialNumToRender={4}
+                maxToRenderPerBatch={4}
+                windowSize={7}
+                removeClippedSubviews
+                ListHeaderComponent={
+                    <View className="mb-5 flex-row rounded-2xl bg-[#E3E5EF] dark:bg-[#242833] p-1">
+                        {statusFilters.map((filter) => {
+                            const Icon = filter.icon;
+                            const isSelected = status === filter.status;
 
-                        return (
-                            <Pressable
-                                key={filter.status}
-                                accessibilityRole="tab"
-                                accessibilityLabel={filter.label}
-                                accessibilityState={{ selected: isSelected }}
-                                onPress={() => setStatus(filter.status)}
-                                className="h-11 flex-1 items-center justify-center rounded-xl"
-                                style={{
-                                    backgroundColor: isSelected
-                                        ? colors.surface
-                                        : "transparent",
-                                }}
-                            >
-                                <Icon
-                                    size={21}
-                                    color={isSelected ? filter.color : colors.onSurfaceVariant}
-                                    strokeWidth={2.5}
-                                />
-                            </Pressable>
-                        );
-                    })}
-                </View>
-
-                {isLoading ? (
-                    <View className="items-center py-16">
-                        <ActivityIndicator size="large" color={colors.primary} />
-                        <Text className="font-body mt-3 text-sm text-[#626B7A] dark:text-[#AAB0BD]">
-                            {t("reports.loading")}
-                        </Text>
+                            return (
+                                <Pressable
+                                    key={filter.status}
+                                    accessibilityRole="tab"
+                                    accessibilityLabel={filter.label}
+                                    accessibilityState={{ selected: isSelected }}
+                                    onPress={() => setStatus(filter.status)}
+                                    className="h-11 flex-1 items-center justify-center rounded-xl"
+                                    style={{
+                                        backgroundColor: isSelected
+                                            ? colors.surface
+                                            : "transparent",
+                                    }}
+                                >
+                                    <Icon
+                                        size={21}
+                                        color={isSelected ? filter.color : colors.onSurfaceVariant}
+                                        strokeWidth={2.5}
+                                    />
+                                </Pressable>
+                            );
+                        })}
                     </View>
-                ) : error ? (
-                    <View className="items-center rounded-2xl bg-white dark:bg-[#1A1D24] px-5 py-8">
-                        <Text className="font-body text-center text-[15px] leading-6 text-[#414755] dark:text-[#AAB0BD]">
-                            {error}
-                        </Text>
-                        <Pressable
-                            accessibilityRole="button"
-                            onPress={() => void loadReports()}
-                            className="mt-4 rounded-xl bg-[#0058BC] px-5 py-3"
-                        >
-                            <Text className="font-body-semibold text-white">
-                                {t("common.retry")}
+                }
+                ListEmptyComponent={
+                    isLoading ? (
+                        <View className="items-center py-16">
+                            <ActivityIndicator size="large" color={colors.primary} />
+                            <Text className="font-body mt-3 text-sm text-[#626B7A] dark:text-[#AAB0BD]">
+                                {t("reports.loading")}
                             </Text>
-                        </Pressable>
-                    </View>
-                ) : reports.length === 0 ? (
-                    <EmptyReports status={status} />
-                ) : (
-                    <View className="gap-4">
-                        {reports.map((report) => (
-                            <ReportCard key={report.id} report={report} />
-                        ))}
-
-                        {page < totalPages && (
+                        </View>
+                    ) : error ? (
+                        <View className="items-center rounded-2xl bg-white dark:bg-[#1A1D24] px-5 py-8">
+                            <Text className="font-body text-center text-[15px] leading-6 text-[#414755] dark:text-[#AAB0BD]">
+                                {error}
+                            </Text>
                             <Pressable
                                 accessibilityRole="button"
-                                onPress={() => void loadMore()}
-                                disabled={isLoadingMore}
-                                className="h-12 items-center justify-center rounded-xl bg-white dark:bg-[#1A1D24]"
+                                onPress={() => void loadReports()}
+                                className="mt-4 rounded-xl bg-[#0058BC] px-5 py-3"
                             >
-                                {isLoadingMore ? (
-                                    <ActivityIndicator
-                                        size="small"
-                                        color={colors.primary}
-                                    />
-                                ) : (
-                                    <Text className="font-body-semibold text-[#0058BC] dark:text-[#3B87F5]">
-                                        {loadMoreError
-                                            ? t("reports.loadMoreRetry")
-                                            : t("reports.loadMore")}
-                                    </Text>
-                                )}
+                                <Text className="font-body-semibold text-white">
+                                    {t("common.retry")}
+                                </Text>
                             </Pressable>
-                        )}
-                    </View>
-                )}
-            </ScrollView>
+                        </View>
+                    ) : (
+                        <EmptyReports filter={findFilter(status)} />
+                    )
+                }
+                ListFooterComponent={
+                    !isLoading && !error && page < totalPages ? (
+                        <Pressable
+                            accessibilityRole="button"
+                            onPress={() => void loadMore()}
+                            disabled={isLoadingMore}
+                            className="mt-4 h-12 items-center justify-center rounded-xl bg-white dark:bg-[#1A1D24]"
+                        >
+                            {isLoadingMore ? (
+                                <ActivityIndicator
+                                    size="small"
+                                    color={colors.primary}
+                                />
+                            ) : (
+                                <Text className="font-body-semibold text-[#0058BC] dark:text-[#3B87F5]">
+                                    {loadMoreError
+                                        ? t("reports.loadMoreRetry")
+                                        : t("reports.loadMore")}
+                                </Text>
+                            )}
+                        </Pressable>
+                    ) : null
+                }
+            />
         </View>
     );
 }
 
-function EmptyReports({ status }: { status: ReportStatus }) {
+function EmptyReports({ filter }: { filter: StatusFilter }) {
     const { t } = useTranslation();
-    const STATUS_FILTERS = getStatusFilters(useAppTheme().colors, t);
-    const selectedFilter = STATUS_FILTERS.find(
-        (filter) => filter.status === status,
-    )!;
-    const Icon = selectedFilter.icon;
+    const Icon = filter.icon;
 
     return (
         <View className="items-center rounded-2xl bg-white dark:bg-[#1A1D24] px-6 py-10">
             <View
                 className="mb-4 h-14 w-14 items-center justify-center rounded-full"
-                style={{ backgroundColor: selectedFilter.background }}
+                style={{ backgroundColor: filter.background }}
             >
-                <Icon size={26} color={selectedFilter.color} />
+                <Icon size={26} color={filter.color} />
             </View>
             <Text className="text-center text-base font-body-semibold text-[#181C23] dark:text-[#ECEEF4]">
                 {t("reports.emptyTitle", {
-                    status: selectedFilter.label.toLowerCase(),
+                    status: filter.label.toLowerCase(),
                 })}
             </Text>
             <Text className="font-body mt-2 text-center text-sm leading-5 text-[#626B7A] dark:text-[#AAB0BD]">
@@ -299,13 +330,15 @@ function EmptyReports({ status }: { status: ReportStatus }) {
     );
 }
 
-function ReportCard({ report }: { report: MyReport }) {
+const ReportCard = memo(function ReportCard({
+    report,
+    filter,
+}: {
+    report: MyReport;
+    filter: StatusFilter;
+}) {
     const { t, language } = useTranslation();
-    const STATUS_FILTERS = getStatusFilters(useAppTheme().colors, t);
     const { colors } = useAppTheme();
-    const filter = STATUS_FILTERS.find(
-        (item) => item.status === report.moderation_status,
-    )!;
     const StatusIcon = filter.icon;
     const image = report.images[0];
     const [address, setAddress] = useState(() => t("reports.searchingAddress"));
@@ -313,6 +346,8 @@ function ReportCard({ report }: { report: MyReport }) {
     useEffect(() => {
         let isMounted = true;
 
+        // Endereços ficam em cache no serviço: voltar à tela ou rolar a
+        // lista não refaz a chamada ao Mapbox.
         reverseGeocode(report.longitude, report.latitude)
             .then((resolvedAddress) => {
                 if (isMounted) setAddress(resolvedAddress);
@@ -372,12 +407,18 @@ function ReportCard({ report }: { report: MyReport }) {
             </View>
 
             {image ? (
-                <Image
-                    accessibilityLabel={image.caption ?? t("reports.imageFallback")}
-                    source={{ uri: image.image_url }}
-                    resizeMode="cover"
-                    className="h-40 w-full rounded-xl bg-[#E8ECF2] dark:bg-[#242833]"
-                />
+                <View className="h-40 w-full overflow-hidden rounded-xl bg-[#E8ECF2] dark:bg-[#242833]">
+                    {/* expo-image: cache em disco/memória e decodificação fora da thread JS. */}
+                    <Image
+                        accessibilityLabel={image.caption ?? t("reports.imageFallback")}
+                        source={{ uri: image.image_url }}
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                        recyclingKey={image.image_url}
+                        transition={150}
+                        style={{ width: "100%", height: "100%" }}
+                    />
+                </View>
             ) : null}
 
             {report.moderation_status === "REJECTED" && (
@@ -393,16 +434,18 @@ function ReportCard({ report }: { report: MyReport }) {
             )}
         </View>
     );
-}
+});
+
+const OCCURRENCE_DATE_FORMAT: Intl.DateTimeFormatOptions = {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+};
 
 function formatOccurrenceDate(value: string, language: Language) {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return null;
 
-    return new Intl.DateTimeFormat(language, {
-        day: "2-digit",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-    }).format(date);
+    return getDateTimeFormatter(language, OCCURRENCE_DATE_FORMAT).format(date);
 }
