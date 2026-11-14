@@ -10,6 +10,7 @@ const ptBR = {
         close: "Fechar",
         cancel: "Cancelar",
         retry: "Tentar novamente",
+        serverWaking: "Conectando ao servidor… a primeira conexão pode levar até 1 minuto.",
     },
     tabs: {
         home: "Home",

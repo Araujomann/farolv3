@@ -1,9 +1,14 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import * as SecureStore from "expo-secure-store";
+import {
+    API_TIMEOUT_MS,
+    beginRequestTracking,
+    endRequestTracking,
+} from "./serverStatus";
 
 export const api = axios.create({
     baseURL: process.env.EXPO_PUBLIC_API_URL,
-    timeout: 10000,
+    timeout: API_TIMEOUT_MS,
     headers: {
         "Content-Type": "application/json",
     },
@@ -15,6 +20,7 @@ api.interceptors.request.use(
 
         if (token) config.headers.Authorization = `Bearer ${token}`
 
+        beginRequestTracking(config);
         return config;
     },
     (error) => Promise.reject(error)
@@ -39,8 +45,12 @@ const processQueue = (error: any, token: string | null = null) => {
 };
 
 api.interceptors.response.use(
-    (response) => response, 
+    (response) => {
+        endRequestTracking(response.config);
+        return response;
+    },
     async (error: AxiosError) => {
+        endRequestTracking(error.config);
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
         const status = error.response?.status;
 
@@ -72,7 +82,7 @@ api.interceptors.response.use(
                 // Cria uma requisição limpa para NÃO passar por *este* interceptor
                 const refreshResponse = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/auth/refresh`, {
                     refreshToken: refreshToken
-                });
+                }, { timeout: API_TIMEOUT_MS });
 
                 const { tokens } = refreshResponse.data.data;
 

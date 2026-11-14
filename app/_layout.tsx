@@ -33,6 +33,8 @@ import { useThemeStore } from '@/src/theme/themeStore';
 import { useAppTheme } from '@/src/theme/useAppTheme';
 import { useLanguageStore } from '@/src/i18n';
 import { usePushNotifications } from '@/src/features/notifications/usePushNotifications';
+import { ServerWakingNotice } from '@/src/api/ServerWakingNotice';
+import { useIsServerSlow } from '@/src/api/serverStatus';
 import "react-native-reanimated";
 import "../global.css"
 
@@ -47,7 +49,9 @@ Mapbox.setAccessToken(mapboxToken);
 LogBox.ignoreLogs(['Unable to activate keep awake']);
 
 // Mantém a splash nativa (escudo do Farol sobre o azul) até sessão, fontes,
-// tema e idioma estarem prontos, e então some com um fade suave.
+// tema e idioma estarem prontos, e então some com um fade suave. Se a sessão
+// demorar (API acordando da hibernação), a splash sai antes para o aviso de
+// conexão aparecer sobre o indicador de carregamento.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 SplashScreen.setOptions({ duration: 400, fade: true });
 
@@ -90,12 +94,13 @@ export default function RootLayout() {
 
     usePushNotifications(Boolean(token));
 
-    const isAppReady =
-        !isLoading && fontsReady && isThemeHydrated && isLanguageHydrated;
+    const isUiReady = fontsReady && isThemeHydrated && isLanguageHydrated;
+    const isAppReady = !isLoading && isUiReady;
+    const isServerSlow = useIsServerSlow();
 
     useEffect(() => {
-        if (isAppReady) SplashScreen.hide();
-    }, [isAppReady]);
+        if (isUiReady && (isAppReady || isServerSlow)) SplashScreen.hide();
+    }, [isUiReady, isAppReady, isServerSlow]);
 
     useEffect(() => {
         restoreSession();
@@ -168,6 +173,7 @@ export default function RootLayout() {
                             <ActivityIndicator size="large" color={colors.primary} />
                         </View>
                     )}
+                    <ServerWakingNotice />
                 </View>
             </ThemeProvider>
         </GluestackUIProvider>

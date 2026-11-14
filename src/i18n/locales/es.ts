@@ -6,6 +6,7 @@ const es: Dictionary = {
         close: "Cerrar",
         cancel: "Cancelar",
         retry: "Intentar de nuevo",
+        serverWaking: "Conectando al servidor… la primera conexión puede tardar hasta 1 minuto.",
     },
     tabs: {
         home: "Inicio",
