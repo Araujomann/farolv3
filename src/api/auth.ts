@@ -101,3 +101,8 @@ export const resendVerificationCodeService = async () => {
     const response = await api.post<ResendVerificationResponse>("/auth/resend-verification", {});
     return response.data.data;
 }
+
+/** Revoga o refresh token na API (encerra a sessão deste aparelho). */
+export const logoutService = async (refreshToken: string) => {
+    await api.post("/auth/logout", { refreshToken });
+};

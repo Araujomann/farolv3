@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
-import { getMeService } from "../api/auth";
+import { getMeService, logoutService } from "../api/auth";
 import {
     forgetStoredPushToken,
     unregisterCurrentPushToken,
@@ -38,6 +38,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
             await unregisterCurrentPushToken();
         } catch (error) {
             console.error("Falha ao remover o dispositivo das notificações", error);
+        }
+
+        // Revoga a sessão na API depois de remover o dispositivo: essa remoção
+        // pode renovar os tokens, então lemos o refresh token mais recente. Não
+        // esperamos a resposta para a saída não travar com a API hibernando ou
+        // sem rede; se falhar, o token expira em REFRESH_TOKEN_EXPIRES_IN.
+        const refreshToken = await SecureStore.getItemAsync("refresh_token");
+        if (refreshToken) {
+            void logoutService(refreshToken).catch(() => undefined);
         }
 
         await SecureStore.deleteItemAsync("token");
