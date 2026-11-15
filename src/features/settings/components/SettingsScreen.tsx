@@ -6,6 +6,7 @@ import {
     Globe,
     Languages,
     Moon,
+    ShieldCheck,
     Smartphone,
     Sun,
     Trash2,
@@ -85,6 +86,9 @@ export default function SettingsScreen() {
             >
                 <ThemeSection />
                 <LanguageSection />
+                <PrivacySection
+                    onPress={() => router.push("/profile/privacy")}
+                />
                 <AccountSection
                     onDeleteAccountPress={() =>
                         router.push("/profile/delete-account")
@@ -260,6 +264,62 @@ function LanguageSection() {
                         />
                     </View>
                 ))}
+            </SectionCard>
+        </View>
+    );
+}
+
+/** Termos, cópia e correção dos dados (LGPD) em uma tela própria. */
+function PrivacySection({ onPress }: { onPress: () => void }) {
+    const { colors } = useAppTheme();
+    const { t } = useTranslation();
+
+    return (
+        <View>
+            <SectionTitle>{t("settings.privacy.section")}</SectionTitle>
+            <SectionCard>
+                <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t("settings.privacy.privacyAndData")}
+                    accessibilityHint={t(
+                        "settings.privacy.privacyAndDataDescription",
+                    )}
+                    onPress={onPress}
+                    className="flex-row items-center justify-between px-5 py-4"
+                    style={({ pressed }) => ({
+                        backgroundColor: pressed
+                            ? colors.surfaceMuted
+                            : colors.surface,
+                    })}
+                >
+                    <View className="flex-1 flex-row items-center gap-4 pr-3">
+                        <View
+                            className="h-8 w-8 items-center justify-center rounded-lg"
+                            style={{ backgroundColor: colors.surfaceMuted }}
+                        >
+                            <ShieldCheck
+                                size={20}
+                                color={colors.primary}
+                                strokeWidth={2}
+                            />
+                        </View>
+                        <View className="flex-1">
+                            <Text
+                                className="font-body text-base"
+                                style={{ color: colors.onSurface }}
+                            >
+                                {t("settings.privacy.privacyAndData")}
+                            </Text>
+                            <Text
+                                className="font-body mt-0.5 text-[13px]"
+                                style={{ color: colors.onSurfaceVariant }}
+                            >
+                                {t("settings.privacy.privacyAndDataDescription")}
+                            </Text>
+                        </View>
+                    </View>
+                    <ChevronRight size={20} color={colors.outline} />
+                </Pressable>
             </SectionCard>
         </View>
     );

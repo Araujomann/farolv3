@@ -7,6 +7,9 @@ export type User = {
     role: UserRole;
     is_email_verified: boolean;
     email_verified_at: string | null;
+    /** Versão dos Termos/Política aceita (AAAA-MM-DD); `null` se nunca aceitou. */
+    terms_version: string | null;
+    terms_accepted_at: string | null;
     created_at: string;
     updated_at: string;
 };

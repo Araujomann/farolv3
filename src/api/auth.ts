@@ -10,6 +10,8 @@ export type RegisterPayload = {
     email: string;
     name: string;
     password: string;
+    /** Versão dos Termos de Uso e da Política de Privacidade aceita no cadastro. */
+    acceptedTermsVersion: string;
 }
 
 export type VerifyPasswordResetCodePayload = {

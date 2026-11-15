@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { Check } from "lucide-react-native";
 import { Pressable, StyleSheet, View } from "react-native";
 
@@ -15,6 +16,7 @@ type TermsCheckboxProps = {
 export function TermsCheckbox({ value, onChange }: TermsCheckboxProps) {
     const styles = createStyles(useAppTheme().colors);
     const { t } = useTranslation();
+    const router = useRouter();
 
     return (
         <Pressable
@@ -42,11 +44,20 @@ export function TermsCheckbox({ value, onChange }: TermsCheckboxProps) {
 
             <Text className="flex-1 text-xs font-body-medium text-slate-500 dark:text-[#8B92A1]">
                 {t("auth.register.agreePrefix")}{" "}
-                <Text className="text-xs font-body-semibold text-[#0058BC] dark:text-[#3B87F5]">
+                {/* Os textos abrem a leitura sem marcar a caixa. */}
+                <Text
+                    accessibilityRole="link"
+                    onPress={() => router.push("/legal/terms")}
+                    className="text-xs font-body-semibold text-[#0058BC] underline dark:text-[#3B87F5]"
+                >
                     {t("auth.register.terms")}
                 </Text>
                 {" "}{t("auth.register.and")}{" "}
-                <Text className="text-xs font-body-semibold text-[#0058BC] dark:text-[#3B87F5]">
+                <Text
+                    accessibilityRole="link"
+                    onPress={() => router.push("/legal/privacy")}
+                    className="text-xs font-body-semibold text-[#0058BC] underline dark:text-[#3B87F5]"
+                >
                     {t("auth.register.privacy")}
                 </Text>
             </Text>

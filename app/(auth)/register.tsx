@@ -26,6 +26,7 @@ import { VStack } from "@/components/ui/vstack";
 import { Box } from "@/components/ui/box";
 
 import { registerService } from "@/src/api/auth";
+import { TERMS_VERSION } from "@/src/features/legal/legalConfig";
 import { useAuthStore } from "@/src/store/authStore";
 import { AuthServerError } from "@/src/features/auth/components/AuthServerError";
 import { AuthTextField } from "@/src/features/auth/components/AuthTextField";
@@ -137,6 +138,7 @@ export default function RegisterScreen() {
           name: data.name,
           email: data.email,
           password: data.password,
+          acceptedTermsVersion: TERMS_VERSION,
         });
 
       // O _layout.tsx redireciona para a tela do código de verificação

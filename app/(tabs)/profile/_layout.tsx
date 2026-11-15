@@ -7,6 +7,7 @@ export default function ProfileLayout() {
             <Stack.Screen name="reports" options={{ headerShown: false }} />
             <Stack.Screen name="settings" options={{ headerShown: false }} />
             <Stack.Screen name="delete-account" options={{ headerShown: false }} />
+            <Stack.Screen name="privacy" options={{ headerShown: false }} />
         </Stack>
     );
 }

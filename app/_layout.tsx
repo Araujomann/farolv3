@@ -35,6 +35,7 @@ import { useLanguageStore } from '@/src/i18n';
 import { usePushNotifications } from '@/src/features/notifications/usePushNotifications';
 import { ServerWakingNotice } from '@/src/api/ServerWakingNotice';
 import { useIsServerSlow } from '@/src/api/serverStatus';
+import { needsTermsAcceptance } from '@/src/features/legal/legalConfig';
 import "react-native-reanimated";
 import "../global.css"
 
@@ -120,15 +121,35 @@ export default function RootLayout() {
                 segments[1] === "reset-password");
         const inEmailVerification =
             inAuthGroup && segments[1] === "verify-email";
+        // Termos e Política ficam abertos com ou sem sessão (o cadastro e as
+        // configurações apontam para eles); o aceite exige sessão.
+        const inLegalGroup = segments[0] === "legal";
+        const inTermsAcceptance = inLegalGroup && segments[1] === "accept";
+        const mustAcceptTerms = Boolean(
+            token && user && needsTermsAcceptance(user),
+        );
 
-        if (!token && (!inAuthGroup || inEmailVerification)) {
+        if (!token) {
             // Sem token → vai para login
-            router.replace("/(auth)/login");
+            if (
+                !(inAuthGroup || inLegalGroup) ||
+                inEmailVerification ||
+                inTermsAcceptance
+            ) {
+                router.replace("/(auth)/login");
+            }
+        } else if (mustAcceptTerms) {
+            // Conta sem aceite da versão atual dos textos (LGPD) → tela de
+            // aceite, de onde os textos podem ser lidos. Não interrompe a
+            // recuperação de senha nem a confirmação de e-mail em andamento.
+            if (!inLegalGroup && !inPasswordRecovery && !inEmailVerification) {
+                router.replace("/legal/accept");
+            }
         } else if (
-            token &&
             !inTabsGroup &&
             !inPasswordRecovery &&
-            !inEmailVerification
+            !inEmailVerification &&
+            (!inLegalGroup || inTermsAcceptance)
         ) {
             // Com token mas fora da área logada.
             // Logo após cadastro/login sem e-mail verificado → tela do código.
@@ -152,6 +173,7 @@ export default function RootLayout() {
         rootNavigationState?.key,
         segments,
         user?.is_email_verified,
+        user?.terms_version,
         emailVerificationPrompt,
     ]);
 
@@ -164,6 +186,7 @@ export default function RootLayout() {
                         <Stack.Screen name="index" options={{ headerShown: false }} />
                         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                        <Stack.Screen name="legal" options={{ headerShown: false }} />
                     </Stack>
                     {!isAppReady && (
                         <View

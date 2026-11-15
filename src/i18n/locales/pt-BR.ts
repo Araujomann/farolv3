@@ -33,12 +33,58 @@ const ptBR = {
             system: "Padrão do sistema",
             systemDescription: "Usa o idioma do aparelho ({{language}})",
         },
+        privacy: {
+            section: "Privacidade",
+            privacyAndData: "Privacidade e dados",
+            privacyAndDataDescription:
+                "Termos, cópia e correção dos seus dados",
+        },
         account: {
             section: "Conta",
             deleteAccount: "Excluir conta",
             deleteAccountDescription:
                 "Remove permanentemente sua conta e seus dados pessoais",
         },
+    },
+    legal: {
+        back: "Voltar",
+        version: "Versão de {{date}}",
+        accept: {
+            title: "Termos de Uso e Privacidade",
+            message:
+                "Para continuar usando o Farol, leia e aceite os Termos de Uso e a Política de Privacidade. Eles explicam as regras do serviço e como tratamos os seus dados.",
+            readTerms: "Ler os Termos de Uso",
+            readPrivacy: "Ler a Política de Privacidade",
+            confirm: "Li e aceito",
+            signOut: "Sair da conta",
+            errorTitle: "Não foi possível registrar o aceite",
+            errorMessage: "Verifique sua conexão e tente novamente.",
+        },
+    },
+    privacyData: {
+        title: "Privacidade e dados",
+        documentsSection: "Documentos",
+        terms: "Termos de Uso",
+        privacy: "Política de Privacidade",
+        acceptedOn: "Você aceitou a versão de {{date}}",
+        dataSection: "Seus dados",
+        nameLabel: "Nome",
+        nameHint: "Corrija seu nome se ele estiver incorreto.",
+        save: "Salvar",
+        saved: "Nome atualizado.",
+        nameInvalid: "O nome deve ter entre 2 e 120 caracteres.",
+        saveError: "Não foi possível salvar. Tente novamente.",
+        export: "Exportar meus dados",
+        exportDescription: "Gera uma cópia dos seus dados em formato JSON",
+        exporting: "Gerando cópia...",
+        exportShareTitle: "Meus dados no Farol",
+        exportErrorTitle: "Não foi possível exportar",
+        exportErrorMessage:
+            "Tente novamente em alguns minutos. Por segurança, a exportação tem um limite de pedidos por hora.",
+        deleteSection: "Exclusão",
+        contactSection: "Contato",
+        contact: "Dúvidas ou pedidos sobre seus dados: {{contact}}",
+        anpd: "Você também pode apresentar reclamação à Autoridade Nacional de Proteção de Dados (ANPD).",
     },
     deleteAccount: {
         title: "Excluir conta",

@@ -41,10 +41,5 @@ jobs:
             - name: Type check
               run: npx tsc --noEmit
 
-            # Não bloqueia por enquanto: components/ui/tabs/index.tsx (gerado
-            # pelo gluestack) chama hooks condicionalmente (5 erros de
-            # react-hooks/rules-of-hooks). Remover continue-on-error depois de
-            # corrigir.
             - name: Lint
               run: npx expo lint
-              continue-on-error: true
