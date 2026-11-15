@@ -20,6 +20,7 @@ import { LocationIntroSheet } from "@/src/features/report/components/location/Lo
 import { LocationPin } from "@/src/features/report/components/location/LocationPin";
 import { MapZoomControls } from "@/src/features/report/components/location/MapZoomControls";
 import { useLocationPickerAnimation } from "@/src/features/report/hooks/useLocationPickerAnimation";
+import { useUserLocation } from "@/src/features/report/hooks/useUserLocation";
 
 import { useAppTheme } from "@/src/theme/useAppTheme";
 import { tr, useTranslation } from "@/src/i18n";
@@ -62,13 +63,43 @@ export default function ReportScreen() {
         initialMapTop,
         initialMapSize,
     });
+    const { hasPermission, userLocation } = useUserLocation();
+    const hasUserMovedMapRef = useRef(false);
     const lastCameraUpdateRef = useRef(0);
     const isConfirmedRef = useRef(false);
     const confirmationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
         null,
     );
 
+    // Assim que a posição do usuário chega, leva o mapa até ela. Se o mapa
+    // ainda está no círculo inicial, posiciona sem animação para que, ao tocar
+    // em "Entendi", ele já esteja focado; depois de expandido, voa até lá.
+    // Não interfere se o usuário já começou a arrastar o mapa ou já confirmou
+    // o local (a leitura do GPS pode chegar depois da confirmação).
+    useEffect(() => {
+        if (
+            !userLocation ||
+            hasUserMovedMapRef.current ||
+            isConfirmedRef.current
+        ) {
+            return;
+        }
+
+        cameraRef.current?.setCamera({
+            centerCoordinate: userLocation,
+            zoomLevel: INITIAL_ZOOM,
+            animationDuration: isMapExpanded ? 700 : 0,
+            animationMode: isMapExpanded ? "flyTo" : "none",
+        });
+        setSelectedLocation(userLocation);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userLocation]);
+
     const handleCameraChanged = useCallback((state: MapState) => {
+        if (state.gestures.isGestureActive) {
+            hasUserMovedMapRef.current = true;
+        }
+
         const now = Date.now();
 
         // Mapbox emits this event every frame while the map is moving.
@@ -97,8 +128,14 @@ export default function ReportScreen() {
     }, []);
 
     const handleResetLocation = () => {
-        cameraRef.current?.flyTo(DEFAULT_CENTER, 700);
-        setSelectedLocation(DEFAULT_CENTER);
+        const center = userLocation ?? DEFAULT_CENTER;
+        cameraRef.current?.setCamera({
+            centerCoordinate: center,
+            zoomLevel: INITIAL_ZOOM,
+            animationDuration: 700,
+            animationMode: "flyTo",
+        });
+        setSelectedLocation(center);
         setZoomLevel(INITIAL_ZOOM);
         isConfirmedRef.current = false;
         setIsConfirmed(false);
@@ -221,6 +258,16 @@ export default function ReportScreen() {
                                 zoomLevel: INITIAL_ZOOM,
                             }}
                         />
+                        {hasPermission && (
+                            <Mapbox.LocationPuck
+                                puckBearingEnabled={false}
+                                pulsing={{
+                                    isEnabled: true,
+                                    color: colors.primary,
+                                    radius: 36,
+                                }}
+                            />
+                        )}
                     </Mapbox.MapView>
                 </Animated.View>
 

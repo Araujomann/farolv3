@@ -44,6 +44,12 @@
       ],
       "expo-font",
       "expo-notifications",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O Farol usa sua localização para posicionar o mapa onde você está ao registrar um relato de acidente."
+        }
+      ],
       "@rnmapbox/maps"
     ],
 
