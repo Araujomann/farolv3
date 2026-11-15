@@ -32,6 +32,12 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
+            # typedRoutes: os tipos das rotas (.expo/types/router.d.ts) são
+            # gerados pelo `expo start` e ficam fora do git. Sem eles,
+            # useSegments() perde os tipos e o tsc falha em app/_layout.tsx.
+            - name: Generate Expo Router types
+              run: npx expo customize tsconfig.json
+
             - name: Type check
               run: npx tsc --noEmit
 
