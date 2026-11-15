@@ -1,684 +1,287 @@
-# 📚 Manual de Arquitetura - Mapeamento de Acidentes
+# 📚 Manual de Arquitetura - Farol (app)
 
 ## Visão Geral
 
-Este documento descreve a arquitetura do projeto de Mapeamento de Acidentes, construído com React Native + Expo Router. O objetivo é fornecer um guia completo para desenvolvedores que desejam contribuir com o projeto, explicando as decisões arquiteturais, padrões de organização e boas práticas adotadas.
+Este documento descreve a arquitetura do aplicativo Farol, cliente mobile da CrashMap API para registro e consulta de acidentes de trânsito. O app é construído com React Native + Expo (SDK 54) e Expo Router.
+
+### Stack
+
+| Área | Tecnologia |
+|------|------------|
+| Base | React Native 0.81, React 19, TypeScript (`strict`) |
+| Navegação | Expo Router 6 (file-based routing) |
+| Estado global | Zustand |
+| Requisições | Axios (instância única em `src/api/client.ts`) |
+| Formulários | React Hook Form + Zod (`@hookform/resolvers`) |
+| Mapa e geocodificação | `@rnmapbox/maps` + APIs HTTP do Mapbox |
+| UI e estilos | Gluestack UI + NativeWind (Tailwind) e `StyleSheet` |
+| Ícones | `lucide-react-native` |
+| Animações | `react-native-reanimated` |
+| Armazenamento seguro | `expo-secure-store` |
+| Notificações push | `expo-notifications` |
+| Localização | `expo-location` |
+| Idiomas | i18n próprio (pt-BR, en, es) |
 
 ---
 
 ## 🏗️ Princípios Arquiteturais
 
-O projeto segue os seguintes princípios fundamentais:
-
-1. **Separação de Responsabilidades (SoC)**: Cada módulo tem uma responsabilidade clara e bem definida
-2. **Feature-First Architecture**: Organização por domínio de negócio, não por tipo técnico
-3. **File-based Routing**: Rotas definidas pela estrutura de pastas (Expo Router)
-4. **Type Safety**: TypeScript em todo o projeto para prevenção de erros
-5. **Escalabilidade**: Estrutura preparada para crescimento sem refatoração significativa
-6. **Testabilidade**: Componentes isolados e testáveis
+1. **Feature-First**: o código de cada domínio (mapa, relato, perfil…) fica junto em `src/features/`
+2. **File-based Routing**: as rotas são definidas pela estrutura de `app/` (Expo Router)
+3. **Ponto único de API**: toda chamada à CrashMap API passa pela instância Axios de `src/api/client.ts`
+4. **Type Safety**: TypeScript em modo estrito em todo o projeto
 
 ---
 
 ## 📁 Estrutura de Diretórios
 
-### Hierarquia Principal
-
 ```
-accident-mapping-app/
+farolv3/
 ├── app/                    # Rotas (Expo Router)
-├── src/                    # Código fonte
-│   ├── features/          # Features por domínio
-│   ├── shared/            # Código compartilhado
-│   ├── api/               # Configuração de API
-│   ├── stores/            # Estado global
-│   └── providers/         # Providers React
-├── assets/                # Recursos estáticos
-└── tests/                 # Testes
+├── components/             # Componentes de UI (Gluestack) e SearchBar
+├── src/
+│   ├── api/               # Cliente Axios e chamadas à API
+│   ├── features/          # Código por domínio
+│   ├── shared/            # Hooks compartilhados
+│   ├── store/             # Store de autenticação (Zustand)
+│   ├── theme/             # Cores, preferência de tema e hook useAppTheme
+│   └── i18n/              # Traduções e store de idioma
+├── assets/                # Imagens e fontes
+├── global.css             # Entrada do Tailwind/NativeWind
+└── tailwind.config.js
 ```
 
-### Por que essa estrutura?
+As pastas `hooks/` e `constants/theme.ts` da raiz e `scripts/reset-project.js` vieram do template do Expo e não são usadas pelo app; o tema real fica em `src/theme/`.
 
-#### 1. Separação entre `app/` e `src/`
+### Separação entre `app/` e `src/`
 
 ```
-app/     → Responsável APENAS por roteamento
-src/     → Toda a lógica de negócio e componentes
+app/     → Rotas, layouts e composição das telas
+src/     → Componentes, hooks, serviços, estado e tipos
 ```
 
-**Motivação**: O Expo Router usa convenção de file-based routing onde cada arquivo em `app/` vira uma rota. Manter as telas finas (thin screens) e a lógica em `src/` facilita:
-- Testes unitários sem necessidade de mockar navegação
-- Reutilização de componentes em diferentes rotas
-- Migração futura de framework de navegação
+As telas em `app/` montam a interface a partir dos componentes e hooks das features. Algumas telas ainda concentram lógica própria (por exemplo, os formulários de autenticação e de relato, que declaram ali o schema Zod e o `useForm`). Telas simples apenas reexportam um componente da feature:
+
+```typescript
+// app/(tabs)/profile/settings.tsx
+export { default } from "@/src/features/settings/components/SettingsScreen";
+```
 
 ---
 
-## 🎯 Feature-Based Architecture
-
-### Estrutura de uma Feature
-
-```
-src/features/
-└── map/
-    ├── components/      # Componentes React específicos
-    ├── hooks/          # Hooks customizados
-    ├── services/       # Chamadas de API
-    ├── types/          # Tipos TypeScript
-    └── index.ts        # Barrels exports
-```
-
-### Por que organizar por features?
-
-**Problema com organização por tipo técnico:**
-```
-src/
-├── components/
-│   ├── MapView.tsx
-│   ├── AccidentCard.tsx
-│   └── LoginForm.tsx
-├── services/
-│   ├── mapService.ts
-│   ├── accidentService.ts
-│   └── authService.ts
-└── types/
-    ├── map.types.ts
-    ├── accident.types.ts
-    └── auth.types.ts
-```
-
-**Problemas desta abordagem:**
-- Para adicionar uma feature, é preciso modificar 3+ diretórios
-- Difícil identificar o escopo de cada feature
-- Acoplamento entre features diferentes
-- Complexidade para remover ou modificar features
-
-**Vantagens da Feature-Based:**
-- **Coesão**: Tudo relacionado a uma feature está junto
-- **Encapsulamento**: Features podem evoluir independentemente
-- **Descoberta**: Fácil encontrar código relacionado
-- **Remoção**: Apagar uma feature é simples (remover a pasta)
-- **Escala**: Novas features são adicionadas sem afetar as existentes
-
----
-
-## 🗺️ Expo Router e File-Based Routing
-
-### Como funciona
+## 🗺️ Rotas (Expo Router)
 
 ```
 app/
-├── _layout.tsx           → Layout raiz (Stack Navigator)
-├── index.tsx             → Rota: /
-├── (auth)/               → Grupo de rotas (não afeta URL)
-│   ├── _layout.tsx       → Layout do grupo
-│   ├── login.tsx         → Rota: /login
-│   └── register.tsx      → Rota: /register
-└── (main)/               → Grupo de rotas principais
-    ├── _layout.tsx       → Tab Navigator
+├── _layout.tsx                 → Layout raiz (Stack), providers e guarda de autenticação
+├── index.tsx                   → Redireciona para /(auth)/login
+├── (auth)/                     → Telas sem login
+│   ├── _layout.tsx
+│   ├── login.tsx
+│   ├── register.tsx
+│   ├── verify-email.tsx
+│   ├── forgot-password.tsx
+│   └── reset-password.tsx
+└── (tabs)/                     → Área logada (abas customizadas com expo-router/ui)
+    ├── _layout.tsx
+    ├── home/index.tsx          → Painel da comunidade e contribuição pessoal
     ├── map/
-    │   ├── index.tsx     → Rota: /map
-    │   └── [id].tsx      → Rota: /map/:id (dinâmica)
+    │   ├── index.tsx           → Mapa de acidentes
+    │   └── [accidentId].tsx    → Detalhe do acidente (rota dinâmica)
+    ├── report/
+    │   ├── index.tsx           → Escolha da localização
+    │   ├── form.tsx            → Formulário do relato
+    │   └── success.tsx
     └── profile/
-        └── index.tsx     → Rota: /profile
+        ├── index.tsx
+        ├── reports.tsx         → Meus relatos
+        ├── settings.tsx
+        └── delete-account.tsx
 ```
 
-### Grupos de Rotas `(auth)` e `(main)`
+### Guarda de autenticação
 
-**Por que usar grupos?**
+O `app/_layout.tsx` declara as três telas da Stack (`index`, `(auth)` e `(tabs)`) e decide o redirecionamento num `useEffect`, depois que `restoreSession()` termina:
 
-1. **Autenticação condicional**: Rotas `(auth)` são acessíveis sem login, `(main)` requer autenticação
-2. **Layouts diferentes**: Auth tem layout minimalista, main tem tabs
-3. **Performance**: Code splitting automático por grupo
-4. **Organização**: Separação visual clara no código
+- sem token → `/(auth)/login`;
+- com token fora de `(tabs)` → `/(auth)/verify-email` se o e-mail ainda não foi verificado logo após cadastro/login, senão `/(tabs)/home`;
+- recuperação de senha e verificação de e-mail ficam liberadas durante o fluxo.
 
-```typescript
-// app/_layout.tsx
-export default function RootLayout() {
-  const { user } = useAuth();
-  
-  return (
-    <Stack>
-      {!user ? (
-        <Stack.Screen name="(auth)" />
-      ) : (
-        <Stack.Screen name="(main)" />
-      )}
-    </Stack>
-  );
-}
+O layout raiz também configura o token do Mapbox, carrega as fontes, hidrata tema e idioma, registra as notificações push, mantém a splash até tudo estar pronto e envolve o app em `GluestackUIProvider` e `ThemeProvider` (React Navigation).
+
+---
+
+## 🎯 Features
+
 ```
+src/features/
+├── auth/            # Componentes das telas de login/cadastro e useAuthorization
+├── home/            # Painel inicial: cards, useHomeDashboard, validação dos dados
+├── map/             # Mapa, marcadores, filtros, detalhe, comentários, confiança, serviços
+├── notifications/   # Push (registro/remoção do token) e avisos administrativos
+├── profile/         # Perfil, gamificação, meus relatos, cor do título
+├── report/          # Componentes e hooks do fluxo de relato
+└── settings/        # Telas de configurações e exclusão de conta
+```
+
+Estrutura típica (nem toda feature tem todas as pastas):
+
+```
+src/features/map/
+├── components/      # Componentes específicos (inclui details/)
+├── constants/
+├── hooks/           # useAccidents, useAccidentDetails, useAccidentAddress
+├── services/        # accidentService, placeSearch, reverseGeocode
+├── types/
+├── utils/
+└── index.ts         # Exporta parte da API pública da feature
+```
+
+Só `auth` e `map` têm `index.ts`. Em `auth/`, os arquivos `LoginForm.tsx`, `RegisterForm.tsx`, `useAuth.ts`, `useLoginForm.ts`, `authService.ts` e `auth.types.ts` existem, mas estão vazios: a lógica de autenticação está nas telas de `app/(auth)/`, em `src/api/auth.ts` e em `src/store/authStore.ts`.
 
 ---
 
 ## 🔄 Fluxo de Dados
 
-### Camadas da Aplicação
-
 ```
 ┌─────────────────────────────────────┐
-│         Screens (app/)              │  ← Thin screens
+│         Screens (app/)              │  ← Composição e, em alguns casos, formulários
 ├─────────────────────────────────────┤
-│      Components (features/)         │  ← UI + lógica de apresentação
+│   Components (src/features/)        │  ← UI da feature
 ├─────────────────────────────────────┤
-│         Hooks (features/)           │  ← Lógica de negócio
+│      Hooks (src/features/)          │  ← Estado de tela, carregamento, cache
 ├─────────────────────────────────────┤
-│    Services (features/)             │  ← Chamadas de API
+│ Services (features/*/services ou    │  ← Funções que chamam a API
+│          src/api/*.ts)              │
 ├─────────────────────────────────────┤
-│      API Client (src/api/)          │  ← Axios configurado
+│      API Client (src/api/client.ts) │  ← Axios configurado
 └─────────────────────────────────────┘
 ```
 
-### Exemplo de Fluxo
+As funções de chamada à API ficam em dois lugares:
+
+- `src/features/map/services/accidentService.ts`: acidentes do mapa, detalhe, criação de relato, comentários, imagens e votos de confiança;
+- `src/api/*.ts`: `auth`, `accidents` (estatísticas da home), `profile`, `reports` (meus relatos) e `notifications`.
+
+### Exemplo de fluxo
 
 ```typescript
-// 1. Screen (app/(main)/map/index.tsx)
-export default function MapScreen() {
-  const { accidents, loading } = useAccidents();
-  return <AccidentMap accidents={accidents} loading={loading} />;
-}
+// 1. Screen (app/(tabs)/map/index.tsx) usa o hook da feature
+const { accidents, isLoading, error, filters, applyFilters, retry } = useAccidents();
 
 // 2. Hook (src/features/map/hooks/useAccidents.ts)
-export const useAccidents = () => {
-  return useQuery({
-    queryKey: ['accidents'],
-    queryFn: () => accidentService.getAccidents(),
-  });
-};
+//    useState/useEffect + cache em memória no nível do módulo,
+//    revalidado pela versão dos dados no servidor
+const data = await getAccidentsForMap(filters);
 
 // 3. Service (src/features/map/services/accidentService.ts)
-export const accidentService = {
-  async getAccidents() {
-    const response = await api.get('/accidents');
-    return response.data;
-  },
-};
+const response = await api.get("/accidents/map", { params });
 ```
-
-### Por que essa separação?
-
-1. **Screens finas**: Fáceis de entender e manter
-2. **Lógica em hooks**: Testável e reutilizável
-3. **Services isolados**: Trocar API não afeta UI
-4. **Único ponto de API**: Interceptors e headers centralizados
-
----
-
-## 🎣 Hooks Customizados
-
-### Tipos de Hooks
-
-1. **Hooks de Feature**: Lógica específica de domínio
-   ```typescript
-   // src/features/map/hooks/useAccidents.ts
-   export const useAccidents = (filters?: MapFilters) => {
-     // Lógica específica de acidentes
-   };
-   ```
-
-2. **Hooks Compartilhados**: Reutilizáveis entre features
-   ```typescript
-   // src/shared/hooks/useLocation.ts
-   export const useLocation = () => {
-     // Lógica genérica de localização
-   };
-   ```
-
-### Padrões de Nomenclatura
-
-- `use` + Substantivo: `useAuth`, `useMap`
-- `use` + Verbo + Substantivo: `useGetAccidents`, `useUpdateProfile`
-- Hooks de formulário: `useLoginForm`, `useAccidentForm`
 
 ---
 
 ## 🗄️ Gerenciamento de Estado
 
-### Estratégia em Camadas
+1. **Estado local**: `useState`/`useRef` nos hooks e telas
+2. **Dados do servidor**: carregados pelos hooks das features com `useState`/`useEffect` (ou `useFocusEffect`), com cache em memória quando necessário (ex.: `useAccidents`)
+3. **Estado global**: stores Zustand
 
-1. **Estado Local**: `useState` para UI state
-2. **Estado de Servidor**: React Query para dados da API
-3. **Estado Global**: Zustand para estado compartilhado
-4. **Estado de UI**: Context API para temas/preferências
+| Store | Onde | Conteúdo |
+|-------|------|----------|
+| `useAuthStore` | `src/store/authStore.ts` | usuário, token, carregamento da sessão, `signIn`/`signOut`/`restoreSession` |
+| `useThemeStore` | `src/theme/themeStore.ts` | preferência de tema (system/light/dark), persistida |
+| `useLanguageStore` | `src/i18n/index.ts` | preferência de idioma, persistida |
+| `useServerStatusStore` | `src/api/serverStatus.ts` | requisições lentas (API acordando) |
+| `useProfileTitleColorStore` | `src/features/profile/titleColorStore.ts` | animação da cor do título do perfil |
 
-### Por que React Query?
-
-```typescript
-// Sem React Query
-const [accidents, setAccidents] = useState([]);
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState(null);
-
-useEffect(() => {
-  loadAccidents();
-}, []);
-
-// Com React Query
-const { data, isLoading, error } = useQuery({
-  queryKey: ['accidents'],
-  queryFn: getAccidents,
-});
-```
-
-**Vantagens:**
-- Cache automático
-- Retry e refetch automáticos
-- Deduplicação de requisições
-- Loading e error states prontos
-- Invalidação de cache
-- Paginação e infinite scroll
-
-### Por que Zustand?
-
-```typescript
-// Zustand Store
-const useMapStore = create((set) => ({
-  selectedAccident: null,
-  setSelectedAccident: (accident) => set({ selectedAccident: accident }),
-}));
-
-// Uso em qualquer componente
-const selectedAccident = useMapStore((state) => state.selectedAccident);
-```
-
-**Vantagens sobre Redux:**
-- API mais simples
-- Menos boilerplate
-- Sem providers necessários
-- Performance otimizada
-- Curva de aprendizado menor
+As preferências e os tokens são persistidos com `expo-secure-store`.
 
 ---
 
 ## 🔌 API Client
 
-### Estrutura
+`src/api/client.ts` cria a instância única do Axios:
 
-```typescript
-// src/api/client.ts
-import axios from 'axios';
+- `baseURL` em `EXPO_PUBLIC_API_URL` e timeout de 70 s (`API_TIMEOUT_MS`), para tolerar a API acordando da hibernação;
+- interceptor de requisição lê o access token do SecureStore e envia `Authorization: Bearer …`;
+- interceptor de resposta: em `401`, renova o par de tokens em `/auth/refresh` (com fila para evitar refresh simultâneos) e refaz a requisição; se a renovação falhar, apaga os tokens;
+- `beginRequestTracking`/`endRequestTracking` alimentam `useServerStatusStore`, e `ServerWakingNotice` avisa o usuário quando a API demora a responder.
 
-export const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL,
-  timeout: 10000,
-});
+---
 
-// Interceptors
-api.interceptors.request.use((config) => {
-  const token = getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-```
+## 🔒 Autenticação e Autorização
 
-### Por que centralizar?
+- Tokens (`token` e `refresh_token`) ficam no `expo-secure-store`, gravados por `useAuthStore.signIn`.
+- `restoreSession()` restaura a sessão na abertura do app consultando a API.
+- `signOut()` remove o token de push do dispositivo na API e apaga os tokens locais.
+- Formulários validados com Zod + React Hook Form.
+- Papéis: `src/store/authorization.ts` (`hasRole`, `isModerator`) e o hook `useAuthorization` (`src/features/auth`). A autorização efetiva é feita pela API.
 
-1. **Headers consistentes**: Token adicionado automaticamente
-2. **Error handling**: Tratamento global de erros
-3. **Base URL**: Único lugar para mudar ambiente (dev/prod)
-4. **Logging**: Debug centralizado
-5. **Retry logic**: Política de retry uniforme
+---
+
+## 🔔 Notificações
+
+- `usePushNotifications` (chamado no layout raiz) registra o token Expo Push do dispositivo na API quando há sessão.
+- `pushNotifications.ts` trata o registro, a remoção do token e a notificação de relato aprovado (`ACCIDENT_APPROVED`).
+- `AdministrativeNoticesPanel` exibe os avisos à comunidade publicados pelo painel administrativo.
+
+---
+
+## 🗺️ Mapa e Geolocalização
+
+- `@rnmapbox/maps` renderiza o mapa; o token vem de `EXPO_PUBLIC_MAPBOX_TOKEN`.
+- `placeSearch.ts` usa a Search Box API do Mapbox para a busca de lugares.
+- `reverseGeocode.ts` usa a Geocoding API do Mapbox para obter o endereço de uma coordenada.
+- `expo-location` obtém a posição do usuário no fluxo de relato.
+
+---
+
+## 🌐 Internacionalização
+
+`src/i18n/` tem dicionários em `locales/` (`pt-BR`, `en`, `es`), o store de idioma (preferência `system` ou um idioma fixo, com fallback para pt-BR) e o hook `useTranslation`. Fora de componentes usa-se a função `tr`.
+
+---
+
+## 🎨 UI e Tema
+
+- `components/ui/` contém os componentes do Gluestack UI adicionados ao projeto (`box`, `button`, `input`, `text`, `vstack`, `tabs`, provider) e utilitários de animação de cor.
+- Estilos com NativeWind (`className`) e, em alguns componentes, `StyleSheet`.
+- `src/theme/` define as cores claras e escuras (`colors.ts`), a preferência do usuário (`themeStore.ts`) e o hook `useAppTheme`, usado pelas telas e pelo tema do React Navigation.
 
 ---
 
 ## 📝 TypeScript e Tipagem
 
-### Hierarquia de Tipos
-
-```typescript
-// Tipos por feature
-// src/features/map/types/map.types.ts
-export interface Accident {
-  id: string;
-  latitude: number;
-  longitude: number;
-  type: AccidentType;
-  severity: Severity;
-  date: Date;
-  description: string;
-  userId: string;
-  images?: string[];
-}
-
-export type AccidentType = 
-  | 'colisao'
-  | 'atropelamento'
-  | 'queda'
-  | 'incendio'
-  | 'outro';
-
-export type Severity = 'baixa' | 'media' | 'alta';
-```
-
-### Por que tipos por feature?
-
-1. **Encapsulamento**: Tipos evoluem com a feature
-2. **Descoberta**: Tipos próximos ao código que os usa
-3. **Import limpo**: Sem imports circulares
-4. **Refatoração segura**: Mudanças localizadas
-
-### Tipos Compartilhados
-
-```typescript
-// src/shared/types/global.types.ts
-export interface ApiResponse<T> {
-  data: T;
-  message: string;
-  status: number;
-}
-
-export interface PaginationParams {
-  page: number;
-  limit: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
-```
+- Tipos por feature em `src/features/*/types/` (ex.: `accident.types.ts`).
+- Tipos das respostas declarados junto das funções de `src/api/*.ts`.
+- Tipos do usuário e da store de autenticação em `src/store/types.ts`.
+- Alias `@/*` aponta para a raiz do projeto (`tsconfig.json`).
 
 ---
 
-## 🧪 Testabilidade
-
-### Estrutura de Testes
-
-```
-tests/
-├── unit/
-│   ├── features/
-│   │   ├── map/
-│   │   │   ├── hooks/
-│   │   │   │   └── useAccidents.test.ts
-│   │   │   └── components/
-│   │   │       └── AccidentMarker.test.tsx
-│   │   └── shared/
-│   │       └── utils/
-│   │           └── formatters.test.ts
-└── integration/
-    └── flows/
-        └── accidentCreation.test.tsx
-```
-
-### Por que essa arquitetura facilita testes?
-
-1. **Hooks isolados**: Testáveis sem UI
-2. **Services mockáveis**: Fáceis de mockar
-3. **Componentes puros**: Props claras e previsíveis
-4. **Lógica separada**: Business logic sem dependência de UI
-
----
-
-## 🎨 Componentes Compartilhados
-
-### Estrutura
-
-```
-src/shared/components/
-└── Button/
-    ├── Button.tsx
-    ├── Button.styles.ts
-    ├── Button.test.tsx
-    └── index.ts
-```
-
-### Por que essa estrutura?
-
-Cada componente compartilhado tem:
-1. **Implementação**: Componente React
-2. **Estilos**: Styles separados (StyleSheet)
-3. **Testes**: Testes do componente
-4. **Barrel export**: Facilita import
-
-```typescript
-// Import simplificado
-import { Button } from '@shared/components/Button';
-```
-
----
-
-## 🚀 Boas Práticas
-
-### 1. Screens Finas
-
-```typescript
-// ✅ CORRETO - Screen fina
-export default function MapScreen() {
-  const { accidents } = useAccidents();
-  const { filters } = useMapFilters();
-  
-  return <AccidentMap accidents={accidents} filters={filters} />;
-}
-
-// ❌ ERRADO - Screen com lógica
-export default function MapScreen() {
-  const [accidents, setAccidents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({});
-  
-  useEffect(() => {
-    // 50 linhas de lógica
-  }, []);
-  
-  // 100 linhas de lógica de filtro
-  
-  return <MapView>{/* Complexidade */}</MapView>;
-}
-```
-
-### 2. Barrels Exports
-
-```typescript
-// src/features/map/index.ts
-export * from './components';
-export * from './hooks';
-export * from './services';
-export * from './types';
-```
-
-**Vantagens:**
-- Imports mais limpos
-- API pública da feature
-- Encapsulamento interno
-
-### 3. Nomenclatura Consistente
-
-| Tipo | Padrão | Exemplo |
-|------|--------|---------|
-| Componentes | PascalCase | `AccidentMap` |
-| Hooks | camelCase com use | `useAccidents` |
-| Services | camelCase com Service | `accidentService` |
-| Types | PascalCase | `Accident` |
-| Constantes | UPPER_SNAKE_CASE | `API_URL` |
-| Funções | camelCase | `getAccidents` |
-
-### 4. Import Order
-
-```typescript
-// 1. Imports externos
-import React from 'react';
-import { View } from 'react-native';
-
-// 2. Imports de features
-import { AccidentMap } from '../../features/map';
-
-// 3. Imports compartilhados
-import { Button } from '../../shared/components';
-
-// 4. Tipos
-import type { Accident } from '../../features/map/types';
-```
-
----
-
-## 🔒 Segurança
-
-### Autenticação
-
-```typescript
-// src/features/auth/hooks/useAuth.ts
-export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  
-  const login = async (credentials: Credentials) => {
-    const { token, user } = await authService.login(credentials);
-    await SecureStore.setItemAsync('token', token);
-    setUser(user);
-  };
-  
-  return { user, login };
-};
-```
-
-### Boas Práticas
-
-1. **Tokens seguros**: Usar `expo-secure-store`
-2. **Validação**: Zod para schemas
-3. **Sanitização**: Dados do usuário
-4. **HTTPS**: API em produção
-
----
-
-## 📊 Performance
-
-### Otimizações Implementadas
-
-1. **React Query Cache**
-   ```typescript
-   staleTime: 5 * 60 * 1000  // 5 minutos
-   ```
-
-2. **Memoização**
-   ```typescript
-   const MemoizedMarker = React.memo(AccidentMarker);
-   ```
-
-3. **Lazy Loading**
-   ```typescript
-   const AccidentDetail = React.lazy(() => import('./AccidentDetail'));
-   ```
-
-4. **Image Optimization**
-   ```typescript
-   <Image 
-     source={{ uri: accident.image }}
-     resizeMode="cover"
-     cachePolicy="memory-disk"
-   />
-   ```
-
----
-
-## 🐛 Debug e Monitoramento
-
-### Logging
-
-```typescript
-// src/shared/utils/logger.ts
-export const logger = {
-  info: (message: string, data?: any) => {
-    if (__DEV__) console.log(message, data);
-  },
-  error: (message: string, error?: any) => {
-    if (__DEV__) console.error(message, error);
-    // Enviar para serviço de monitoramento
-  },
-};
-```
-
-### Error Boundaries
-
-```typescript
-// src/shared/components/ErrorBoundary
-export class ErrorBoundary extends React.Component {
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    logger.error('Error Boundary', { error, errorInfo });
-  }
-  
-  render() {
-    return this.props.children;
-  }
-}
-```
-
----
-
-## 📦 Deploy e Ambientes
-
-### Variáveis de Ambiente
+## 📦 Variáveis de Ambiente
 
 ```bash
-# .env.development
-EXPO_PUBLIC_API_URL=http://localhost:3000/api
-EXPO_PUBLIC_MAPS_API_KEY=dev_key
-
-# .env.production
-EXPO_PUBLIC_API_URL=https://api.accidentmap.com
-EXPO_PUBLIC_MAPS_API_KEY=prod_key
-```
-
-### Configuração por Ambiente
-
-```typescript
-// src/shared/constants/config.ts
-export const config = {
-  apiUrl: process.env.EXPO_PUBLIC_API_URL,
-  mapsApiKey: process.env.EXPO_PUBLIC_MAPS_API_KEY,
-  environment: process.env.NODE_ENV,
-};
+EXPO_PUBLIC_API_URL=      # URL da CrashMap API
+EXPO_PUBLIC_MAPBOX_TOKEN= # token público do Mapbox (obrigatório: o app não inicia sem ele)
 ```
 
 ---
 
-## 🤝 Guia de Contribuição
+## 🧪 Qualidade
 
-### Antes de Contribuir
-
-1. **Leia este manual** completamente
-2. **Entenda a feature** que vai modificar
-3. **Verifique issues** existentes
-4. **Discuta mudanças** grandes antes de implementar
-
-### Fluxo de Trabalho
-
-1. **Crie uma branch**
-   ```bash
-   git checkout -b feature/nova-funcionalidade
-   ```
-
-2. **Siga os padrões** de código
-3. **Escreva testes**
-4. **Atualize documentação**
-5. **Abra um PR** com descrição clara
-
-### Checklist de PR
-
-- [ ] Código segue os padrões do projeto
-- [ ] Testes escritos e passando
-- [ ] Sem erros de TypeScript
-- [ ] Documentação atualizada
-- [ ] Performance verificada
-- [ ] Acessibilidade considerada
-- [ ] Responsividade testada
+O projeto não tem testes automatizados. A verificação disponível é o lint (`npm run lint`, via `expo lint`) e a checagem de tipos do TypeScript.
 
 ---
 
 ## 📚 Referências
 
 - [Expo Router Docs](https://docs.expo.dev/router/introduction/)
-- [React Query](https://tanstack.com/query/latest)
 - [Zustand](https://github.com/pmndrs/zustand)
+- [React Hook Form](https://react-hook-form.com/)
+- [Zod](https://zod.dev/)
+- [rnmapbox](https://rnmapbox.github.io/)
+- [Gluestack UI](https://gluestack.io/)
+- [NativeWind](https://www.nativewind.dev/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [React Native](https://reactnative.dev/)
-
----
-
-## 🎯 Conclusão
-
-Esta arquitetura foi projetada para:
-
-1. **Facilitar manutenção** através de organização clara
-2. **Permitir escalabilidade** sem refatoração
-3. **Garantir qualidade** com TypeScript e testes
-4. **Acelerar desenvolvimento** com padrões consistentes
-5. **Melhorar colaboração** com documentação clara
-
-Siga os padrões descritos neste manual para manter a consistência e qualidade do projeto. Quando em dúvida, priorize clareza e simplicidade sobre otimização prematura.
