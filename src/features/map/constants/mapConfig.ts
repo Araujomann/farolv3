@@ -51,11 +51,8 @@ export const CAMERA_PADDING = {
     paddingLeft: 48,
 };
 
-/** Cores dos marcadores por severidade (desconhecida usa a cor de "baixa"). */
-export const MARKER_COLORS = {
-    ...SEVERITY_COLORS,
-    unknown: SEVERITY_COLORS.low,
-} as const;
+/** Cores dos marcadores por severidade. */
+export const MARKER_COLORS = SEVERITY_COLORS;
 
 /** Estilo da camada de mapa de calor; a cor mais intensa segue o tema. */
 export function createHeatmapStyle(errorColor: string): HeatmapLayerStyle {

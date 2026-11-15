@@ -67,7 +67,6 @@ const es: Dictionary = {
             medium: "Media",
             high: "Alta",
             critical: "Crítica",
-            unknown: "No informada",
         },
         classification: {
             com_vitima: "Con víctimas",

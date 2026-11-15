@@ -71,7 +71,6 @@ const ptBR = {
             medium: "Média",
             high: "Alta",
             critical: "Crítica",
-            unknown: "Não informada",
         },
         classification: {
             com_vitima: "Com vítima",

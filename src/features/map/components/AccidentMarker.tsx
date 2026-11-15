@@ -8,7 +8,6 @@ const SEVERITY_COLORS: Record<AccidentSeverity, string> = {
     medium: "#D99A24",
     high: "#D9534F",
     critical: "#B42318",
-    unknown: "#0969D7",
 };
 
 const HALO_COLORS: Record<AccidentSeverity, string> = {
@@ -16,7 +15,6 @@ const HALO_COLORS: Record<AccidentSeverity, string> = {
     medium: "#FFD166",
     high: "#FF8A80",
     critical: "#FF6B5F",
-    unknown: "#65B7FF",
 };
 
 type AccidentMarkerProps = {
@@ -41,8 +39,8 @@ export const AccidentMarker = memo(function AccidentMarker({
     onSelect,
 }: AccidentMarkerProps) {
     const markerColor =
-        SEVERITY_COLORS[accident.severity] ?? SEVERITY_COLORS.unknown;
-    const haloColor = HALO_COLORS[accident.severity] ?? HALO_COLORS.unknown;
+        SEVERITY_COLORS[accident.severity] ?? SEVERITY_COLORS.low;
+    const haloColor = HALO_COLORS[accident.severity] ?? HALO_COLORS.low;
     const handleSelected = useCallback(
         () => onSelect?.(accident.id),
         [accident.id, onSelect],

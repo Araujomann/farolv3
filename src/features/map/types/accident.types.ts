@@ -2,8 +2,7 @@ export type AccidentSeverity =
     | "low"
     | "medium"
     | "high"
-    | "critical"
-    | "unknown";
+    | "critical";
 
 export type AccidentClassification = "com_vitima" | "sem_vitima";
 export type AccidentWeatherCondition = "ceu_claro" | "chuva" | "nublado" | "garoa";
@@ -17,7 +16,7 @@ export type CreateAccidentInput = {
     latitude: number;
     longitude: number;
     occurredAt: string;
-    severity: Exclude<AccidentSeverity, "unknown">;
+    severity: AccidentSeverity;
 };
 
 export type Accident = {

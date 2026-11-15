@@ -12,7 +12,7 @@ export const MAX_DESCRIPTION_LENGTH = 1000;
 export const MAX_CUSTOM_TYPE_LENGTH = 60;
 
 /** Severidades que o usuário pode escolher ao relatar. */
-export type ReportSeverity = Exclude<AccidentSeverity, "unknown">;
+export type ReportSeverity = AccidentSeverity;
 
 export const SEVERITY_OPTIONS: {
     value: ReportSeverity;
