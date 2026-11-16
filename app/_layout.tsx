@@ -186,6 +186,11 @@ export default function RootLayout() {
         emailVerificationPrompt,
     ]);
 
+    // Só monta as telas depois que as fontes carregarem (a splash continua
+    // visível). No Android o texto medido com a fonte do sistema não é
+    // remedido quando a fonte customizada chega, e a última palavra some.
+    if (!fontsReady) return null;
+
     return (
         <GluestackUIProvider mode={themePreference}>
             <ThemeProvider value={navigationTheme}>
