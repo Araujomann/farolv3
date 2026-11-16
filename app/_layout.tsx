@@ -33,6 +33,7 @@ import { useThemeStore } from '@/src/theme/themeStore';
 import { useAppTheme } from '@/src/theme/useAppTheme';
 import { useLanguageStore } from '@/src/i18n';
 import { usePushNotifications } from '@/src/features/notifications/usePushNotifications';
+import { useNotificationNavigation } from '@/src/features/notifications/useNotificationNavigation';
 import { ServerWakingNotice } from '@/src/api/ServerWakingNotice';
 import { useIsServerSlow } from '@/src/api/serverStatus';
 import { needsTermsAcceptance } from '@/src/features/legal/legalConfig';
@@ -94,6 +95,14 @@ export default function RootLayout() {
     };
 
     usePushNotifications(Boolean(token));
+    // Só abre o mapa da notificação depois que o redirecionamento inicial
+    // levou o usuário à área logada (sessão restaurada e termos aceitos).
+    useNotificationNavigation(
+        Boolean(token) &&
+            !isLoading &&
+            Boolean(rootNavigationState?.key) &&
+            segments[0] === "(tabs)",
+    );
 
     const isUiReady = fontsReady && isThemeHydrated && isLanguageHydrated;
     const isAppReady = !isLoading && isUiReady;

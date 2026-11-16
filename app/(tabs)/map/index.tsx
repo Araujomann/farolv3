@@ -15,6 +15,7 @@ import {
     BASEMAP_CONFIG,
     CAMERA_PADDING,
     CITY_OVERVIEW_ZOOM,
+    FOCUSED_ACCIDENT_ZOOM,
     createHeatmapStyle,
     DEFAULT_CENTER,
     MAP_STYLE_JSON,
@@ -23,9 +24,9 @@ import {
 import type { MapPlaceSearchResult } from "@/src/features/map/services/placeSearch";
 import { toAccidentFeatureCollection } from "@/src/features/map/utils/mapGeometry";
 import Mapbox from "@rnmapbox/maps";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Keyboard, View } from "react-native";
 import { isAccidentApprovedNotification } from "@/src/features/notifications/pushNotifications";
 
@@ -34,8 +35,13 @@ import { useAppTheme } from "@/src/theme/useAppTheme";
 export default function MapScreen() {
     const { colors, isDark } = useAppTheme();
     const router = useRouter();
+    const { focusAccidentId, focusRequest } = useLocalSearchParams<{
+        focusAccidentId?: string;
+        focusRequest?: string;
+    }>();
     const {
         accidents,
+        revealAccident,
         error,
         isLoading,
         retry,
@@ -56,6 +62,10 @@ export default function MapScreen() {
         : undefined;
     const [suggestionsHeight, setSuggestionsHeight] = useState(0);
     const [viewMode, setViewMode] = useState<MapViewMode>("markers");
+    // Centro do acidente aberto por uma notificação push.
+    const [focusedCenter, setFocusedCenter] = useState<
+        [number, number] | null
+    >(null);
 
     const handleSuggestionsHeightChange = useCallback((height: number) => {
         setSuggestionsHeight(height);
@@ -63,6 +73,7 @@ export default function MapScreen() {
 
     const handleSelectPlace = useCallback((place: MapPlaceSearchResult) => {
         setSelectedAccidentId(null);
+        setFocusedCenter(null);
         setSearchedPlace(place);
         cameraRef.current?.setCamera({
             centerCoordinate: place.center,
@@ -79,6 +90,51 @@ export default function MapScreen() {
             void checkForUpdates();
         }, [checkForUpdates]),
     );
+
+    // Notificação de acidente aprovado tocada: mostra o acidente no mapa, já
+    // selecionado. Se ele não estiver no mapa (ex.: removido depois), abre os
+    // detalhes, que exibem o erro adequado.
+    useEffect(() => {
+        if (!focusAccidentId) return;
+
+        let active = true;
+        void revealAccident(focusAccidentId).then((accident) => {
+            if (!active) return;
+            router.setParams({
+                focusAccidentId: undefined,
+                focusRequest: undefined,
+            });
+
+            if (!accident) {
+                router.push({
+                    pathname: "/map/[accidentId]",
+                    params: { accidentId: focusAccidentId },
+                });
+                return;
+            }
+
+            const center: [number, number] = [
+                accident.longitude,
+                accident.latitude,
+            ];
+            Keyboard.dismiss();
+            setViewMode("markers");
+            setSearchedPlace(null);
+            setFocusedCenter(center);
+            setSelectedAccidentId(accident.id);
+            cameraRef.current?.setCamera({
+                centerCoordinate: center,
+                zoomLevel: FOCUSED_ACCIDENT_ZOOM,
+                animationMode: "flyTo",
+                animationDuration: 1500,
+            });
+        });
+
+        return () => {
+            active = false;
+        };
+        // focusRequest muda a cada toque, mesmo para o mesmo acidente.
+    }, [focusAccidentId, focusRequest, revealAccident, router]);
 
     useFocusEffect(
         useCallback(() => {
@@ -163,11 +219,18 @@ export default function MapScreen() {
 
                 {/* Abre com Imperatriz inteira centralizada e não segue os
                     acidentes carregados ou filtrados: a câmera só se move
-                    pela busca ou pelos gestos do usuário. */}
+                    pela busca, pela notificação de um acidente aprovado ou
+                    pelos gestos do usuário. */}
                 <Mapbox.Camera
                     ref={cameraRef}
-                    centerCoordinate={searchedPlace?.center ?? DEFAULT_CENTER}
-                    zoomLevel={searchedPlaceZoom ?? CITY_OVERVIEW_ZOOM}
+                    centerCoordinate={
+                        focusedCenter ?? searchedPlace?.center ?? DEFAULT_CENTER
+                    }
+                    zoomLevel={
+                        focusedCenter
+                            ? FOCUSED_ACCIDENT_ZOOM
+                            : (searchedPlaceZoom ?? CITY_OVERVIEW_ZOOM)
+                    }
                     pitch={35}
                     animationMode="flyTo"
                     animationDuration={2000}

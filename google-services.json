@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "159329248306",
+    "project_id": "farol-4bf63",
+    "storage_bucket": "farol-4bf63.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:159329248306:android:5954a6480652886813882b",
+        "android_client_info": {
+          "package_name": "br.com.farol.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMs794RFCAU1hzrz4YpULQfkVp7wUWuiQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

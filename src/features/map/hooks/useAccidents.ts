@@ -147,8 +147,56 @@ export const useAccidents = () => {
         }
     }, [loadAccidents]);
 
+    /**
+     * Garante que um acidente (ex.: recém-aprovado, vindo de uma notificação)
+     * esteja na lista do mapa. Baixa os dados de novo e, se os filtros atuais
+     * o escondem, limpa os filtros. Devolve o acidente, ou null se não achar.
+     */
+    const revealAccident = useCallback(
+        async (accidentId: string): Promise<Accident | null> => {
+            const find = (list: Accident[]) =>
+                list.find((accident) => accident.id === accidentId) ?? null;
+
+            const candidates =
+                Object.keys(filters).length > 0 ? [filters, {}] : [filters];
+
+            try {
+                for (const [index, candidate] of candidates.entries()) {
+                    const [nextAccidents, version] = await Promise.all([
+                        getAccidentsForMap(candidate),
+                        fetchVersionSafely(),
+                    ]);
+                    const found = find(nextAccidents);
+                    if (!found && index < candidates.length - 1) continue;
+
+                    // Descarta cargas em andamento: esta resposta é a mais nova.
+                    requestId.current += 1;
+                    mapCache = {
+                        filters: candidate,
+                        filtersKey: getFiltersKey(candidate),
+                        accidents: nextAccidents,
+                        version,
+                    };
+                    setFilters(candidate);
+                    setAccidents(nextAccidents);
+                    setError(null);
+                    setIsLoading(false);
+                    return found;
+                }
+            } catch (error) {
+                if (__DEV__) {
+                    console.warn("Falha ao localizar o acidente no mapa", error);
+                }
+            }
+
+            return null;
+        },
+        [filters],
+    );
+
     return {
         accidents,
+        revealAccident,
         isLoading,
         error,
         filters,

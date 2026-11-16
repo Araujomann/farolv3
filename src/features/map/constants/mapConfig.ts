@@ -39,6 +39,9 @@ export const BASEMAP_CONFIG = {
 } as const;
 
 /** Zoom aplicado ao selecionar um resultado da busca, por categoria. */
+/** Zoom ao abrir o mapa num acidente vindo de uma notificação push. */
+export const FOCUSED_ACCIDENT_ZOOM = 16.5;
+
 export const SEARCH_ZOOM_LEVELS = {
     Estabelecimento: 18,
     Rua: 17,
