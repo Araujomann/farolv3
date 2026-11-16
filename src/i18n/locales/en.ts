@@ -267,6 +267,8 @@ const en: Dictionary = {
         noRecords: "No records",
         byTimeOfDay: "Accidents by time of day",
         last30Days: "Last 30 days",
+        timeOfDayPeriod: "Period analyzed",
+        timeOfDayError: "Could not load this period.",
         severityTitle: "Accident severity",
         severitySubtitle: "Among approved records",
         overviewError: "We couldn't load the overview",

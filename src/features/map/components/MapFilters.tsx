@@ -13,6 +13,11 @@ import type {
 import { useAppTheme } from "@/src/theme/useAppTheme";
 import { useTranslation, type TranslationKey } from "@/src/i18n";
 import { SEVERITY_COLORS } from "@/src/theme/colors";
+import {
+    getTemporalPeriodRange,
+    TEMPORAL_PERIOD_OPTIONS,
+    type TemporalPeriod,
+} from "../utils/temporalPeriod";
 const SEVERITY_OPTIONS: { value: AccidentSeverity; label: TranslationKey; color: string }[] = [
     { value: "low", label: "enums.severity.low", color: SEVERITY_COLORS.low },
     { value: "medium", label: "enums.severity.medium", color: SEVERITY_COLORS.medium },
@@ -35,19 +40,6 @@ const WEATHER_OPTIONS: { value: AccidentWeatherCondition; label: TranslationKey;
 const SOURCE_OPTIONS: { value: AccidentSource; label: TranslationKey }[] = [
     { value: "APP", label: "enums.source.APP" },
     { value: "PRF", label: "enums.source.PRF" },
-];
-
-type TemporalPeriod = "quarterly" | "semiannual" | "annual" | "biennial";
-
-const TEMPORAL_PERIOD_OPTIONS: {
-    value: TemporalPeriod;
-    label: TranslationKey;
-    months: number;
-}[] = [
-    { value: "quarterly", label: "filters.quarterly", months: 3 },
-    { value: "semiannual", label: "filters.semiannual", months: 6 },
-    { value: "annual", label: "filters.annual", months: 12 },
-    { value: "biennial", label: "filters.biennial", months: 24 },
 ];
 
 type MapFiltersProps = {
@@ -117,23 +109,9 @@ export function MapFilters({
             return;
         }
 
-        const now = new Date();
-        const from = new Date(now);
-        const dayOfMonth = from.getDate();
-        from.setDate(1);
-        from.setMonth(from.getMonth() - months);
-        const lastDayOfMonth = new Date(
-            from.getFullYear(),
-            from.getMonth() + 1,
-            0,
-        ).getDate();
-        from.setDate(Math.min(dayOfMonth, lastDayOfMonth));
+        const { from, to } = getTemporalPeriodRange(months);
 
-        setDraft((prev) => ({
-            ...prev,
-            from: from.toISOString(),
-            to: now.toISOString(),
-        }));
+        setDraft((prev) => ({ ...prev, from, to }));
         setDraftPeriod(value);
     };
 

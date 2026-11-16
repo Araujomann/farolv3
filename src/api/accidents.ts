@@ -56,6 +56,30 @@ const overviewHourFormatter = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Sao_Paulo",
 });
 
+/** Hora (0–23) da ocorrência em Imperatriz, independente do fuso do aparelho. */
+function getLocalHour(occurredAt: Date): number {
+    return Number(overviewHourFormatter.format(occurredAt));
+}
+
+/** Contagem em oito faixas de 3 horas (00–03, 03–06, …), como o panorama da API. */
+export function countAccidentsByTimeOfDay(
+    accidents: { occurred_at: string }[],
+): AccidentOverview["time_of_day"] {
+    const counts = Array.from({ length: 8 }, () => 0);
+
+    for (const accident of accidents) {
+        const occurredAt = new Date(accident.occurred_at);
+        if (!Number.isFinite(occurredAt.getTime())) {
+            throw new Error(
+                "A lista de acidentes contém uma data inválida; não foi possível calcular os horários.",
+            );
+        }
+        counts[Math.floor(getLocalHour(occurredAt) / 3)] += 1;
+    }
+
+    return counts.map((count, index) => ({ start_hour: index * 3, count }));
+}
+
 function isAccidentSeverity(
     severity: string,
 ): severity is AccidentSeverity {
@@ -120,7 +144,7 @@ async function getOverviewFromMapData(): Promise<AccidentOverview> {
         }
         if (occurredAtTime >= currentPeriodStart && occurredAtTime <= now) {
             currentPeriodCount += 1;
-            const hour = Number(overviewHourFormatter.format(occurredAt));
+            const hour = getLocalHour(occurredAt);
             timeOfDayCounts[Math.floor(hour / 3)] += 1;
         } else if (
             occurredAtTime >= previousPeriodStart &&

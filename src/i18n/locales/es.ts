@@ -267,6 +267,8 @@ const es: Dictionary = {
         noRecords: "Sin registros",
         byTimeOfDay: "Accidentes por horario",
         last30Days: "Últimos 30 días",
+        timeOfDayPeriod: "Período analizado",
+        timeOfDayError: "No se pudo cargar este período.",
         severityTitle: "Gravedad de los accidentes",
         severitySubtitle: "Entre los registros aprobados",
         overviewError: "No fue posible cargar el panorama",

@@ -273,6 +273,8 @@ const ptBR = {
         noRecords: "Sem registros",
         byTimeOfDay: "Acidentes por horário",
         last30Days: "Últimos 30 dias",
+        timeOfDayPeriod: "Período analisado",
+        timeOfDayError: "Não foi possível carregar este período.",
         severityTitle: "Gravidade dos acidentes",
         severitySubtitle: "Entre os registros aprovados",
         overviewError: "Não foi possível carregar o panorama",
