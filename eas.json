@@ -6,6 +6,10 @@
   "build": {
     "preview": {
       "distribution": "internal",
+      "node": "24.19.0",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://crashmap-api.onrender.com"
+      },
       "android": {
         "buildType": "apk"
       }
