@@ -13,7 +13,7 @@ const ptBR = {
         serverWaking: "Conectando ao servidor… a primeira conexão pode levar até 1 minuto.",
     },
     tabs: {
-        home: "Home",
+        home: "Início",
         map: "Mapa",
         report: "Relatar",
         profile: "Perfil",
