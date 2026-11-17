@@ -34,6 +34,7 @@ import type {
 } from "@/src/features/report/constants/reportOptions";
 import { useReportAddress } from "@/src/features/report/hooks/useReportAddress";
 import { useReportExitGuard } from "@/src/features/report/hooks/useReportExitGuard";
+import { resolveOccurrenceTime } from "@/src/features/report/utils/occurrenceTime";
 import { useKeyboardHeight } from "@/src/shared/hooks/useKeyboardHeight";
 
 import { tr } from "@/src/i18n";
@@ -60,7 +61,9 @@ export default function ReportFormScreen() {
     const [description, setDescription] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
-    const [createdAt] = useState(() => new Date());
+    // Dia em que o relato foi aberto; o horário do acidente vem do usuário.
+    const [reportDate] = useState(() => new Date());
+    const [occurrenceTime, setOccurrenceTime] = useState("");
     const scrollViewRef = useRef<ScrollView>(null);
 
     const { user } = useAuthStore();
@@ -145,7 +148,13 @@ export default function ReportFormScreen() {
             return;
         }
 
-        if (!accidentType || !classification || !weather || !severity) {
+        if (
+            !occurrenceTime ||
+            !accidentType ||
+            !classification ||
+            !weather ||
+            !severity
+        ) {
             setSubmitError(tr("report.form.requiredFields"));
             return;
         }
@@ -158,6 +167,18 @@ export default function ReportFormScreen() {
         if (accidentType === "OUTRO" && !normalizedCustomType) {
             setSubmitError(tr("report.form.customTypeRequired"));
             customTypeInputRef.current?.focus();
+            return;
+        }
+
+        const occurrence = resolveOccurrenceTime(occurrenceTime, reportDate);
+        if (!occurrence.ok) {
+            setSubmitError(
+                tr(
+                    occurrence.reason === "future"
+                        ? "report.form.futureTime"
+                        : "report.form.invalidTime",
+                ),
+            );
             return;
         }
 
@@ -174,7 +195,7 @@ export default function ReportFormScreen() {
                 description: description.trim() || undefined,
                 latitude,
                 longitude,
-                occurredAt: createdAt.toISOString(),
+                occurredAt: occurrence.occurredAt.toISOString(),
                 severity,
             });
 
@@ -226,7 +247,11 @@ export default function ReportFormScreen() {
                         longitude={longitude}
                     />
 
-                    <DateTimeCard createdAt={createdAt} />
+                    <DateTimeCard
+                        reportDate={reportDate}
+                        time={occurrenceTime}
+                        onChangeTime={setOccurrenceTime}
+                    />
 
                     <AccidentTypeSelector
                         accidentType={accidentType}
